@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-inter);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -39,6 +39,16 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-interactive-action: var(--interactive-action);
+  --color-interactive-action-foreground: var(--interactive-action-foreground);
+  --color-interactive-action-hover: var(--interactive-action-hover);
+  --color-interactive-border: var(--interactive-border);
+  --color-interactive-hover: var(--interactive-hover);
+  --color-interactive-hover-border: var(--interactive-hover-border);
+  --color-interactive-selected: var(--interactive-selected);
+  --color-interactive-selected-border: var(--interactive-selected-border);
+  --color-interactive-selected-foreground: var(--interactive-selected-foreground);
+  --color-interactive-selected-ring: var(--interactive-selected-ring);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -49,6 +59,8 @@
 }
 
 :root {
+  --font-inter: "Inter", sans-serif;
+  --font-geist-mono: "Geist Mono", monospace;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -72,6 +84,16 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
+  --interactive-action: oklch(0.585 0.233 277.117);
+  --interactive-action-foreground: oklch(0.985 0 0);
+  --interactive-action-hover: oklch(0.511 0.218 276.966);
+  --interactive-border: oklch(0.928 0.006 264.531);
+  --interactive-hover: oklch(0.985 0.002 247.839);
+  --interactive-hover-border: oklch(0.872 0.01 258.338);
+  --interactive-selected: oklch(0.962 0.018 272.314);
+  --interactive-selected-border: oklch(0.585 0.233 277.117);
+  --interactive-selected-foreground: oklch(0.145 0 0);
+  --interactive-selected-ring: oklch(0.673 0.182 276.935);
   --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
@@ -107,6 +129,16 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
+  --interactive-action: oklch(0.585 0.233 277.117);
+  --interactive-action-foreground: oklch(0.985 0 0);
+  --interactive-action-hover: oklch(0.511 0.218 276.966);
+  --interactive-border: oklch(1 0 0 / 10%);
+  --interactive-hover: oklch(0.269 0 0);
+  --interactive-hover-border: oklch(1 0 0 / 18%);
+  --interactive-selected: oklch(0.293 0.091 280.211);
+  --interactive-selected-border: oklch(0.585 0.233 277.117);
+  --interactive-selected-foreground: oklch(0.985 0 0);
+  --interactive-selected-ring: oklch(0.673 0.182 276.935);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
