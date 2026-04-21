@@ -17,30 +17,36 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
+    // 로그인 시 최초 1회 실행 — account, profile 있음
+    // 이후 요청에서는 HttpOnly 쿠키의 JWT를 복호화해서 token만 전달됨 (DB/네트워크 요청 없음)
     async jwt({ token, account, profile }) {
       if (account?.access_token) {
+        // 최초 로그인 시에만 진입 — GitHub OAuth 토큰 + 유저 정보 JWT에 저장
         token.accessToken = account.access_token
-        token.githubId = String(profile?.id)  // 추가
+        token.githubId = String(profile?.id)
 
+        // 로그인 시 1회만 DB upsert
         await sql`
           INSERT INTO users (github_id, github_login, avatar_url, access_token)
           VALUES (
-                   ${String(profile?.id)},
-                   ${profile?.login as string},
-                   ${profile?.avatar_url as string},
-                   ${account.access_token}
-                 )
-            ON CONFLICT (github_id)
-        DO UPDATE SET
+            ${String(profile?.id)},
+            ${profile?.login as string},
+            ${profile?.avatar_url as string},
+            ${account.access_token}
+          )
+          ON CONFLICT (github_id)
+          DO UPDATE SET
             github_login = EXCLUDED.github_login,
-                         avatar_url = EXCLUDED.avatar_url,
-                         access_token = EXCLUDED.access_token
+            avatar_url   = EXCLUDED.avatar_url,
+            access_token = EXCLUDED.access_token
         `
       }
       return token
     },
+    // auth() 호출 시마다 실행 — HttpOnly 쿠키의 JWT를 복호화한 token을 session으로 변환
+    // 네트워크 요청 없이 쿠키 읽기만 하므로 매우 가벼움
     async session({ session, token }) {
-      session.user.id = token.githubId as string  // 여기 수정
+      session.user.id = token.githubId as string
       return session
     },
   },
