@@ -6,7 +6,7 @@
 
 ## 프로젝트 개요
 
-**프로젝트명**: ContribHub
+**프로젝트명**: OpenIssueMap
 **설명**: 내 GitHub 프로필 + 설문 기반으로 실시간 오픈소스 이슈를 매칭해주는 서비스
 **목적**: 포트폴리오용 토이프로젝트
 
@@ -141,7 +141,7 @@ shadcn/ui (Nova 프리셋)
 ## 현재 파일 구조
 
 ```
-contribhub/
+openissuemap/
 ├── src/
 │   ├── app/
 │   │   ├── (auth)/
@@ -178,4 +178,3 @@ contribhub/
 ```
 
 ---
-

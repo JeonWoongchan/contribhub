@@ -1,6 +1,6 @@
 import type { ContributionType, ExperienceLevel } from './user'
 
-export type CompetitionLevel = 'OPEN' | 'COMPETITIVE' | 'TAKEN'
+export type CompetitionLevel = 'OPEN' | 'ACTIVE' | 'HAS_PR'
 export type DifficultyLevel = ExperienceLevel
 
 export interface RawIssue {

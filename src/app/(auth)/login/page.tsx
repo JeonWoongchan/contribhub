@@ -7,7 +7,7 @@ export default function LoginPage() {
       <div className="flex min-h-screen items-center justify-center bg-background">
       <Card className="w-full max-w-sm">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">ContribHub</CardTitle>
+            <CardTitle className="text-2xl">OpenIssueMap</CardTitle>
             <CardDescription>
               내 GitHub 프로필 기반으로 기여 가능한 오픈소스 이슈를 매칭해드려요
             </CardDescription>

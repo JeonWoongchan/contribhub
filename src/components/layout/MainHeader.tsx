@@ -21,7 +21,7 @@ export function MainHeader({ image, name }: MainHeaderProps) {
           href="/dashboard"
           className="text-sm font-semibold tracking-tight text-foreground transition-colors hover:text-interactive-action-hover"
         >
-          ContribHub
+          Open Issue Map
         </Link>
         <div className="flex items-center gap-3">
           {image && (
