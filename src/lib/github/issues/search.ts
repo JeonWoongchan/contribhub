@@ -14,15 +14,19 @@ export type IssueSearchResult = {
 }
 
 function buildIssueQueries(languages: string[]): string[] {
-  return languages.slice(0, 2).flatMap((lang) => [
-    `is:open is:issue label:"good first issue" language:${lang}`,
-    `is:open is:issue label:"help wanted" language:${lang}`,
+  return languages.flatMap((lang) => [
+    `is:open is:issue label:"good first issue" language:${lang} sort:created`,
+    `is:open is:issue label:"help wanted" language:${lang} sort:created`,
   ])
+}
+
+// englishOk: false일 때 한글 포함 이슈 우선 — 제목에 한글 문자 포함 여부로 판단
+function isKoreanIssue(issue: RawIssue): boolean {
+  return /[\uAC00-\uD7A3]/.test(issue.title + (issue.body ?? ''))
 }
 
 function dedupeIssues(issues: RawIssue[]): RawIssue[] {
   const seen = new Set<string>()
-
   return issues.filter((issue) => {
     if (seen.has(issue.url)) return false
     seen.add(issue.url)
@@ -32,7 +36,8 @@ function dedupeIssues(issues: RawIssue[]): RawIssue[] {
 
 export async function fetchCandidateIssues(
   languages: string[],
-  accessToken: string
+  accessToken: string,
+  englishOk: boolean = true
 ): Promise<IssueSearchResult> {
   const queries = buildIssueQueries(languages)
 
@@ -51,18 +56,25 @@ export async function fetchCandidateIssues(
     )
   )
 
-  const issues = settled
-    .filter(
-      (result): result is PromiseFulfilledResult<SearchResult> => result.status === 'fulfilled'
-    )
-    .flatMap((result) => result.value.search.nodes ?? [])
+  const allIssues = settled
+  .filter(
+    (result): result is PromiseFulfilledResult<SearchResult> => result.status === 'fulfilled'
+  )
+  .flatMap((result) => result.value.search.nodes ?? [])
+
+  const deduped = dedupeIssues(allIssues)
+
+  // englishOk: false면 한글 이슈 앞으로, 영어 이슈 뒤로 재정렬
+  const issues = englishOk
+    ? deduped
+    : [...deduped.filter(isKoreanIssue), ...deduped.filter((i) => !isKoreanIssue(i))]
 
   const failedResults = settled.filter(
     (result): result is PromiseRejectedResult => result.status === 'rejected'
   )
 
   return {
-    issues: dedupeIssues(issues),
+    issues,
     failedQueryCount: failedResults.length,
     totalQueryCount: queries.length,
     rateLimited: failedResults.some(
