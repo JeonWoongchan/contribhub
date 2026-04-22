@@ -52,6 +52,22 @@ export const CONTRIBUTION_TYPES: OptionItem<ContributionType>[] = [
   },
 ]
 
+// 선택 가능한 인기 언어 목록
+export const POPULAR_LANGUAGES = [
+  'TypeScript',
+  'JavaScript',
+  'Python',
+  'Rust',
+  'Go',
+  'Java',
+  'C++',
+  'C#',
+  'Ruby',
+  'Swift',
+  'Kotlin',
+  'PHP',
+] as const
+
 export const WEEKLY_HOURS: OptionItem<WeeklyHours>[] = [
   {
     value: 2,
@@ -104,6 +120,7 @@ export const ENGLISH_OPTIONS: OptionItem<boolean>[] = [
 export const ONBOARDING_STEPS: OnboardingStepConfig[] = [
   { id: 'experienceLevel', label: '경험 수준' },
   { id: 'contributionTypes', label: '기여 방식' },
+  { id: 'topLanguages', label: '선호 언어' },
   { id: 'weeklyHours', label: '투입 시간' },
   { id: 'englishOk', label: '영어 선호' },
   { id: 'purpose', label: '참여 목적' },
@@ -113,17 +130,19 @@ export function isStepComplete(stepIndex: number, form: FormState): boolean {
   const step = ONBOARDING_STEPS[stepIndex]
 
   switch (step?.id) {
-    case 'experienceLevel':
-      return form.experienceLevel !== null
-    case 'contributionTypes':
-      return form.contributionTypes.length > 0
-    case 'weeklyHours':
-      return form.weeklyHours !== null
-    case 'englishOk':
-      return true
-    case 'purpose':
-      return form.purpose !== null
-    default:
-      return false
+  case 'experienceLevel':
+    return form.experienceLevel !== null
+  case 'contributionTypes':
+    return form.contributionTypes.length > 0
+  case 'topLanguages':
+    return form.topLanguages.length > 0
+  case 'weeklyHours':
+    return form.weeklyHours !== null
+  case 'englishOk':
+    return true
+  case 'purpose':
+    return form.purpose !== null
+  default:
+    return false
   }
 }

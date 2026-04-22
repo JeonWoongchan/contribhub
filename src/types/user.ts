@@ -17,11 +17,12 @@ export interface UserProfile {
 }
 
 export interface OnboardingSurvey {
-    experienceLevel: ExperienceLevel
-    contributionTypes: ContributionType[]
-    weeklyHours: WeeklyHours
-    englishOk: boolean
-    purpose: Purpose
+  experienceLevel: ExperienceLevel
+  contributionTypes: ContributionType[]
+  topLanguages: string[]
+  weeklyHours: WeeklyHours
+  englishOk: boolean
+  purpose: Purpose
 }
 
 // 온보딩 단계 정의
@@ -31,3 +32,4 @@ export interface SurveyStepConfig {
     description: string
     field: keyof OnboardingSurvey
 }
+

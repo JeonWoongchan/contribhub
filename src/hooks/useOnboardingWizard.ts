@@ -4,84 +4,88 @@ import { isStepComplete, ONBOARDING_STEPS } from '@/constants/contribution-level
 import type { FormState } from '@/types/onboarding'
 import type { ContributionType, ExperienceLevel, Purpose, WeeklyHours } from '@/types/user'
 
-const INITIAL_FORM_STATE: FormState = {
-  experienceLevel: null,
-  contributionTypes: [],
-  weeklyHours: null,
-  englishOk: false,
-  purpose: null,
-}
-
-export function useOnboardingWizard() {
+export function useOnboardingWizard(initialLanguages: string[] = []) {
   const router = useRouter()
   const [step, setStep] = useState(0)
   const [loading, setLoading] = useState(false)
-  const [form, setForm] = useState<FormState>(INITIAL_FORM_STATE)
+  const [form, setForm] = useState<FormState>({
+    experienceLevel: null,
+    contributionTypes: [],
+    topLanguages: initialLanguages,
+    weeklyHours: null,
+    englishOk: false,
+    purpose: null,
+  })
 
-  // 현재 step 기준 다음 단계 이동 가능 여부 계산
+  // 현재 단계 완료 여부 — 다음 버튼 활성화 조건
   const canNext = isStepComplete(step, form)
 
+  // 다음 단계로 이동 (마지막 단계 초과 방지)
   function goNext() {
-    // 다음 step으로 이동
-    setStep((currentStep) => Math.min(currentStep + 1, ONBOARDING_STEPS.length - 1))
+    setStep((s) => Math.min(s + 1, ONBOARDING_STEPS.length - 1))
   }
 
+  // 이전 단계로 이동 (첫 단계 미만 방지)
   function goPrev() {
-    // 이전 step으로 이동
-    setStep((currentStep) => Math.max(currentStep - 1, 0))
+    setStep((s) => Math.max(s - 1, 0))
   }
 
+  // 경험 수준 선택 업데이트
   function updateExperienceLevel(value: ExperienceLevel) {
-    // 경험 수준 응답 업데이트
-    setForm((currentForm) => ({ ...currentForm, experienceLevel: value }))
+    setForm((f) => ({ ...f, experienceLevel: value }))
   }
 
+  // 기여 방식 다중 선택 토글 (선택 → 해제, 해제 → 선택)
   function toggleContributionType(value: ContributionType) {
-    // 기여 방식 다중 선택 토글
-    setForm((currentForm) => ({
-      ...currentForm,
-      contributionTypes: currentForm.contributionTypes.includes(value)
-        ? currentForm.contributionTypes.filter((item) => item !== value)
-        : [...currentForm.contributionTypes, value],
+    setForm((f) => ({
+      ...f,
+      contributionTypes: f.contributionTypes.includes(value)
+        ? f.contributionTypes.filter((i) => i !== value)
+        : [...f.contributionTypes, value],
     }))
   }
 
+  // 선호 언어 토글 (선택 → 해제, 해제 → 선택)
+  function toggleTopLanguage(lang: string) {
+    setForm((f) => ({
+      ...f,
+      topLanguages: f.topLanguages.includes(lang)
+        ? f.topLanguages.filter((l) => l !== lang)
+        : [...f.topLanguages, lang],
+    }))
+  }
+
+  // 주간 투입 시간 선택 업데이트
   function updateWeeklyHours(value: WeeklyHours) {
-    // 주간 투입 시간 응답 업데이트
-    setForm((currentForm) => ({ ...currentForm, weeklyHours: value }))
+    setForm((f) => ({ ...f, weeklyHours: value }))
   }
 
+  // 영어 이슈 허용 여부 업데이트
   function updateEnglishOk(value: boolean) {
-    // 영어 이슈 허용 여부 업데이트
-    setForm((currentForm) => ({ ...currentForm, englishOk: value }))
+    setForm((f) => ({ ...f, englishOk: value }))
   }
 
+  // 참여 목적 선택 업데이트
   function updatePurpose(value: Purpose) {
-    // 참여 목적 응답 업데이트
-    setForm((currentForm) => ({ ...currentForm, purpose: value }))
+    setForm((f) => ({ ...f, purpose: value }))
   }
 
+  // 설문 최종 제출 — API 저장 후 대시보드로 이동
   async function handleSubmit() {
-    // 제출 중 상태 전환
     setLoading(true)
-
     try {
-      // 온보딩 응답 저장 요청
       const response = await fetch('/api/onboarding', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
 
-      if (!response.ok) {
-        setLoading(false)
-        return
-      }
+      if (!response.ok) return
 
-      // 저장 성공 후 대시보드 이동
       router.push('/dashboard')
     } catch {
-      // 제출 실패 시 로딩 상태 해제
+      // 제출 실패 시 로딩 해제 — 유저가 재시도 가능
+    } finally {
       setLoading(false)
     }
   }
@@ -94,10 +98,11 @@ export function useOnboardingWizard() {
     handleSubmit,
     loading,
     step,
+    toggleContributionType,
+    toggleTopLanguage,
     updateEnglishOk,
     updateExperienceLevel,
     updatePurpose,
     updateWeeklyHours,
-    toggleContributionType,
   }
 }

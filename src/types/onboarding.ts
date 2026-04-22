@@ -3,6 +3,7 @@ import type { ContributionType, ExperienceLevel, Purpose, WeeklyHours } from '@/
 export type FormState = {
   experienceLevel: ExperienceLevel | null
   contributionTypes: ContributionType[]
+  topLanguages: string[]
   weeklyHours: WeeklyHours | null
   englishOk: boolean
   purpose: Purpose | null
@@ -11,6 +12,7 @@ export type FormState = {
 export type OnboardingStepId =
   | 'experienceLevel'
   | 'contributionTypes'
+  | 'topLanguages'
   | 'weeklyHours'
   | 'englishOk'
   | 'purpose'

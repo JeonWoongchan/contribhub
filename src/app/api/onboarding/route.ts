@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   try {
     // 2. 설문 결과 파싱
     const body: OnboardingSurvey = await req.json()
-    const { experienceLevel, contributionTypes, weeklyHours, englishOk, purpose } = body
+    const { experienceLevel, contributionTypes, topLanguages, weeklyHours, englishOk, purpose } = body
 
     // 3. user_profiles upsert
     //    - user_id: users 테이블에서 github_id(= session.user.id)로 조회
@@ -43,25 +43,26 @@ export async function POST(req: NextRequest) {
         updated_at
       )
       VALUES (
-        (SELECT id FROM users WHERE github_id = ${session.user.id}),
-        ARRAY[]::text[],
-        ${experienceLevel},
-        ${contributionTypes},
-        ${weeklyHours},
-        ${englishOk},
-        ${purpose},
-        true,
-        NOW()
-      )
-      ON CONFLICT (user_id)
+                 (SELECT id FROM users WHERE github_id = ${session.user.id}),
+                 ${topLanguages},
+                 ${experienceLevel},
+                 ${contributionTypes},
+                 ${weeklyHours},
+                 ${englishOk},
+                 ${purpose},
+                 true,
+                 NOW()
+             )
+        ON CONFLICT (user_id)
       DO UPDATE SET
-        experience_level   = EXCLUDED.experience_level,
-        contribution_types = EXCLUDED.contribution_types,
-        weekly_hours       = EXCLUDED.weekly_hours,
-        english_ok         = EXCLUDED.english_ok,
-        purpose            = EXCLUDED.purpose,
-        onboarding_done    = true,
-        updated_at         = NOW()
+            top_languages      = EXCLUDED.top_languages,
+            experience_level   = EXCLUDED.experience_level,
+            contribution_types = EXCLUDED.contribution_types,
+            weekly_hours       = EXCLUDED.weekly_hours,
+            english_ok         = EXCLUDED.english_ok,
+            purpose            = EXCLUDED.purpose,
+            onboarding_done    = true,
+            updated_at         = NOW()
     `
 
     // 4. 완료 응답 → 클라이언트에서 /dashboard 로 라우팅
