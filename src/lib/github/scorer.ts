@@ -102,9 +102,9 @@ function detectCompetition(
   commentCount: number,
   hasPR: boolean
 ): { level: CompetitionLevel; penalty: number } {
-  if (hasPR) return { level: 'TAKEN', penalty: COMPETITION_PENALTY.PR_EXISTS }
-  if (commentCount >= 5) return { level: 'COMPETITIVE', penalty: COMPETITION_PENALTY.HIGH_ACTIVITY }
-  if (commentCount >= 2) return { level: 'COMPETITIVE', penalty: COMPETITION_PENALTY.MEDIUM_ACTIVITY }
+  if (hasPR) return { level: 'HAS_PR', penalty: COMPETITION_PENALTY.PR_EXISTS }
+  if (commentCount >= 5) return { level: 'ACTIVE', penalty: COMPETITION_PENALTY.HIGH_ACTIVITY }
+  if (commentCount >= 2) return { level: 'ACTIVE', penalty: COMPETITION_PENALTY.MEDIUM_ACTIVITY }
   return { level: 'OPEN', penalty: COMPETITION_PENALTY.LOW_ACTIVITY }
 }
 

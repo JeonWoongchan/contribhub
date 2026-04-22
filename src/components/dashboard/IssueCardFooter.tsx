@@ -1,4 +1,4 @@
-import { ExternalLink, GitPullRequest, MessageCircle, Star } from 'lucide-react'
+import { ExternalLink, MessageCircle, Star } from 'lucide-react'
 import { RepoHealthBadge } from '@/components/dashboard/RepoHealthBadge'
 import { Badge } from '@/components/ui/badge'
 import { formatTimeAgo } from '@/lib/format/time-ago'
@@ -9,7 +9,6 @@ import type { ScoredIssue } from '@/types/issue'
 type IssueCardFooterProps = {
   commentCount: ScoredIssue['commentCount']
   competitionLevel: ScoredIssue['competitionLevel']
-  hasPR: ScoredIssue['hasPR']
   healthScore: ScoredIssue['healthScore']
   stargazerCount: ScoredIssue['stargazerCount']
   updatedAt: ScoredIssue['updatedAt']
@@ -18,7 +17,6 @@ type IssueCardFooterProps = {
 export function IssueCardFooter({
   commentCount,
   competitionLevel,
-  hasPR,
   healthScore,
   stargazerCount,
   updatedAt,
@@ -36,15 +34,6 @@ export function IssueCardFooter({
           <MessageCircle className="h-3 w-3" />
           {commentCount}
         </span>
-        {hasPR && (
-          <Badge
-            variant="outline"
-            className="rounded-md border-status-warning-border bg-status-warning text-status-warning-foreground"
-          >
-            <GitPullRequest className="h-3 w-3" />
-            PR 있음
-          </Badge>
-        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
