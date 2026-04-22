@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { githubGraphQL } from '@/lib/github/client'
 import { SEARCH_ISSUES_QUERY } from '@/lib/github/queries'
 import { scoreIssue } from '@/lib/github/scorer'
+import { getRepoHealth } from '@/lib/github/repo-health'
 import sql from '@/lib/db'
 import type { RawIssue, ScoredIssue } from '@/types/issue'
 import type { UserProfile } from '@/types/user'
@@ -37,7 +38,7 @@ function filterScoredIssues(
   allowedTypes: string[]
 ): ScoredIssue[] {
   return issues.filter((issue) => {
-    // star STAR_CUTOFF 미만 레포 제외
+    // star STAR_CUTOFF 미만 레포 제외 (스팸·봇 생성 레포 필터링)
     if (issue.stargazerCount < STAR_CUTOFF) return false
     // 레포 활성도 캐시 있을 때만 HEALTH_THRESHOLD 적용
     if (issue.healthScore !== null && issue.healthScore < HEALTH_THRESHOLD) return false
@@ -63,7 +64,7 @@ export async function GET(req: NextRequest) {
     SELECT up.top_languages, up.experience_level, up.contribution_types,
            up.weekly_hours, up.english_ok
     FROM user_profiles up
-    JOIN users u ON u.id = up.user_id
+           JOIN users u ON u.id = up.user_id
     WHERE u.github_id = ${session.user.id}
       AND up.onboarding_done = true
   `
@@ -107,15 +108,24 @@ export async function GET(req: NextRequest) {
   const repoNames = [...new Set(unique.map((i) => i.repository.nameWithOwner))]
   const healthRows = repoNames.length > 0
     ? await sql`
-        SELECT repo_full_name, health_score
-        FROM repo_health_cache
-        WHERE repo_full_name = ANY(${repoNames})
-          AND cached_at > NOW() - INTERVAL '1 hour'
-      `
+      SELECT repo_full_name, health_score
+      FROM repo_health_cache
+      WHERE repo_full_name = ANY(${repoNames})
+        AND cached_at > NOW() - INTERVAL '1 hour'
+    `
     : []
 
   const healthMap = new Map<string, number>(
     healthRows.map((r) => [r.repo_full_name, r.health_score])
+  )
+
+  // 캐시 없는 레포는 GitHub API로 실시간 계산 후 캐시 저장
+  const uncachedRepos = repoNames.filter((name) => !healthMap.has(name))
+  await Promise.allSettled(
+    uncachedRepos.map(async (name) => {
+      const score = await getRepoHealth(name, token.accessToken as string)
+      healthMap.set(name, score)
+    })
   )
 
   // 스코어링 → 필터 → 정렬
