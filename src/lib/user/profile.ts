@@ -6,6 +6,7 @@ export type OnboardingProfile = Pick<
   'topLanguages' | 'experienceLevel' | 'contributionTypes' | 'weeklyHours' | 'englishOk'
 >
 
+// 온보딩 완료 사용자의 프로필 정보를 조회하는 함수.
 export async function loadOnboardingProfile(
   githubUserId: string
 ): Promise<OnboardingProfile | null> {
@@ -29,4 +30,18 @@ export async function loadOnboardingProfile(
     weeklyHours: row.weekly_hours,
     englishOk: row.english_ok,
   }
+}
+
+// 사용자의 온보딩 완료 여부를 조회하는 함수.
+export async function getOnboardingStatus(githubUserId: string): Promise<boolean> {
+  const rows = await sql`
+    SELECT up.onboarding_done
+    FROM user_profiles up
+    JOIN users u ON u.id = up.user_id
+    WHERE u.github_id = ${githubUserId}
+      AND up.onboarding_done = true
+    LIMIT 1
+  `
+
+  return rows.length > 0
 }
