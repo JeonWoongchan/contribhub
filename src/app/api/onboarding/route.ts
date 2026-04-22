@@ -1,8 +1,8 @@
 import { auth } from '@/lib/auth'
 import { NextRequest } from 'next/server'
-import sql from '@/lib/db'
-import type { OnboardingSurvey } from '@/types/user'
 import { ok, err, ErrorCode } from '@/lib/api-response'
+import { saveOnboardingSurvey } from '@/lib/user/onboarding'
+import type { OnboardingSurvey } from '@/types/user'
 
 /**
  * POST /api/onboarding
@@ -16,57 +16,14 @@ import { ok, err, ErrorCode } from '@/lib/api-response'
  * 4. onboarding_done = true 로 설정 → 이후 layout.tsx 가드에서 대시보드로 통과
  */
 export async function POST(req: NextRequest) {
-  // 1. 세션 확인 — HttpOnly 쿠키 JWT 복호화 (네트워크 요청 없음)
   const session = await auth()
   if (!session) {
     return err('Unauthorized', 401, ErrorCode.UNAUTHORIZED)
   }
 
   try {
-    // 2. 설문 결과 파싱
-    const body: OnboardingSurvey = await req.json()
-    const { experienceLevel, contributionTypes, topLanguages, weeklyHours, englishOk, purpose } = body
-
-    // 3. user_profiles upsert
-    //    - user_id: users 테이블에서 github_id(= session.user.id)로 조회
-    //    - top_languages: 이 시점엔 빈 배열, /api/github/profile 호출 후 별도 업데이트
-    //    - ON CONFLICT: 온보딩 재시도 시 덮어쓰기
-    await sql`
-      INSERT INTO user_profiles (
-        user_id,
-        top_languages,
-        experience_level,
-        contribution_types,
-        weekly_hours,
-        english_ok,
-        purpose,
-        onboarding_done,
-        updated_at
-      )
-      VALUES (
-                 (SELECT id FROM users WHERE github_id = ${session.user.id}),
-                 ${topLanguages},
-                 ${experienceLevel},
-                 ${contributionTypes},
-                 ${weeklyHours},
-                 ${englishOk},
-                 ${purpose},
-                 true,
-                 NOW()
-             )
-        ON CONFLICT (user_id)
-      DO UPDATE SET
-            top_languages      = EXCLUDED.top_languages,
-            experience_level   = EXCLUDED.experience_level,
-            contribution_types = EXCLUDED.contribution_types,
-            weekly_hours       = EXCLUDED.weekly_hours,
-            english_ok         = EXCLUDED.english_ok,
-            purpose            = EXCLUDED.purpose,
-            onboarding_done    = true,
-            updated_at         = NOW()
-    `
-
-    // 4. 완료 응답 → 클라이언트에서 /dashboard 로 라우팅
+    const survey = (await req.json()) as OnboardingSurvey
+    await saveOnboardingSurvey(session.user.id, survey)
     return ok({ success: true })
   } catch (error) {
     console.error('Onboarding error:', error)

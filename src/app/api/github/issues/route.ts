@@ -1,144 +1,38 @@
 import { NextRequest } from 'next/server'
-import {githubGraphQL, GitHubRateLimitError} from '@/lib/github/client'
-import { SEARCH_ISSUES_QUERY } from '@/lib/github/queries'
-import { scoreIssue } from '@/lib/github/scorer'
-import { getRepoHealth } from '@/lib/github/repo-health'
-import sql from '@/lib/db'
-import type { RawIssue, ScoredIssue } from '@/types/issue'
-import type { UserProfile } from '@/types/user'
-import {TIME_FILTER, HEALTH_THRESHOLD, STAR_CUTOFF, REPO_HEALTH_CACHE_TTL_HOURS} from '@/constants/scoring-rules'
-import {requireGithubToken} from "@/lib/auth-utils";
-import { ok, err, ErrorCode } from '@/lib/api-response'
 
-interface SearchResult {
-  search: { nodes: RawIssue[] }
-}
-
-// 언어별 × 라벨별 쿼리 생성 — language: AND 조건 문제로 언어별로 분리
-function buildIssueQueries(languages: string[]): string[] {
-  return languages.slice(0, 2).flatMap((lang) => [
-    `is:open is:issue label:"good first issue" language:${lang}`,
-    `is:open is:issue label:"help wanted" language:${lang}`,
-  ])
-}
-
-// URL 기준 중복 이슈 제거
-function dedupeIssues(issues: RawIssue[]): RawIssue[] {
-  const seen = new Set<string>()
-  return issues.filter((issue) => {
-    if (seen.has(issue.url)) return false
-    seen.add(issue.url)
-    return true
-  })
-}
-
-// 스팸 레포, 레포 활성도, 시간 가용성 기준 필터링
-function filterScoredIssues(
-  issues: ScoredIssue[],
-  allowedTypes: string[]
-): ScoredIssue[] {
-  return issues.filter((issue) => {
-    // star STAR_CUTOFF 미만 레포 제외 (스팸·봇 생성 레포 필터링)
-    if (issue.stargazerCount < STAR_CUTOFF) return false
-    // 레포 활성도 캐시 있을 때만 HEALTH_THRESHOLD 적용
-    if (issue.healthScore !== null && issue.healthScore < HEALTH_THRESHOLD) return false
-    // 유저 시간 가용성 기준 기여 방식 필터
-    return !(issue.contributionType && !allowedTypes.includes(issue.contributionType));
-
-  })
-}
+import { err, ErrorCode, ok } from '@/lib/api-response'
+import { requireGithubToken } from '@/lib/auth-utils'
+import { getRepoHealthMap } from '@/lib/github/issues/health'
+import { rankIssues } from '@/lib/github/issues/ranking'
+import { fetchCandidateIssues } from '@/lib/github/issues/search'
+import { loadOnboardingProfile } from '@/lib/user/profile'
 
 export async function GET(req: NextRequest) {
   const auth = await requireGithubToken(req)
   if (!auth.ok) return err(auth.error, auth.status, auth.code)
 
-  // 유저 프로필 조회
-  const profileRows = await sql`
-    SELECT up.top_languages, up.experience_level, up.contribution_types,
-           up.weekly_hours, up.english_ok
-    FROM user_profiles up
-           JOIN users u ON u.id = up.user_id
-    WHERE u.github_id = ${auth.userId}
-      AND up.onboarding_done = true
-  `
-
-  if (profileRows.length === 0) {
+  const profile = await loadOnboardingProfile(auth.userId)
+  if (!profile) {
     return err('Onboarding not complete', 400, ErrorCode.ONBOARDING_REQUIRED)
   }
 
-  const row = profileRows[0]
-  const profile: Pick<UserProfile, 'topLanguages' | 'experienceLevel' | 'contributionTypes' | 'weeklyHours' | 'englishOk'> = {
-    topLanguages:      row.top_languages ?? [],
-    experienceLevel:   row.experience_level,
-    contributionTypes: row.contribution_types ?? [],
-    weeklyHours:       row.weekly_hours,
-    englishOk:         row.english_ok,
-  }
-
-  // 시간 기반 허용 기여 방식 목록
-  const allowedTypes = profile.weeklyHours
-    ? TIME_FILTER[profile.weeklyHours] ?? TIME_FILTER[10]
-    : TIME_FILTER[10]
-
-  // GitHub 이슈 검색
-  const queries = buildIssueQueries(profile.topLanguages)
-  const allRaw: RawIssue[] = []
-
-  const results = await Promise.allSettled(
-    queries.map(async (q) => {
-      const data = await githubGraphQL<SearchResult>(
-        SEARCH_ISSUES_QUERY,
-        { query: q, first: 30 },
-        auth.accessToken
-      )
-      allRaw.push(...(data.search.nodes ?? []))
-    })
-  )
-
-  // rate limit 에러 감지
-  const rateLimited = results.some(
-    (r) => r.status === 'rejected' && r.reason instanceof GitHubRateLimitError
-  )
-  if (rateLimited) {
+  const searchResult = await fetchCandidateIssues(profile.topLanguages, auth.accessToken)
+  if (searchResult.rateLimited && searchResult.issues.length === 0) {
     return err('GitHub rate limit exceeded', 429, ErrorCode.RATE_LIMITED)
   }
 
-  const unique = dedupeIssues(allRaw)
+  if (searchResult.failedQueryCount === searchResult.totalQueryCount && searchResult.totalQueryCount > 0) {
+    return err('Failed to fetch GitHub issues', 502, ErrorCode.GITHUB_ERROR)
+  }
 
-  // 레포 활성도 캐시 조회
-  const repoNames = [...new Set(unique.map((i) => i.repository.nameWithOwner))]
-  const healthRows = repoNames.length > 0
-    ? await sql`
-      SELECT repo_full_name, health_score
-      FROM repo_health_cache
-      WHERE repo_full_name = ANY(${repoNames})
-        AND cached_at > NOW() - (${REPO_HEALTH_CACHE_TTL_HOURS} * INTERVAL '1 hour')
-    `
-    : []
+  const repoNames = [...new Set(searchResult.issues.map((issue) => issue.repository.nameWithOwner))]
+  const healthMap = await getRepoHealthMap(repoNames, auth.accessToken)
+  const issues = rankIssues(searchResult.issues, profile, healthMap)
 
-  const healthMap = new Map<string, number>(
-    healthRows.map((r) => [r.repo_full_name, r.health_score])
-  )
-
-  // 캐시 없는 레포는 GitHub API로 실시간 계산 후 캐시 저장
-  const uncachedRepos = repoNames.filter((name) => !healthMap.has(name))
-  await Promise.allSettled(
-    uncachedRepos.map(async (name) => {
-      const score = await getRepoHealth(name, auth.accessToken)
-      healthMap.set(name, score)
-    })
-  )
-
-  // 스코어링 → 필터 → 정렬
-  const scored = filterScoredIssues(
-    unique.map((raw) => {
-      const healthScore = healthMap.get(raw.repository.nameWithOwner) ?? null
-      return scoreIssue(raw, profile, healthScore)
-    }),
-    allowedTypes
-  )
-  .sort((a, b) => b.score - a.score)
-  .slice(0, 50)
-
-  return ok({ issues: scored, total: scored.length })
+  return ok({
+    issues,
+    total: issues.length,
+    partialResults: searchResult.failedQueryCount > 0,
+    failedQueryCount: searchResult.failedQueryCount,
+  })
 }

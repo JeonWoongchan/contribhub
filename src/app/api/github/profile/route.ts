@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
-import type { GitHubRepo } from '@/types/github'
-import {requireGithubToken} from "@/lib/auth-utils";
 import { ok, err, ErrorCode } from '@/lib/api-response'
+import { requireGithubToken } from '@/lib/auth-utils'
+import { GitHubProfileError, getTopLanguagesByAccessToken } from '@/lib/github/profile'
 
 /**
  * GET /api/github/profile
@@ -22,33 +22,13 @@ export async function GET(req: NextRequest) {
   if (!auth.ok) return err(auth.error, auth.status, auth.code)
 
   try {
-    const response = await fetch('https://api.github.com/user/repos?per_page=100&sort=updated', {
-      headers: {
-        Authorization: `Bearer ${auth.accessToken}`,
-        Accept: 'application/vnd.github.v3+json',
-      },
-      cache: 'no-store',
-    })
-
-    if (!response.ok) {
-      return err('GitHub API error', response.status, ErrorCode.GITHUB_ERROR)
-    }
-
-    const repos = await response.json() as GitHubRepo[]
-    const languageCount: Record<string, number> = {}
-
-    for (const repo of repos) {
-      if (!repo.language) continue
-      languageCount[repo.language] = (languageCount[repo.language] ?? 0) + 1
-    }
-
-    const topLanguages = Object.entries(languageCount)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 5)
-    .map(([language]) => language)
-
+    const topLanguages = await getTopLanguagesByAccessToken(auth.accessToken)
     return ok({ topLanguages })
-  } catch {
+  } catch (error) {
+    if (error instanceof GitHubProfileError) {
+      return err(error.message, error.status, ErrorCode.GITHUB_ERROR)
+    }
+
     return err('Failed to fetch GitHub profile', 500, ErrorCode.INTERNAL_ERROR)
   }
 }
