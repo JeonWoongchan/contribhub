@@ -69,6 +69,12 @@ export const HEALTH_BONUS = {
   LOW:  3,
 } as const
 
+export const HEALTH_SCORE_TIERS = {
+  HIGH: 80,
+  MID: 60,
+  LOW: 40,
+} as const
+
 export const TIME_FILTER: Record<number, ContributionType[]> = {
   2:  ['doc', 'bug'],
   5:  ['doc', 'bug', 'test'],
