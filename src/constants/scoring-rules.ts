@@ -6,6 +6,9 @@ import type { ContributionType, ExperienceLevel } from '@/types/user'
 // 스팸·봇 생성 레포 필터링 기준 — 이 미만은 노출 제외
 export const STAR_CUTOFF = 5
 
+// 레포 활성도 캐시 유지 시간 (시간 단위)
+export const REPO_HEALTH_CACHE_TTL_HOURS = 1
+
 export const LANGUAGE_SCORE = {
   EXACT_MATCH: 30,
   RELATED: 15,
@@ -105,7 +108,7 @@ export const REPO_HEALTH_WEIGHTS = {
     rules: [
       { ratio: 0.7, score: 15 },
       { ratio: 0.4, score: 8  },
-      { ratio: 0,   score: 0  },
+      { ratio: 0,   score: 4  }, // 일부라도 메인테이너 응답 있으면 소폭 점수
     ],
   },
 } as const

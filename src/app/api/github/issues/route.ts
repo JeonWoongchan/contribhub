@@ -6,7 +6,7 @@ import { getRepoHealth } from '@/lib/github/repo-health'
 import sql from '@/lib/db'
 import type { RawIssue, ScoredIssue } from '@/types/issue'
 import type { UserProfile } from '@/types/user'
-import { TIME_FILTER, HEALTH_THRESHOLD, STAR_CUTOFF } from '@/constants/scoring-rules'
+import {TIME_FILTER, HEALTH_THRESHOLD, STAR_CUTOFF, REPO_HEALTH_CACHE_TTL_HOURS} from '@/constants/scoring-rules'
 import {requireGithubToken} from "@/lib/auth-utils";
 import { ok, err, ErrorCode } from '@/lib/api-response'
 
@@ -96,7 +96,6 @@ export async function GET(req: NextRequest) {
   )
 
   // rate limit 에러 감지
-  // rate limit 에러 감지
   const rateLimited = results.some(
     (r) => r.status === 'rejected' && r.reason instanceof GitHubRateLimitError
   )
@@ -113,7 +112,7 @@ export async function GET(req: NextRequest) {
       SELECT repo_full_name, health_score
       FROM repo_health_cache
       WHERE repo_full_name = ANY(${repoNames})
-        AND cached_at > NOW() - INTERVAL '1 hour'
+        AND cached_at > NOW() - (${REPO_HEALTH_CACHE_TTL_HOURS} * INTERVAL '1 hour')
     `
     : []
 
