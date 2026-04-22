@@ -1,6 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import type { GitHubRepo } from '@/types/github'
 import {requireGithubToken} from "@/lib/auth-utils";
+import { ok, err, ErrorCode } from '@/lib/api-response'
+
 /**
  * GET /api/github/profile
  *
@@ -17,7 +19,7 @@ import {requireGithubToken} from "@/lib/auth-utils";
  */
 export async function GET(req: NextRequest) {
   const auth = await requireGithubToken(req)
-  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status })
+  if (!auth.ok) return err(auth.error, auth.status, auth.code)
 
   try {
     const response = await fetch('https://api.github.com/user/repos?per_page=100&sort=updated', {
@@ -29,7 +31,7 @@ export async function GET(req: NextRequest) {
     })
 
     if (!response.ok) {
-      return NextResponse.json({ error: 'GitHub API error' }, { status: response.status })
+      return err('GitHub API error', response.status, ErrorCode.GITHUB_ERROR)
     }
 
     const repos = await response.json() as GitHubRepo[]
@@ -45,8 +47,8 @@ export async function GET(req: NextRequest) {
     .slice(0, 5)
     .map(([language]) => language)
 
-    return NextResponse.json({ topLanguages })
+    return ok({ topLanguages })
   } catch {
-    return NextResponse.json({ error: 'Failed to fetch GitHub profile' }, { status: 500 })
+    return err('Failed to fetch GitHub profile', 500, ErrorCode.INTERNAL_ERROR)
   }
 }

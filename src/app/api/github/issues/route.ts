@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import {githubGraphQL, GitHubRateLimitError} from '@/lib/github/client'
 import { SEARCH_ISSUES_QUERY } from '@/lib/github/queries'
 import { scoreIssue } from '@/lib/github/scorer'
@@ -8,6 +8,7 @@ import type { RawIssue, ScoredIssue } from '@/types/issue'
 import type { UserProfile } from '@/types/user'
 import { TIME_FILTER, HEALTH_THRESHOLD, STAR_CUTOFF } from '@/constants/scoring-rules'
 import {requireGithubToken} from "@/lib/auth-utils";
+import { ok, err, ErrorCode } from '@/lib/api-response'
 
 interface SearchResult {
   search: { nodes: RawIssue[] }
@@ -49,7 +50,7 @@ function filterScoredIssues(
 
 export async function GET(req: NextRequest) {
   const auth = await requireGithubToken(req)
-  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status })
+  if (!auth.ok) return err(auth.error, auth.status, auth.code)
 
   // 유저 프로필 조회
   const profileRows = await sql`
@@ -62,7 +63,7 @@ export async function GET(req: NextRequest) {
   `
 
   if (profileRows.length === 0) {
-    return NextResponse.json({ error: 'Onboarding not complete' }, { status: 400 })
+    return err('Onboarding not complete', 400, ErrorCode.ONBOARDING_REQUIRED)
   }
 
   const row = profileRows[0]
@@ -94,12 +95,13 @@ export async function GET(req: NextRequest) {
     })
   )
 
-// rate limit 에러 감지
+  // rate limit 에러 감지
+  // rate limit 에러 감지
   const rateLimited = results.some(
     (r) => r.status === 'rejected' && r.reason instanceof GitHubRateLimitError
   )
   if (rateLimited) {
-    return NextResponse.json({ error: 'GitHub rate limit exceeded' }, { status: 429 })
+    return err('GitHub rate limit exceeded', 429, ErrorCode.RATE_LIMITED)
   }
 
   const unique = dedupeIssues(allRaw)
@@ -139,5 +141,5 @@ export async function GET(req: NextRequest) {
   .sort((a, b) => b.score - a.score)
   .slice(0, 50)
 
-  return NextResponse.json({ issues: scored, total: scored.length })
+  return ok({ issues: scored, total: scored.length })
 }
