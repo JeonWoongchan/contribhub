@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { auth, signOut } from '@/lib/auth'
 import sql from '@/lib/db'
@@ -20,7 +21,7 @@ async function getOnboardingStatus(githubId: string): Promise<boolean> {
 export default async function MainLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: ReactNode
 }) {
   const session = await auth()
   if (!session) redirect('/login')
