@@ -1,26 +1,27 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { requireGithubToken } from '@/lib/auth-utils'
 import { getRepoHealth } from '@/lib/github/repo-health'
-import {GitHubRateLimitError} from "@/lib/github/client";
+import { GitHubRateLimitError } from '@/lib/github/client'
+import { ok, err, ErrorCode } from '@/lib/api-response'
 
 export async function GET(req: NextRequest) {
   const auth = await requireGithubToken(req)
-  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status })
+  if (!auth.ok) return err(auth.error, auth.status, auth.code)
 
   const { searchParams } = new URL(req.url)
   const repo = searchParams.get('repo')
 
   if (!repo || !repo.includes('/')) {
-    return NextResponse.json({ error: 'Invalid repo format. Use owner/name' }, { status: 400 })
+    return err('Invalid repo format. Use owner/name', 400, ErrorCode.INVALID_REPO)
   }
 
   try {
     const healthScore = await getRepoHealth(repo, auth.accessToken)
-    return NextResponse.json({ repo, healthScore })
+    return ok({ repo, healthScore })
   } catch (e) {
     if (e instanceof GitHubRateLimitError) {
-      return NextResponse.json({ error: 'GitHub rate limit exceeded' }, { status: 429 })
+      return err('GitHub rate limit exceeded', 429, ErrorCode.RATE_LIMITED)
     }
-    return NextResponse.json({ error: 'Failed to fetch repo health' }, { status: 500 })
+    return err('Failed to fetch repo health', 500, ErrorCode.INTERNAL_ERROR)
   }
 }

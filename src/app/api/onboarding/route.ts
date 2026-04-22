@@ -1,7 +1,8 @@
 import { auth } from '@/lib/auth'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import sql from '@/lib/db'
 import type { OnboardingSurvey } from '@/types/user'
+import { ok, err, ErrorCode } from '@/lib/api-response'
 
 /**
  * POST /api/onboarding
@@ -18,7 +19,7 @@ export async function POST(req: NextRequest) {
   // 1. 세션 확인 — HttpOnly 쿠키 JWT 복호화 (네트워크 요청 없음)
   const session = await auth()
   if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return err('Unauthorized', 401, ErrorCode.UNAUTHORIZED)
   }
 
   try {
@@ -66,9 +67,9 @@ export async function POST(req: NextRequest) {
     `
 
     // 4. 완료 응답 → 클라이언트에서 /dashboard 로 라우팅
-    return NextResponse.json({ success: true })
+    return ok({ success: true })
   } catch (error) {
     console.error('Onboarding error:', error)
-    return NextResponse.json({ error: 'Failed to save onboarding' }, { status: 500 })
+    return err('Failed to save onboarding', 500, ErrorCode.INTERNAL_ERROR)
   }
 }
