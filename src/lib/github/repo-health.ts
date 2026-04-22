@@ -1,6 +1,6 @@
 import sql from '@/lib/db'
 import { githubGraphQL } from '@/lib/github/client'
-import { REPO_HEALTH_WEIGHTS, HEALTH_THRESHOLD } from '@/constants/scoring-rules'
+import { REPO_HEALTH_WEIGHTS, HEALTH_THRESHOLD, REPO_HEALTH_CACHE_TTL_HOURS } from '@/constants/scoring-rules'
 
 interface MergedPR {
   createdAt: string
@@ -12,25 +12,21 @@ interface ClosedPR {
   closedAt: string
 }
 
-interface RepoHealthData {
-  repository: {
-    pushedAt: string
-    mergedPullRequests: {
-      nodes: MergedPR[]
-    }
-    closedPullRequests: {
-      nodes: ClosedPR[]
-    }
-    issues: {
-      nodes: {
-        comments: {
-          nodes: {
-            authorAssociation: string
-          }[]
-        }
-      }[]
-    }
+export interface RepoRepository {
+  pushedAt: string
+  mergedPullRequests: { nodes: MergedPR[] }
+  closedPullRequests: { nodes: ClosedPR[] }
+  issues: {
+    nodes: {
+      comments: {
+        nodes: { authorAssociation: string }[]
+      }
+    }[]
   }
+}
+
+interface RepoHealthData {
+  repository: RepoRepository | null  // 존재하지 않는 레포 또는 권한 없는 레포
 }
 
 const REPO_HEALTH_QUERY = `
@@ -62,14 +58,28 @@ const REPO_HEALTH_QUERY = `
   }
 `
 
+// 임계값 기준 점수 반환 — 제네릭으로 rule 타입 추론, as 캐스팅 없음
+// lte: value <= threshold (낮을수록 좋음 — 커밋 날짜, PR 응답 속도)
+// gte: value >= threshold (높을수록 좋음 — 머지율, 메인테이너 응답률)
+function scoreByThreshold<T extends { score: number }>(
+  value: number,
+  rules: readonly T[],
+  getThreshold: (rule: T) => number,
+  mode: 'lte' | 'gte'
+): number {
+  for (const rule of rules) {
+    const threshold = getThreshold(rule)
+    if (mode === 'lte' ? value <= threshold : value >= threshold) {
+      return rule.score
+    }
+  }
+  return 0
+}
+
 // 최근 커밋 기준 점수 계산
 function scoreRecentCommit(pushedAt: string): number {
   const daysSince = (Date.now() - new Date(pushedAt).getTime()) / (1000 * 60 * 60 * 24)
-
-  for (const rule of REPO_HEALTH_WEIGHTS.RECENT_COMMIT.rules) {
-    if (daysSince <= rule.days) return rule.score
-  }
-  return 0
+  return scoreByThreshold(daysSince, REPO_HEALTH_WEIGHTS.RECENT_COMMIT.rules, (r) => r.days, 'lte')
 }
 
 // PR 평균 응답 속도 점수 계산 — 머지된 PR 기준 생성 → 머지 기간
@@ -78,15 +88,10 @@ function scorePRResponseSpeed(mergedPRs: MergedPR[]): number {
 
   const avgDays =
     mergedPRs.reduce((sum, pr) => {
-      const end = new Date(pr.mergedAt).getTime()
-      const start = new Date(pr.createdAt).getTime()
-      return sum + (end - start) / (1000 * 60 * 60 * 24)
+      return sum + (new Date(pr.mergedAt).getTime() - new Date(pr.createdAt).getTime()) / (1000 * 60 * 60 * 24)
     }, 0) / mergedPRs.length
 
-  for (const rule of REPO_HEALTH_WEIGHTS.PR_RESPONSE_SPEED.rules) {
-    if (avgDays <= rule.days) return rule.score
-  }
-  return 0
+  return scoreByThreshold(avgDays, REPO_HEALTH_WEIGHTS.PR_RESPONSE_SPEED.rules, (r) => r.days, 'lte')
 }
 
 // PR 머지율 점수 계산 — 머지된 PR / (머지 + 클로즈된 PR)
@@ -95,17 +100,11 @@ function scoreMergeRate(mergedPRs: MergedPR[], closedPRs: ClosedPR[]): number {
   if (total === 0) return 0
 
   const rate = mergedPRs.length / total
-
-  if (rate >= 0.8) return REPO_HEALTH_WEIGHTS.MERGE_RATE.rules[0].score
-  if (rate >= 0.6) return REPO_HEALTH_WEIGHTS.MERGE_RATE.rules[1].score
-  if (rate >= 0.4) return REPO_HEALTH_WEIGHTS.MERGE_RATE.rules[2].score
-  return 0
+  return scoreByThreshold(rate, REPO_HEALTH_WEIGHTS.MERGE_RATE.rules, (r) => r.rate, 'gte')
 }
 
 // 메인테이너 응답 비율 점수 계산
-function scoreMaintainerResponse(
-  issues: RepoHealthData['repository']['issues']['nodes']
-): number {
+function scoreMaintainerResponse(issues: RepoRepository['issues']['nodes']): number {
   if (issues.length === 0) return 0
 
   const maintainerAssociations = new Set(['MEMBER', 'OWNER', 'COLLABORATOR'])
@@ -114,17 +113,11 @@ function scoreMaintainerResponse(
   ).length
 
   const ratio = respondedCount / issues.length
-
-  if (ratio >= 0.7) return REPO_HEALTH_WEIGHTS.MAINTAINER_RESPONSE.rules[0].score
-  if (ratio >= 0.4) return REPO_HEALTH_WEIGHTS.MAINTAINER_RESPONSE.rules[1].score
-  if (ratio > 0)   return 4  // 일부라도 메인테이너 응답 있으면 소폭 점수
-  return 0
+  return scoreByThreshold(ratio, REPO_HEALTH_WEIGHTS.MAINTAINER_RESPONSE.rules, (r) => r.ratio, 'gte')
 }
 
 // 레포 활성도 점수 계산 (0~100)
-function calculateHealthScore(data: RepoHealthData): number {
-  const { repository } = data
-
+function calculateHealthScore(repository: RepoRepository): number {
   return (
     scoreRecentCommit(repository.pushedAt) +
     scorePRResponseSpeed(repository.mergedPullRequests.nodes) +
@@ -138,12 +131,12 @@ export async function getRepoHealth(
   repoFullName: string,
   accessToken: string
 ): Promise<number> {
-  // 1. 캐시 확인 (1시간 이내)
+  // 1. 캐시 확인
   const cached = await sql`
     SELECT health_score
     FROM repo_health_cache
     WHERE repo_full_name = ${repoFullName}
-      AND cached_at > NOW() - INTERVAL '1 hour'
+      AND cached_at > NOW() - (${REPO_HEALTH_CACHE_TTL_HOURS} * INTERVAL '1 hour')
   `
   if (cached.length > 0) return cached[0].health_score
 
@@ -155,7 +148,10 @@ export async function getRepoHealth(
     accessToken
   )
 
-  const healthScore = calculateHealthScore(data)
+  // repository가 null이면 존재하지 않는 레포 — 0점 반환
+  if (!data.repository) return 0
+
+  const healthScore = calculateHealthScore(data.repository)
 
   // 3. 캐시 저장
   await sql`
