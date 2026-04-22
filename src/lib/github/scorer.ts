@@ -10,6 +10,7 @@ import {
   CONTRIBUTION_TYPE_SCORE,
   COMPETITION_PENALTY,
   HEALTH_BONUS,
+  HEALTH_SCORE_TIERS,
 } from '@/constants/scoring-rules'
 
 /**
@@ -110,9 +111,9 @@ function detectCompetition(
 // ── 레포 활성도 보너스 ────────────────────────────────────
 function scoreHealth(healthScore: number | null): number {
   if (healthScore === null) return 0
-  if (healthScore >= 80) return HEALTH_BONUS.HIGH
-  if (healthScore >= 60) return HEALTH_BONUS.MID
-  if (healthScore >= 40) return HEALTH_BONUS.LOW
+  if (healthScore >= HEALTH_SCORE_TIERS.HIGH) return HEALTH_BONUS.HIGH
+  if (healthScore >= HEALTH_SCORE_TIERS.MID) return HEALTH_BONUS.MID
+  if (healthScore >= HEALTH_SCORE_TIERS.LOW) return HEALTH_BONUS.LOW
   return 0
 }
 
