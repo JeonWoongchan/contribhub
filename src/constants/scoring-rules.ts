@@ -4,7 +4,7 @@ import type { ContributionType, ExperienceLevel } from '@/types/user'
 // 스코어링 로직(scorer.ts)과 규칙 데이터를 분리해 규칙 변경 시 이 파일만 수정
 
 // 스팸·봇 생성 레포 필터링 기준 — 이 미만은 노출 제외
-export const STAR_CUTOFF = 5
+export const STAR_CUTOFF = 10
 
 // 레포 활성도 캐시 유지 시간 (시간 단위)
 export const REPO_HEALTH_CACHE_TTL_HOURS = 1
