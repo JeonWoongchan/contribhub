@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { githubGraphQL } from '@/lib/github/client'
+import {githubGraphQL, GitHubRateLimitError} from '@/lib/github/client'
 import { SEARCH_ISSUES_QUERY } from '@/lib/github/queries'
 import { scoreIssue } from '@/lib/github/scorer'
 import { getRepoHealth } from '@/lib/github/repo-health'
@@ -83,16 +83,24 @@ export async function GET(req: NextRequest) {
   const queries = buildIssueQueries(profile.topLanguages)
   const allRaw: RawIssue[] = []
 
-  await Promise.allSettled(
+  const results = await Promise.allSettled(
     queries.map(async (q) => {
       const data = await githubGraphQL<SearchResult>(
         SEARCH_ISSUES_QUERY,
         { query: q, first: 30 },
-        auth.accessToken as string
+        auth.accessToken
       )
       allRaw.push(...(data.search.nodes ?? []))
     })
   )
+
+// rate limit 에러 감지
+  const rateLimited = results.some(
+    (r) => r.status === 'rejected' && r.reason instanceof GitHubRateLimitError
+  )
+  if (rateLimited) {
+    return NextResponse.json({ error: 'GitHub rate limit exceeded' }, { status: 429 })
+  }
 
   const unique = dedupeIssues(allRaw)
 
@@ -115,7 +123,7 @@ export async function GET(req: NextRequest) {
   const uncachedRepos = repoNames.filter((name) => !healthMap.has(name))
   await Promise.allSettled(
     uncachedRepos.map(async (name) => {
-      const score = await getRepoHealth(name, auth.accessToken as string)
+      const score = await getRepoHealth(name, auth.accessToken)
       healthMap.set(name, score)
     })
   )
