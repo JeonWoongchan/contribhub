@@ -1,5 +1,3 @@
-import { auth } from '@/lib/auth'
-import { getToken } from 'next-auth/jwt'
 import { NextRequest, NextResponse } from 'next/server'
 import { githubGraphQL } from '@/lib/github/client'
 import { SEARCH_ISSUES_QUERY } from '@/lib/github/queries'
@@ -9,6 +7,7 @@ import sql from '@/lib/db'
 import type { RawIssue, ScoredIssue } from '@/types/issue'
 import type { UserProfile } from '@/types/user'
 import { TIME_FILTER, HEALTH_THRESHOLD, STAR_CUTOFF } from '@/constants/scoring-rules'
+import {requireGithubToken} from "@/lib/auth-utils";
 
 interface SearchResult {
   search: { nodes: RawIssue[] }
@@ -49,15 +48,8 @@ function filterScoredIssues(
 }
 
 export async function GET(req: NextRequest) {
-  const session = await auth()
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
-  if (!token?.accessToken) {
-    return NextResponse.json({ error: 'No access token' }, { status: 401 })
-  }
+  const auth = await requireGithubToken(req)
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status })
 
   // 유저 프로필 조회
   const profileRows = await sql`
@@ -65,7 +57,7 @@ export async function GET(req: NextRequest) {
            up.weekly_hours, up.english_ok
     FROM user_profiles up
            JOIN users u ON u.id = up.user_id
-    WHERE u.github_id = ${session.user.id}
+    WHERE u.github_id = ${auth.userId}
       AND up.onboarding_done = true
   `
 
@@ -96,7 +88,7 @@ export async function GET(req: NextRequest) {
       const data = await githubGraphQL<SearchResult>(
         SEARCH_ISSUES_QUERY,
         { query: q, first: 30 },
-        token.accessToken as string
+        auth.accessToken as string
       )
       allRaw.push(...(data.search.nodes ?? []))
     })
@@ -123,7 +115,7 @@ export async function GET(req: NextRequest) {
   const uncachedRepos = repoNames.filter((name) => !healthMap.has(name))
   await Promise.allSettled(
     uncachedRepos.map(async (name) => {
-      const score = await getRepoHealth(name, token.accessToken as string)
+      const score = await getRepoHealth(name, auth.accessToken as string)
       healthMap.set(name, score)
     })
   )
