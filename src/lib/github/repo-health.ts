@@ -1,5 +1,5 @@
 import sql from '@/lib/db'
-import { githubGraphQL } from '@/lib/github/client'
+import {githubGraphQL, GitHubNotFoundError} from '@/lib/github/client'
 import { REPO_HEALTH_WEIGHTS, HEALTH_THRESHOLD, REPO_HEALTH_CACHE_TTL_HOURS } from '@/constants/scoring-rules'
 
 interface MergedPR {
@@ -148,8 +148,8 @@ export async function getRepoHealth(
     accessToken
   )
 
-  // repository가 null이면 존재하지 않는 레포 — 0점 반환
-  if (!data.repository) return 0
+  // repository가 null이면 존재하지 않는 레포 — NotFound 에러
+  if (!data.repository) throw new GitHubNotFoundError()
 
   const healthScore = calculateHealthScore(data.repository)
 

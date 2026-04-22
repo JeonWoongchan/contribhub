@@ -5,6 +5,13 @@ export class GitHubRateLimitError extends Error {
   }
 }
 
+export class GitHubNotFoundError extends Error {
+  constructor() {
+    super('NOT_FOUND')
+    this.name = 'GitHubNotFoundError'
+  }
+}
+
 export async function githubGraphQL<T>(
   query: string,
   variables: Record<string, unknown>,
@@ -26,13 +33,15 @@ export async function githubGraphQL<T>(
 
   const json = await res.json()
 
-  // rate limit 초과 — 별도 에러로 구분
-  if (json.errors?.[0]?.type === 'RATE_LIMITED') {
-    throw new GitHubRateLimitError()
-  }
+  // GraphQL 에러 타입별 구분 — 새 타입 추가 시 case만 추가
+  if (json.errors?.length > 0) {
+    const firstError = json.errors[0]
 
-  if (json.errors) {
-    throw new Error(json.errors[0]?.message ?? 'GraphQL error')
+    switch (firstError.type) {
+    case 'RATE_LIMITED': throw new GitHubRateLimitError()
+    case 'NOT_FOUND':    throw new GitHubNotFoundError()
+    default:             throw new Error(firstError.message ?? 'GraphQL error')
+    }
   }
 
   return json.data as T
