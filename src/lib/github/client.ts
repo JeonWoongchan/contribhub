@@ -1,3 +1,10 @@
+export class GitHubRateLimitError extends Error {
+  constructor() {
+    super('RATE_LIMITED')
+    this.name = 'GitHubRateLimitError'
+  }
+}
+
 export async function githubGraphQL<T>(
   query: string,
   variables: Record<string, unknown>,
@@ -10,7 +17,7 @@ export async function githubGraphQL<T>(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ query, variables }),
-    next: { revalidate: 600 }, // 10분 캐시
+    next: { revalidate: 600 },
   })
 
   if (!res.ok) {
@@ -18,6 +25,11 @@ export async function githubGraphQL<T>(
   }
 
   const json = await res.json()
+
+  // rate limit 초과 — 별도 에러로 구분
+  if (json.errors?.[0]?.type === 'RATE_LIMITED') {
+    throw new GitHubRateLimitError()
+  }
 
   if (json.errors) {
     throw new Error(json.errors[0]?.message ?? 'GraphQL error')
