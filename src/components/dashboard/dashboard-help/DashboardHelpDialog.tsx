@@ -1,8 +1,8 @@
 'use client'
 
-import { DashboardHelpPanel } from '@/components/dashboard/dashboard-help/DashboardHelpPanel'
-import { DashboardHelpTrigger } from '@/components/dashboard/dashboard-help/DashboardHelpTrigger'
 import { useDashboardHelpDialog } from '@/hooks/useDashboardHelpDialog'
+import { DashboardHelpPanel } from './DashboardHelpPanel'
+import { DashboardHelpTrigger } from './DashboardHelpTrigger'
 
 export function DashboardHelpDialog() {
   const {

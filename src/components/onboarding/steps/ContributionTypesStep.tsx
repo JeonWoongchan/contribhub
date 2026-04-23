@@ -1,6 +1,6 @@
 import { CONTRIBUTION_TYPES } from '@/constants/contribution-levels'
-import { OptionCard } from '@/components/onboarding/OptionCard'
-import { StepSection } from '@/components/onboarding/StepSection'
+import { OptionCard } from '../OptionCard'
+import { StepSection } from '../StepSection'
 import type { ContributionType } from '@/types/user'
 
 type ContributionTypesStepProps = {

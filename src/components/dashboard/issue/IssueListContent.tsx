@@ -1,6 +1,6 @@
-import { IssueCard } from '@/components/dashboard/issue/IssueCard'
-import { IssueListPartialNotice } from '@/components/dashboard/issue/IssueListPartialNotice'
 import { Card, CardContent } from '@/components/ui/card'
+import { IssueCard } from './IssueCard'
+import { IssueListPartialNotice } from './IssueListPartialNotice'
 import type { ScoredIssue } from '@/types/issue'
 
 type IssueListContentProps = {

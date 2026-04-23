@@ -1,14 +1,18 @@
 import { ExternalLink } from 'lucide-react'
-import { IssueMetrics } from '@/components/dashboard/issue/IssueMetrics'
-import { RepoHealthBadge } from '@/components/dashboard/issue/RepoHealthBadge'
 import { Badge } from '@/components/ui/badge'
 import { formatTimeAgo } from '@/lib/format/time-ago'
 import { getCompetitionMeta } from '@/lib/github/issue-badge-meta'
 import { cn } from '@/lib/utils'
-import {IssueCardTags} from "@/components/dashboard/issue/IssueCardTags";
-import {IssueCardProps} from "@/types/issue";
+import { IssueCardTags } from './IssueCardTags'
+import { IssueMetrics } from './IssueMetrics'
+import { RepoHealthBadge } from './RepoHealthBadge'
+import type { ScoredIssue } from '@/types/issue'
 
-export function IssueCardFooter({issue}: IssueCardProps) {
+type IssueCardFooterProps = {
+  issue: ScoredIssue
+}
+
+export function IssueCardFooter({ issue }: IssueCardFooterProps) {
   const competition = getCompetitionMeta(issue.competitionLevel)
 
   return (
