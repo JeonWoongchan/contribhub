@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     return err('Onboarding not complete', 400, ErrorCode.ONBOARDING_REQUIRED)
   }
 
-  const searchResult = await fetchCandidateIssues(profile.topLanguages, auth.accessToken, profile.englishOk)
+  const searchResult = await fetchCandidateIssues(profile.topLanguages, auth.accessToken)
   if (searchResult.rateLimited && searchResult.issues.length === 0) {
     return err('GitHub rate limit exceeded', 429, ErrorCode.RATE_LIMITED)
   }

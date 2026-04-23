@@ -20,15 +20,14 @@ function buildIssueQueries(languages: string[]): string[] {
   ])
 }
 
-// englishOk: false일 때 한글 포함 이슈 우선 — 제목에 한글 문자 포함 여부로 판단
-function isKoreanIssue(issue: RawIssue): boolean {
-  return /[\uAC00-\uD7A3]/.test(issue.title + (issue.body ?? ''))
-}
-
 function dedupeIssues(issues: RawIssue[]): RawIssue[] {
   const seen = new Set<string>()
+
   return issues.filter((issue) => {
-    if (seen.has(issue.url)) return false
+    if (seen.has(issue.url)) {
+      return false
+    }
+
     seen.add(issue.url)
     return true
   })
@@ -36,8 +35,7 @@ function dedupeIssues(issues: RawIssue[]): RawIssue[] {
 
 export async function fetchCandidateIssues(
   languages: string[],
-  accessToken: string,
-  englishOk: boolean = true
+  accessToken: string
 ): Promise<IssueSearchResult> {
   const queries = buildIssueQueries(languages)
 
@@ -56,18 +54,13 @@ export async function fetchCandidateIssues(
     )
   )
 
-  const allIssues = settled
-  .filter(
-    (result): result is PromiseFulfilledResult<SearchResult> => result.status === 'fulfilled'
+  const issues = dedupeIssues(
+    settled
+      .filter(
+        (result): result is PromiseFulfilledResult<SearchResult> => result.status === 'fulfilled'
+      )
+      .flatMap((result) => result.value.search.nodes ?? [])
   )
-  .flatMap((result) => result.value.search.nodes ?? [])
-
-  const deduped = dedupeIssues(allIssues)
-
-  // englishOk: false면 한글 이슈 앞으로, 영어 이슈 뒤로 재정렬
-  const issues = englishOk
-    ? deduped
-    : [...deduped.filter(isKoreanIssue), ...deduped.filter((i) => !isKoreanIssue(i))]
 
   const failedResults = settled.filter(
     (result): result is PromiseRejectedResult => result.status === 'rejected'
@@ -77,8 +70,6 @@ export async function fetchCandidateIssues(
     issues,
     failedQueryCount: failedResults.length,
     totalQueryCount: queries.length,
-    rateLimited: failedResults.some(
-      (result) => result.reason instanceof GitHubRateLimitError
-    ),
+    rateLimited: failedResults.some((result) => result.reason instanceof GitHubRateLimitError),
   }
 }

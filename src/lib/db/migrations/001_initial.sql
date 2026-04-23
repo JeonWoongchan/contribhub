@@ -14,7 +14,6 @@ CREATE TABLE user_profiles (
   experience_level    TEXT,
   contribution_types  TEXT[],
   weekly_hours        INT,
-  english_ok          BOOLEAN DEFAULT FALSE,
   purpose             TEXT,
   onboarding_done     BOOLEAN DEFAULT FALSE,
   updated_at          TIMESTAMPTZ DEFAULT NOW(),
