@@ -29,12 +29,22 @@ type IssueListState =
       failedCount: number
     }
 
+type IssueListInternalState =
+  | { status: 'loading' }
+  | { status: 'error'; message: string }
+  | {
+      status: 'done'
+      issues: ScoredIssue[]
+      partial: boolean
+      failedCount: number
+    }
+
 const DEFAULT_ERROR_MESSAGE = '오류가 발생했어요.'
 const NETWORK_ERROR_MESSAGE = '네트워크 오류가 발생했어요.'
 
 export function useIssueList(): IssueListState {
   const [requestId, setRequestId] = useState(0)
-  const [state, setState] = useState<Omit<IssueListState, 'refetch'> | { status: 'error'; message: string }>({
+  const [state, setState] = useState<IssueListInternalState>({
     status: 'loading',
   })
 

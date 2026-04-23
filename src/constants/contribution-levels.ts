@@ -14,7 +14,7 @@ export const EXPERIENCE_LEVELS: OptionItem<ExperienceLevel>[] = [
   },
   {
     value: 'mid',
-    label: '미드',
+    label: '미들',
     description: '기능 구현과 버그 수정까지 비교적 익숙하게 진행할 수 있어요.',
   },
   {

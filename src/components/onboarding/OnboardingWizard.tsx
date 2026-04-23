@@ -67,6 +67,15 @@ export default function OnboardingWizard({ initialLanguages }: { initialLanguage
 
   return (
     <CenteredPanel>
+      <div className="mb-6 space-y-2">
+        <p className="text-sm font-medium text-interactive-action-hover">추천 설정</p>
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">
+          나에게 맞는 이슈를 찾기 위해 몇 가지만 알려주세요
+        </h1>
+        <p className="text-sm leading-6 text-muted-foreground">
+          답변을 매칭 점수로 계산해 잘 맞는 이슈부터 보여드릴게요.
+        </p>
+      </div>
       <StepProgress currentStep={step} labels={ONBOARDING_STEPS.map((item) => item.label)} />
       {renderCurrentStep()}
       <div className="mt-6 flex gap-3">
@@ -77,7 +86,7 @@ export default function OnboardingWizard({ initialLanguages }: { initialLanguage
         ) : null}
         {isLastStep ? (
           <OnboardingWizardButton disabled={!canNext || loading} onClick={handleSubmit}>
-            {loading ? '저장 중...' : '시작하기 🚀'}
+            {loading ? '저장 중...' : '시작하기'}
           </OnboardingWizardButton>
         ) : (
           <OnboardingWizardButton disabled={!canNext} onClick={goNext}>

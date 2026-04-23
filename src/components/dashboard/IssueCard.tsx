@@ -53,7 +53,6 @@ export function IssueCard({ issue }: IssueCardProps) {
           <IssueCardFooter
             commentCount={issue.commentCount}
             competitionLevel={issue.competitionLevel}
-            hasPR={issue.hasPR}
             healthScore={issue.healthScore}
             stargazerCount={issue.stargazerCount}
             updatedAt={issue.updatedAt}
