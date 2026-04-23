@@ -1,5 +1,5 @@
 import { ExternalLink, MessageCircle, Star } from 'lucide-react'
-import { RepoHealthBadge } from '@/components/dashboard/RepoHealthBadge'
+import { RepoHealthBadge } from '@/components/dashboard/issue/RepoHealthBadge'
 import { Badge } from '@/components/ui/badge'
 import { formatTimeAgo } from '@/lib/format/time-ago'
 import { getCompetitionMeta } from '@/lib/github/issue-badge-meta'

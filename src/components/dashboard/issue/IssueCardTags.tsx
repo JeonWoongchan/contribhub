@@ -4,7 +4,7 @@ import type { DifficultyLevel } from '@/types/issue'
 
 type IssueCardTagsProps = {
   difficultyLevel: DifficultyLevel | null
-  labels: string[]
+  labels: readonly string[]
   language: string | null
 }
 
