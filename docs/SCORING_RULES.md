@@ -1,229 +1,172 @@
-# SCORING_RULES.md — 이슈 스코어링 규칙
+# Issue Matching Score
 
-OpenAI 대신 규칙 기반으로 이슈를 스코어링하는 로직 상세.
-`src/constants/scoring-rules.ts` 와 `src/lib/github/scorer.ts` 를 참고해서 구현.
+GitHub Search API로 수집한 이슈를 사용자 온보딩 답변과 비교해 산출하는 매칭 점수입니다.  
+점수가 높을수록 사용자 설정에 잘 맞는 이슈로, 카드 우측 상단에 노출됩니다.
 
----
+| 항목 | 값 |
+|---|---|
+| 이론적 최댓값 | +83점 |
+| 이론적 최솟값 | −39점 |
+| 노출 하한선 | 0점 (미만은 노출 제외) |
 
-## 이슈 스코어링 (0~100점)
-
-이슈 하나에 대한 "이 유저에게 얼마나 적합한가" 점수.
-
-### 언어 매칭 (30점)
-
-```ts
-export const LANGUAGE_SCORE = {
-  EXACT_MATCH: 30,      // 유저 top_languages에 정확히 있음
-  RELATED: 15,          // 연관 언어 (예: TypeScript ↔ JavaScript)
-  NO_MATCH: 0,
-}
-
-// 연관 언어 그룹
-export const LANGUAGE_GROUPS = [
-  ['TypeScript', 'JavaScript'],
-  ['Python', 'Jupyter Notebook'],
-  ['C', 'C++', 'C#'],
-  ['Java', 'Kotlin', 'Scala'],
-]
 ```
-
-### 난이도 매칭 (25점)
-
-```ts
-export const DIFFICULTY_SCORE = {
-  PERFECT: 25,    // 유저 수준과 정확히 일치
-  ONE_ABOVE: 15,  // 한 단계 높음 (도전적)
-  TWO_ABOVE: 5,   // 두 단계 높음 (벅참)
-  BELOW: 10,      // 낮음 (쉬움, 연습용)
-}
-
-// 이슈 난이도 판별 기준 (라벨 기반)
-export const DIFFICULTY_LABELS = {
-  beginner: ['good first issues', 'good-first-issues', 'beginner', 'starter'],
-  junior:   ['help wanted', 'help-wanted', 'easy'],
-  mid:      ['medium', 'moderate', 'intermediate'],
-  senior:   ['hard', 'complex', 'advanced', 'needs-investigation'],
-}
-```
-
-### 기여 방식 매칭 (20점)
-
-```ts
-// 이슈 라벨 → 기여 방식 분류
-export const CONTRIBUTION_TYPE_LABELS: Record<string, string[]> = {
-  doc:    ['documentation', 'docs', 'readme', 'translation', 'i18n'],
-  bug:    ['bug', 'fix', 'regression', 'defect'],
-  feat:   ['feature', 'enhancement', 'feature-request'],
-  test:   ['test', 'testing', 'coverage'],
-  review: [], // 라벨보다 PR 리뷰 코멘트로 판단
-}
-
-export const CONTRIBUTION_TYPE_SCORE = {
-  MATCH: 20,
-  NO_MATCH: 0,
-}
-```
-
-### 경쟁도 페널티 (-15점 ~ 0점)
-
-```ts
-export const COMPETITION_PENALTY = {
-  PR_EXISTS: -15,       // 이미 PR 올라온 이슈
-  HIGH_ACTIVITY: -8,    // 코멘트 5개 이상
-  MEDIUM_ACTIVITY: -3,  // 코멘트 2~4개
-  LOW_ACTIVITY: 0,      // 코멘트 0~1개
-}
-```
-
-### 레포 활성도 보너스 (0~15점)
-
-```ts
-export const HEALTH_BONUS = {
-  HIGH: 15,    // 활성도 80점 이상
-  MID: 8,      // 활성도 60~79점
-  LOW: 3,      // 활성도 40~59점
-  // 40점 미만은 기본 노출 제외
-}
-```
-
-### 시간 가용성 보정
-
-```ts
-// 유저 weekly_hours와 이슈 예상 소요 시간 매칭
-export const TIME_FILTER = {
-  2:  ['doc', 'bug'],         // 주 2시간 → 빠른 기여만
-  5:  ['doc', 'bug', 'test'], // 주 5시간
-  10: ['doc', 'bug', 'test', 'feat', 'review'], // 주 10시간 → 전부
-}
+최종 점수 = 언어 매칭 + 난이도 매칭 + 기여 방식 매칭
+           + 경쟁도 패널티 + 경험 보정
+           + 저장소 건강도 보너스 + 스타 수 보너스
+           + 시간 예산 보너스/패널티
+           + 기여 목적 보너스/패널티
 ```
 
 ---
 
-## 레포 활성도 점수 (0~100점)
+## 1. 언어 매칭 `최대 +20`
 
-`src/lib/github/repo-health.ts` 에서 계산.
+온보딩의 선호 언어와 저장소 `primaryLanguage`를 비교한다.  
+`LANGUAGE_GROUPS`에 같이 묶인 언어(예: TypeScript ↔ JavaScript)는 관련 언어(related)로 처리한다.
 
-```ts
-export const REPO_HEALTH_WEIGHTS = {
-  RECENT_COMMIT: {
-    weight: 30,
-    rules: [
-      { days: 30,  score: 30 },
-      { days: 90,  score: 20 },
-      { days: 180, score: 10 },
-      { days: Infinity, score: 0 },
-    ],
-  },
-  PR_RESPONSE_SPEED: {
-    weight: 30,
-    rules: [
-      { days: 3,  score: 30 },
-      { days: 7,  score: 20 },
-      { days: 14, score: 10 },
-      { days: Infinity, score: 0 },
-    ],
-  },
-  MERGE_RATE: {
-    weight: 25,
-    rules: [
-      { rate: 0.8, score: 25 },
-      { rate: 0.6, score: 15 },
-      { rate: 0.4, score: 5  },
-      { rate: 0,   score: 0  },
-    ],
-  },
-  MAINTAINER_RESPONSE: {
-    weight: 15,
-    // 최근 10개 이슈 중 메인테이너 코멘트 있는 비율
-    rules: [
-      { ratio: 0.7, score: 15 },
-      { ratio: 0.4, score: 8  },
-      { ratio: 0,   score: 0  },
-    ],
-  },
-}
-
-export const HEALTH_THRESHOLD = 40 // 이 미만은 기본 노출 제외
-```
+| 상황 | 점수 |
+|---|---|
+| Primary 언어 정확히 일치 | +20 |
+| Secondary 언어 정확히 일치 | +18 |
+| 기타 선택 언어 정확히 일치 | +16 |
+| Primary 언어와 같은 계열 | +11 |
+| Secondary 언어와 같은 계열 | +9 |
+| 기타 선택 언어와 같은 계열 | +7 |
+| 아무 매칭 없음 | 0 |
 
 ---
 
-## 경쟁도 판별
+## 2. 난이도 매칭 `최대 +16`
 
-```ts
-export const COMPETITION_LEVELS = {
-  OPEN: {
-    label: '여유',
-    color: 'green',
-    condition: (comments: number, hasPR: boolean) =>
-      !hasPR && comments <= 1,
-  },
-  COMPETITIVE: {
-    label: '경쟁 중',
-    color: 'yellow',
-    condition: (comments: number, hasPR: boolean) =>
-      !hasPR && comments >= 2,
-  },
-  TAKEN: {
-    label: '진행 중',
-    color: 'red',
-    condition: (comments: number, hasPR: boolean) => hasPR,
-  },
-}
-```
+GitHub가 난이도를 공식 필드로 제공하지 않으므로 라벨·제목·본문 키워드로  
+`beginner → junior → mid → senior` 난이도를 추정한다.
+
+| 상황 | 점수 |
+|---|---|
+| 사용자 수준과 정확히 같은 난이도 | +16 |
+| 1단계 높은 난이도 (도전 가능) | +14 |
+| 2단계 높은 난이도 | +6 |
+| 3단계 높은 난이도 (너무 어려움) | 0 |
+| 1단계 낮은 난이도 | +9 |
+| 2단계 낮은 난이도 | +5 |
+| 3단계 낮은 난이도 | +2 |
 
 ---
 
-## 기여 방식별 난이도 기준
+## 3. 기여 방식 매칭 `최대 +14`
 
-`src/constants/contribution-levels.ts` 에서 사용.
+이슈 라벨·제목·본문 키워드로 작업 성격(`bug` / `feat` / `doc` / `test` / `review`)을 추정해  
+사용자 선호 기여 방식과 비교한다.
 
-| 기여 방식 | 난이도 | 예상 소요 시간 | 필요 수준 |
+| 상황 | 점수 |
+|---|---|
+| Primary 기여 방식 일치 | +14 |
+| Secondary 기여 방식 일치 | +12 |
+| 기타 선택 기여 방식 일치 | +10 |
+| 직접 일치는 아니지만 연관 타입 (예: `bug` ↔ `test`, `doc` ↔ `review`) | +5 |
+| 아무 매칭 없음 | 0 |
+
+---
+
+## 4. 경쟁도 패널티 `+6 ~ −10`
+
+댓글 수와 PR 연결 여부로 이슈의 진입 경쟁도를 추정한다.  
+이미 PR이 있거나 토론이 많은 이슈일수록 새로 진입하기 어렵다고 판단한다.
+
+| 상황 | 점수 |
+|---|---|
+| 댓글 0개 | +6 |
+| 댓글 1개 | +4 |
+| 댓글 보통 수준 | −2 |
+| 댓글 많음 | −6 |
+| 댓글 매우 많음 | −10 |
+| PR이 이미 연결된 이슈 | −10 |
+
+---
+
+## 5. 경험 수준 × 경쟁도 보정 `+14 ~ −8`
+
+경험이 높을수록 ACTIVE 이슈에서 높은 보정을 받는다.  
+beginner는 이미 PR이 있는 이슈에 강한 감점을 받는다.
+
+| 경험 수준 | OPEN | ACTIVE | HAS_PR |
 |---|---|---|---|
-| 문서 개선 / 번역 | 입문 | 1~3일 | 누구나 |
-| 이슈 제보 | 초급 | 1~2일 | 누구나 |
-| 테스트 작성 | 초급 | 2일~1주 | 해당 언어 기본기 |
-| 버그 수정 (good-first-issue) | 초중급 | 3일~2주 | 코드 읽기 가능 |
-| 코드 리뷰 참여 | 중급 | 상시 | 아키텍처 이해 |
-| 기능 구현 | 중급 이상 | 1주~1개월 | 설계 논의 가능 |
+| beginner | +6 | −2 | −8 |
+| junior | +6 | +4 | −5 |
+| mid | +4 | +14 | −2 |
+| senior | +4 | +14 | 0 |
 
-```ts
-// contribution-levels.ts
-export const CONTRIBUTION_LEVELS = [
-  {
-    type: 'doc',
-    label: '문서 / 번역',
-    difficulty: 'beginner',
-    minExperience: 'beginner',
-    estimatedDays: { min: 1, max: 3 },
-  },
-  {
-    type: 'bug',
-    label: '버그 수정',
-    difficulty: 'junior',
-    minExperience: 'beginner',
-    estimatedDays: { min: 3, max: 14 },
-  },
-  {
-    type: 'test',
-    label: '테스트 작성',
-    difficulty: 'junior',
-    minExperience: 'beginner',
-    estimatedDays: { min: 2, max: 7 },
-  },
-  {
-    type: 'feat',
-    label: '기능 구현',
-    difficulty: 'mid',
-    minExperience: 'junior',
-    estimatedDays: { min: 7, max: 30 },
-  },
-  {
-    type: 'review',
-    label: '코드 리뷰',
-    difficulty: 'mid',
-    minExperience: 'mid',
-    estimatedDays: null, // 상시
-  },
-] as const
-```
+---
+
+## 6. 저장소 건강도 보너스 `최대 +8`
+
+4개 지표를 가중 합산해 0~100의 건강도 점수를 산출한 뒤, 티어로 변환해 보너스를 부여한다.  
+**40점 미만이면 필터링 검토 대상**이다.
+
+### 건강도 계산 지표
+
+| 지표 | 가중치 | 만점 조건 |
+|---|---|---|
+| 최근 커밋 | 30% | 30일 이내 커밋 |
+| PR 평균 응답 속도 | 30% | 3일 이내 응답 |
+| PR merge rate | 25% | 80% 이상 |
+| Maintainer 응답률 | 15% | 70% 이상 |
+
+### 티어별 보너스
+
+| 건강도 점수 | 티어 | 보너스 |
+|---|---|---|
+| 85 이상 | EXCELLENT | +8 |
+| 70 ~ 84 | HIGH | +6 |
+| 55 ~ 69 | MID | +4 |
+| 40 ~ 54 | LOW | +2 |
+| 40 미만 | — | 필터링 검토 |
+
+---
+
+## 7. 스타 수 보너스 `최대 +4`
+
+| 저장소 스타 수 | 점수 |
+|---|---|
+| 3,000개 이상 | +4 |
+| 1,000개 이상 | +3 |
+| 300개 이상 | +2 |
+| 100개 이상 | +1 |
+| 100개 미만 | 0 |
+
+---
+
+## 8. 시간 예산 보너스 / 패널티
+
+주당 가용 시간이 적을수록 짧은 작업 위주로 좁히며, 맞지 않는 타입에 강한 패널티를 부여한다.
+
+| 조건 | 주 2시간 | 주 5시간 | 주 10시간 |
+|---|---|---|---|
+| 선호 타입 매칭 | +5 | +5 | +4 |
+| 타입 미스매칭 | −6 | −4 | −2 |
+| 선호 난이도 매칭 | +5 | +5 | +4 |
+| 난이도 미스매칭 | −5 | −3 | −1 |
+| 댓글 수 임계치 이하 | +4 | +4 | +3 |
+| PR 연결 이슈 | −8 | −4 | −1 |
+| 허용 최대 댓글 수 | 2개 | 5개 | 8개 |
+
+---
+
+## 9. 기여 목적 보너스 / 패널티
+
+GitHub API가 목적을 직접 제공하지 않으므로 제품 정책으로 해석한다.
+
+- **portfolio** — 결과물을 설명하기 쉬운 유명·건강한 저장소와 진입 가능한 작업 우대
+- **growth** — 학습 효과가 큰 기능/테스트/버그, 약간 도전적인 난이도 우대
+- **community** — 유지보수가 활발하고 꾸준히 참여하기 좋은 저장소와 작업 우대
+
+| 조건 | portfolio | growth | community |
+|---|---|---|---|
+| 저장소 건강도 높음 | +3 | +3 | +4 |
+| 저장소 건강도 중간 | +2 | +2 | +2 |
+| 경쟁도 OPEN | +3 | +1 | +3 |
+| 경쟁도 ACTIVE | +1 | +3 | +2 |
+| PR 연결 이슈 | −6 | −2 | −4 |
+| 스타 300+ 저장소 | +2 | — | — |
+| 선호 기여 타입 매칭 | +4 | +5 | +5 |
+| 선호 난이도 매칭 | +2 | +5 | +4 |
