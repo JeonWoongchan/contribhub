@@ -5,7 +5,6 @@ export type FormState = {
   contributionTypes: ContributionType[]
   topLanguages: string[]
   weeklyHours: WeeklyHours | null
-  englishOk: boolean
   purpose: Purpose | null
 }
 
@@ -14,7 +13,6 @@ export type OnboardingStepId =
   | 'contributionTypes'
   | 'topLanguages'
   | 'weeklyHours'
-  | 'englishOk'
   | 'purpose'
 
 export type OptionItem<TValue> = {

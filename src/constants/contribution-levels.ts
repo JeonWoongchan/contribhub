@@ -20,7 +20,7 @@ export const EXPERIENCE_LEVELS: OptionItem<ExperienceLevel>[] = [
   {
     value: 'senior',
     label: '시니어',
-    description: '구조 설계, 코드 리뷰, 협업 흐름까지 주도할 수 있어요.',
+    description: '구조 설계, 코드 리뷰, 작업 흐름까지 주도해본 경험이 있어요.',
   },
 ]
 
@@ -28,7 +28,7 @@ export const CONTRIBUTION_TYPES: OptionItem<ContributionType>[] = [
   {
     value: 'doc',
     label: '문서 / 번역',
-    description: 'README, 가이드, 문서 개선에 집중하고 싶어요.',
+    description: 'README, 가이드, 문서 개선을 직접 하고 싶어요.',
   },
   {
     value: 'bug',
@@ -48,11 +48,10 @@ export const CONTRIBUTION_TYPES: OptionItem<ContributionType>[] = [
   {
     value: 'review',
     label: '코드 리뷰',
-    description: 'PR 리뷰와 피드백 중심으로 참여하고 싶어요.',
+    description: 'PR 리뷰와 피드백 전달로 참여하고 싶어요.',
   },
 ]
 
-// 선택 가능한 인기 언어 목록
 export const POPULAR_LANGUAGES = [
   'TypeScript',
   'JavaScript',
@@ -90,30 +89,17 @@ export const PURPOSES: OptionItem<Purpose>[] = [
   {
     value: 'portfolio',
     label: '포트폴리오',
-    description: '취업이나 이직에 도움이 되는 결과물을 만들고 싶어요.',
+    description: '취업이나 이직에 보여줄 수 있는 결과물을 만들고 싶어요.',
   },
   {
     value: 'growth',
     label: '실력 향상',
-    description: '협업과 코드 품질 관점에서 한 단계 성장하고 싶어요.',
+    description: '작업과 코드 리뷰 과정에서 단계적으로 성장하고 싶어요.',
   },
   {
     value: 'community',
     label: '커뮤니티',
-    description: '오픈소스 생태계에 꾸준히 기여하며 연결되고 싶어요.',
-  },
-]
-
-export const ENGLISH_OPTIONS: OptionItem<boolean>[] = [
-  {
-    value: true,
-    label: '영어 이슈도 괜찮아요',
-    description: '영문 이슈와 문서를 포함해서 추천받아도 괜찮아요.',
-  },
-  {
-    value: false,
-    label: '한글 중심이 좋아요',
-    description: '가능하면 한글 맥락으로 시작할 수 있는 항목을 원해요.',
+    description: '오픈소스 생태계에 꾸준히 기여하고 연결되고 싶어요.',
   },
 ]
 
@@ -122,7 +108,6 @@ export const ONBOARDING_STEPS: OnboardingStepConfig[] = [
   { id: 'contributionTypes', label: '기여 방식' },
   { id: 'topLanguages', label: '선호 언어' },
   { id: 'weeklyHours', label: '투입 시간' },
-  { id: 'englishOk', label: '영어 선호' },
   { id: 'purpose', label: '참여 목적' },
 ]
 
@@ -130,19 +115,17 @@ export function isStepComplete(stepIndex: number, form: FormState): boolean {
   const step = ONBOARDING_STEPS[stepIndex]
 
   switch (step?.id) {
-  case 'experienceLevel':
-    return form.experienceLevel !== null
-  case 'contributionTypes':
-    return form.contributionTypes.length > 0
-  case 'topLanguages':
-    return form.topLanguages.length > 0
-  case 'weeklyHours':
-    return form.weeklyHours !== null
-  case 'englishOk':
-    return true
-  case 'purpose':
-    return form.purpose !== null
-  default:
-    return false
+    case 'experienceLevel':
+      return form.experienceLevel !== null
+    case 'contributionTypes':
+      return form.contributionTypes.length > 0
+    case 'topLanguages':
+      return form.topLanguages.length > 0
+    case 'weeklyHours':
+      return form.weeklyHours !== null
+    case 'purpose':
+      return form.purpose !== null
+    default:
+      return false
   }
 }
