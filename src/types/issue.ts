@@ -46,3 +46,7 @@ export interface ScoredIssue {
   // 레포 활성도 (Phase 5에서 채워짐)
   healthScore: number | null
 }
+
+export type IssueCardProps = {
+  issue: ScoredIssue
+}
