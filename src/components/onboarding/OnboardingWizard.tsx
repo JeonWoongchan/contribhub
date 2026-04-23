@@ -20,6 +20,7 @@ export default function OnboardingWizard({ initialLanguages }: { initialLanguage
     handleSubmit,
     loading,
     step,
+    toggleAllTopLanguages,
     toggleContributionType,
     toggleTopLanguage,
     updateExperienceLevel,
@@ -48,7 +49,13 @@ export default function OnboardingWizard({ initialLanguages }: { initialLanguage
           />
         )
       case 'topLanguages':
-        return <LanguagesStep value={form.topLanguages} onToggle={toggleTopLanguage} />
+        return (
+          <LanguagesStep
+            value={form.topLanguages}
+            onToggle={toggleTopLanguage}
+            onToggleAll={toggleAllTopLanguages}
+          />
+        )
       case 'weeklyHours':
         return <WeeklyHoursStep value={form.weeklyHours} onChange={updateWeeklyHours} />
       case 'purpose':

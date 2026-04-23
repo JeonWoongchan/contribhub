@@ -1,6 +1,6 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { isStepComplete, ONBOARDING_STEPS } from '@/constants/contribution-levels'
+import { isStepComplete, ONBOARDING_STEPS, POPULAR_LANGUAGES } from '@/constants/contribution-levels'
 import type { FormState } from '@/types/onboarding'
 import type { ContributionType, ExperienceLevel, Purpose, WeeklyHours } from '@/types/user'
 
@@ -48,6 +48,14 @@ export function useOnboardingWizard(initialLanguages: string[] = []) {
     }))
   }
 
+  function toggleAllTopLanguages() {
+    setForm((currentForm) => ({
+      ...currentForm,
+      topLanguages:
+        currentForm.topLanguages.length === POPULAR_LANGUAGES.length ? [] : [...POPULAR_LANGUAGES],
+    }))
+  }
+
   function updateWeeklyHours(value: WeeklyHours) {
     setForm((currentForm) => ({ ...currentForm, weeklyHours: value }))
   }
@@ -86,6 +94,7 @@ export function useOnboardingWizard(initialLanguages: string[] = []) {
     handleSubmit,
     loading,
     step,
+    toggleAllTopLanguages,
     toggleContributionType,
     toggleTopLanguage,
     updateExperienceLevel,
