@@ -1,7 +1,11 @@
-import { IssueScoreBadge } from '@/components/dashboard/issue/IssueScoreBadge'
-import type { IssueCardProps } from '@/types/issue'
+import { IssueScoreBadge } from './IssueScoreBadge'
+import type { ScoredIssue } from '@/types/issue'
 
-export function IssueCardHeader({ issue }: IssueCardProps) {
+type IssueCardHeaderProps = {
+  issue: ScoredIssue
+}
+
+export function IssueCardHeader({ issue }: IssueCardHeaderProps) {
   return (
     <>
       <div className="flex items-start justify-between gap-3">

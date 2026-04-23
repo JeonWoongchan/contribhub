@@ -2,14 +2,14 @@
 
 import { ONBOARDING_STEPS } from '@/constants/contribution-levels'
 import { CenteredPanel } from '@/components/layout/CenteredPanel'
-import { OnboardingWizardButton } from '@/components/onboarding/OnboardingWizardButton'
-import { StepProgress } from '@/components/onboarding/StepProgress'
-import { ContributionTypesStep } from '@/components/onboarding/steps/ContributionTypesStep'
-import { ExperienceStep } from '@/components/onboarding/steps/ExperienceStep'
-import { LanguagesStep } from '@/components/onboarding/steps/LanguagesStep'
-import { PurposeStep } from '@/components/onboarding/steps/PurposeStep'
-import { WeeklyHoursStep } from '@/components/onboarding/steps/WeeklyHoursStep'
 import { useOnboardingWizard } from '@/hooks/useOnboardingWizard'
+import { OnboardingWizardButton } from './OnboardingWizardButton'
+import { StepProgress } from './StepProgress'
+import { ContributionTypesStep } from './steps/ContributionTypesStep'
+import { ExperienceStep } from './steps/ExperienceStep'
+import { LanguagesStep } from './steps/LanguagesStep'
+import { PurposeStep } from './steps/PurposeStep'
+import { WeeklyHoursStep } from './steps/WeeklyHoursStep'
 
 export default function OnboardingWizard({ initialLanguages }: { initialLanguages: string[] }) {
   const {

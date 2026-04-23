@@ -1,8 +1,12 @@
-import { IssueCardFooter } from '@/components/dashboard/issue/IssueCardFooter'
-import { IssueCardHeader } from '@/components/dashboard/issue/IssueCardHeader'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
-import type { IssueCardProps } from '@/types/issue'
+import { IssueCardFooter } from './IssueCardFooter'
+import { IssueCardHeader } from './IssueCardHeader'
+import type { ScoredIssue } from '@/types/issue'
+
+type IssueCardProps = {
+  issue: ScoredIssue
+}
 
 export function IssueCard({ issue }: IssueCardProps) {
   return (
