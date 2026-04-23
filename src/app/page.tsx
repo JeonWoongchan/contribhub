@@ -1,10 +1,15 @@
-export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-      </footer>
-    </div>
-  );
+import { redirect } from 'next/navigation'
+import { auth } from '@/lib/auth'
+import { getOnboardingStatus } from '@/lib/user/profile'
+
+export default async function HomePage() {
+  const session = await auth()
+
+  if (!session) {
+    redirect('/login')
+  }
+
+  const isOnboardingDone = await getOnboardingStatus(session.user.id)
+
+  redirect(isOnboardingDone ? '/dashboard' : '/onboarding')
 }
