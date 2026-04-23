@@ -1,14 +1,8 @@
-import { Zap } from 'lucide-react'
 import { IssueCardFooter } from '@/components/dashboard/issue/IssueCardFooter'
-import { IssueCardTags } from '@/components/dashboard/issue/IssueCardTags'
-import { Badge } from '@/components/ui/badge'
+import { IssueCardHeader } from '@/components/dashboard/issue/IssueCardHeader'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
-import type { ScoredIssue } from '@/types/issue'
-
-type IssueCardProps = {
-  issue: ScoredIssue
-}
+import type { IssueCardProps } from '@/types/issue'
 
 export function IssueCard({ issue }: IssueCardProps) {
   return (
@@ -29,34 +23,8 @@ export function IssueCard({ issue }: IssueCardProps) {
         )}
       >
         <CardContent className="flex h-full flex-col gap-4">
-          <div className="flex items-start justify-between gap-3">
-            <span className="truncate text-xs text-muted-foreground">{issue.repoFullName}</span>
-            <Badge
-              variant="outline"
-              className="shrink-0 rounded-md border-transparent bg-interactive-action text-interactive-action-foreground"
-            >
-              <Zap className="h-3 w-3" />
-              <span className="tabular-nums">{issue.score}</span>
-            </Badge>
-          </div>
-
-          <h3 className="line-clamp-2 text-sm font-medium leading-snug text-card-foreground transition-colors group-hover:text-interactive-action-hover">
-            {issue.title}
-          </h3>
-
-          <IssueCardTags
-            difficultyLevel={issue.difficultyLevel}
-            labels={issue.labels}
-            language={issue.language}
-          />
-
-          <IssueCardFooter
-            commentCount={issue.commentCount}
-            competitionLevel={issue.competitionLevel}
-            healthScore={issue.healthScore}
-            stargazerCount={issue.stargazerCount}
-            updatedAt={issue.updatedAt}
-          />
+          <IssueCardHeader issue={issue} />
+          <IssueCardFooter issue={issue} />
         </CardContent>
       </Card>
     </a>
