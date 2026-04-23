@@ -1,24 +1,53 @@
+import { POPULAR_LANGUAGES } from '@/constants/contribution-levels'
 import { OptionCard } from '@/components/onboarding/OptionCard'
 import { StepSection } from '@/components/onboarding/StepSection'
-import {POPULAR_LANGUAGES} from "@/constants/contribution-levels";
 
 type LanguagesStepProps = {
   value: string[]
-  onToggle: (lang: string) => void
+  onToggle: (language: string) => void
+  onToggleAll: () => void
 }
 
-export function LanguagesStep({ value, onToggle }: LanguagesStepProps) {
+const LAST_ROW_LANGUAGES = ['PHP'] as const
+
+export function LanguagesStep({ value, onToggle, onToggleAll }: LanguagesStepProps) {
+  const mainLanguages = POPULAR_LANGUAGES.filter(
+    (language) => !LAST_ROW_LANGUAGES.includes(language as (typeof LAST_ROW_LANGUAGES)[number])
+  )
+  const isAllSelected = value.length === POPULAR_LANGUAGES.length
+
   return (
-    <StepSection title="어떤 언어로 기여하고 싶나요?">
-      {POPULAR_LANGUAGES.map((lang) => (
+    <StepSection
+      title="어떤 언어로 기여하고 싶나요?"
+      description="사용자의 GitHub 데이터 기반으로 자동 선택되어 있어요."
+    >
+      <div className="grid gap-2 sm:grid-cols-2">
+        {mainLanguages.map((language) => (
+          <OptionCard
+            key={language}
+            label={language}
+            description=""
+            selected={value.includes(language)}
+            onClick={() => onToggle(language)}
+          />
+        ))}
+        {LAST_ROW_LANGUAGES.map((language) => (
+          <OptionCard
+            key={language}
+            label={language}
+            description=""
+            selected={value.includes(language)}
+            onClick={() => onToggle(language)}
+          />
+        ))}
         <OptionCard
-          key={lang}
-          label={lang}
+          label="전체 선택"
           description=""
-          selected={value.includes(lang)}
-          onClick={() => onToggle(lang)}
+          selected={isAllSelected}
+          onClick={onToggleAll}
+          className="border-border/60 bg-muted/40 hover:border-border hover:bg-muted/70"
         />
-      ))}
+      </div>
     </StepSection>
   )
 }

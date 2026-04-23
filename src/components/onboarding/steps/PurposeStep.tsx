@@ -10,7 +10,10 @@ type PurposeStepProps = {
 
 export function PurposeStep({ value, onChange }: PurposeStepProps) {
   return (
-    <StepSection title="이번 기여를 통해 가장 얻고 싶은 것은 무엇인가요?">
+    <StepSection
+      title="이번 기여를 통해 가장 얻고 싶은 건 무엇인가요?"
+      description="참여 목적에 맞춰 포트폴리오용인지, 성장용인지 더 잘 맞는 이슈를 보여드릴게요."
+    >
       {PURPOSES.map((item) => (
         <OptionCard
           key={item.value}

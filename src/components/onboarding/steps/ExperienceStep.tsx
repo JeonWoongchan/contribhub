@@ -10,7 +10,10 @@ type ExperienceStepProps = {
 
 export function ExperienceStep({ value, onChange }: ExperienceStepProps) {
   return (
-    <StepSection title="오픈소스 기여 경험은 어느 정도인가요?">
+    <StepSection
+      title="오픈소스 기여 경험은 어느 정도인가요?"
+      description="현재 익숙한 수준에 맞춰 너무 어렵지 않은 이슈를 추천해드릴게요."
+    >
       {EXPERIENCE_LEVELS.map((item) => (
         <OptionCard
           key={item.value}

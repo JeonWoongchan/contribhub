@@ -59,6 +59,7 @@ export const POPULAR_LANGUAGES = [
   'Rust',
   'Go',
   'Java',
+  'C',
   'C++',
   'C#',
   'Ruby',
