@@ -1,6 +1,6 @@
 import { Zap } from 'lucide-react'
-import { IssueCardFooter } from '@/components/dashboard/IssueCardFooter'
-import { IssueCardTags } from '@/components/dashboard/IssueCardTags'
+import { IssueCardFooter } from '@/components/dashboard/issue/IssueCardFooter'
+import { IssueCardTags } from '@/components/dashboard/issue/IssueCardTags'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
