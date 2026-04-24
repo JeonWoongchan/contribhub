@@ -45,3 +45,23 @@ export interface ScoredIssue {
   isBookmarked?: boolean
   healthScore: number | null
 }
+
+export interface IssueCardItem {
+  number: number
+  title: string
+  url: string
+  repoFullName: string
+  language: string | null
+  stargazerCount: number
+  labels: string[]
+  commentCount: number
+  createdAt: string
+  updatedAt: string
+  score: number | null
+  difficultyLevel: DifficultyLevel | null
+  contributionType: ContributionType | null
+  competitionLevel: CompetitionLevel | null
+  hasPR: boolean
+  isBookmarked?: boolean
+  healthScore: number | null
+}

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import type { ScoredIssue } from '@/types/issue'
+import type { IssueCardItem } from '@/types/issue'
 import type { ContributionType } from '@/types/user'
 
 type IssueBookmarksResponse =
@@ -14,12 +14,12 @@ type IssueBookmarksResponse =
     }
 
 type UseIssueBookmarksOptions = {
-  sourceIssues: ScoredIssue[]
+  sourceIssues: IssueCardItem[]
   isSourceIssuesReady: boolean
 }
 
 // 카드 단위 북마크 식별 키 생성 유틸리티 함수 선언부.
-function getBookmarkKey(issue: Pick<ScoredIssue, 'repoFullName' | 'number'>): string {
+function getBookmarkKey(issue: Pick<IssueCardItem, 'repoFullName' | 'number'>): string {
   return `${issue.repoFullName}#${issue.number}`
 }
 
@@ -30,7 +30,7 @@ export function useIssueBookmarks({
 }: UseIssueBookmarksOptions) {
   // 북마크 토글 결과를 반영하는 낙관적 이슈 목록 상태 선언부.
   // 추천 이슈 목록을 복사하고 북마크 여부를 추가 관리해서 사용
-  const [optimisticIssues, setOptimisticIssues] = useState<ScoredIssue[]>([])
+  const [optimisticIssues, setOptimisticIssues] = useState<IssueCardItem[]>([])
 
   // 북마크 저장 및 삭제 요청 진행 중인 카드 키 목록 상태 선언부.
   const [pendingBookmarkKeys, setPendingBookmarkKeys] = useState<string[]>([])
@@ -56,7 +56,7 @@ export function useIssueBookmarks({
   }
 
   // 대시보드 이슈 카드 기준 북마크 저장 및 해제 토글 처리부.
-  async function toggleBookmark(issue: ScoredIssue) {
+  async function toggleBookmark(issue: IssueCardItem) {
     const bookmarkKey = getBookmarkKey(issue)
     const wasBookmarked = issue.isBookmarked ?? false
 

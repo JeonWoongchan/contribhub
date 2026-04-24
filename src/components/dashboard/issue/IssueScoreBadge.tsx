@@ -1,10 +1,9 @@
 import { Zap } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import type { ScoredIssue } from '@/types/issue'
 
 type IssueScoreBadgeProps = {
-  score: ScoredIssue['score']
+  score: number
   className?: string
 }
 

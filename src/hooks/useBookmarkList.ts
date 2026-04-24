@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import type { Bookmark } from '@/types/bookmark'
+import type { IssueCardItem } from '@/types/issue'
 
 type BookmarkPageInfo = {
   limit: number
@@ -14,7 +14,7 @@ type BookmarkListResponse =
   | {
       ok: true
       data: {
-        bookmarks: Bookmark[]
+        issues: IssueCardItem[]
         pageInfo: BookmarkPageInfo
       }
     }
@@ -30,7 +30,7 @@ type BookmarkListState =
   | { status: 'error'; message: string }
   | {
       status: 'done'
-      bookmarks: Bookmark[]
+      issues: IssueCardItem[]
       pageInfo: BookmarkPageInfo
     }
 
@@ -64,7 +64,7 @@ export function useBookmarkList(): BookmarkListResult {
 
         setState({
           status: 'done',
-          bookmarks: json.data.bookmarks,
+          issues: json.data.issues,
           pageInfo: json.data.pageInfo,
         })
       } catch (error) {

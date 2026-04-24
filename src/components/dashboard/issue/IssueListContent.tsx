@@ -1,13 +1,13 @@
 import { IssueCard } from './IssueCard'
 import { IssueListPartialNotice } from './IssueListPartialNotice'
-import type { ScoredIssue } from '@/types/issue'
+import type { IssueCardItem } from '@/types/issue'
 
 type IssueListContentProps = {
-  issues: ScoredIssue[]
+  issues: IssueCardItem[]
   partial: boolean
   failedCount: number
   pendingBookmarkKeys: string[]
-  onToggleBookmark: (issue: ScoredIssue) => Promise<void>
+  onToggleBookmark: (issue: IssueCardItem) => Promise<void>
 }
 
 export function IssueListContent({

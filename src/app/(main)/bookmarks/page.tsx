@@ -6,7 +6,7 @@ export default function BookmarksPage() {
   return (
     <MainSectionShell
       title="북마크"
-      description="저장한 이슈를 다시 보고 진행 상태와 PR 링크를 관리할 수 있습니다."
+      description="관심 있는 이슈를 다시 볼 수 있어요"
       actions={<Link href="/dashboard">추천 이슈 보러가기</Link>}
       // topAside={<BookmarkHelpDialog />}
     >

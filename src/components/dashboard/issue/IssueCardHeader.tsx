@@ -1,13 +1,13 @@
-import {Bookmark, ExternalLink} from 'lucide-react'
+import { Bookmark, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { IssueScoreBadge } from './IssueScoreBadge'
-import type { ScoredIssue } from '@/types/issue'
+import type { IssueCardItem } from '@/types/issue'
 
 type IssueCardHeaderProps = {
-  issue: ScoredIssue
+  issue: IssueCardItem
   isBookmarkPending: boolean
-  onToggleBookmark: (issue: ScoredIssue) => Promise<void>
+  onToggleBookmark: (issue: IssueCardItem) => Promise<void>
 }
 
 export function IssueCardHeader({
@@ -37,7 +37,7 @@ export function IssueCardHeader({
           >
             <Bookmark className={cn('size-5 transition-colors', issue.isBookmarked ? 'fill-current' : null)} />
           </Button>
-          <IssueScoreBadge score={issue.score} />
+          {issue.score !== null ? <IssueScoreBadge score={issue.score} /> : null}
         </div>
       </div>
 

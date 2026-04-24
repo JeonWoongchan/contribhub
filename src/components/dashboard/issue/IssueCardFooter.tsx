@@ -5,14 +5,14 @@ import { cn } from '@/lib/utils'
 import { IssueCardTags } from './IssueCardTags'
 import { IssueMetrics } from './IssueMetrics'
 import { RepoHealthBadge } from './RepoHealthBadge'
-import type { ScoredIssue } from '@/types/issue'
+import type { IssueCardItem } from '@/types/issue'
 
 type IssueCardFooterProps = {
-  issue: ScoredIssue
+  issue: IssueCardItem
 }
 
 export function IssueCardFooter({ issue }: IssueCardFooterProps) {
-  const competition = getCompetitionMeta(issue.competitionLevel)
+  const competition = issue.competitionLevel ? getCompetitionMeta(issue.competitionLevel) : null
 
   return (
     <div className="mt-auto flex flex-col gap-3 text-xs text-muted-foreground">
@@ -26,9 +26,11 @@ export function IssueCardFooter({ issue }: IssueCardFooterProps) {
 
       <div className="flex flex-wrap items-center gap-2">
         <RepoHealthBadge score={issue.healthScore} />
-        <Badge variant="outline" className={cn('rounded-md', competition.className)}>
-          {competition.label}
-        </Badge>
+        {competition ? (
+          <Badge variant="outline" className={cn('rounded-md', competition.className)}>
+            {competition.label}
+          </Badge>
+        ) : null}
         <span className="text-interactive-action-hover">{formatTimeAgo(issue.updatedAt)}</span>
       </div>
     </div>
