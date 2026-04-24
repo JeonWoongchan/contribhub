@@ -1,12 +1,12 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 
-type IssueListErrorProps = {
+type CardListErrorProps = {
   message: string
   onRetry: () => void
 }
 
-export function IssueListError({ message, onRetry }: IssueListErrorProps) {
+export function CardListError({ message, onRetry }: CardListErrorProps) {
   return (
     <Card className="border border-status-danger-border bg-status-danger py-8 text-center">
       <CardContent className="flex flex-col items-center gap-3">

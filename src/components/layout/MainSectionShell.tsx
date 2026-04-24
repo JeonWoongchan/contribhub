@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Separator } from '@/components/ui/separator'
+import {Button} from "@/components/ui/button";
 
 type MainSectionShellProps = {
   title: string
@@ -27,7 +28,14 @@ export function MainSectionShell({
         </div>
         {actions ? (
           <div className="flex flex-col items-start gap-3 sm:self-stretch sm:items-end sm:justify-between">
-            {actions}
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="w-fit border-interactive-selected-border text-interactive-action-hover hover:bg-interactive-hover"
+            >
+              {actions}
+            </Button>
           </div>
         ) : null}
       </div>

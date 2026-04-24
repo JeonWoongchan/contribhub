@@ -1,11 +1,17 @@
 import { Card, CardContent } from '@/components/ui/card'
 
-const SKELETON_COUNT = 6
+type CardListSkeletonProps = {
+  count?: number
+}
 
-export function IssueListSkeleton() {
+const DEFAULT_COUNT = 4
+
+export function CardListSkeleton({
+  count = DEFAULT_COUNT,
+}: CardListSkeletonProps) {
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      {Array.from({ length: SKELETON_COUNT }).map((_, index) => (
+      {Array.from({ length: count }).map((_, index) => (
         <Card key={index} size="sm" className="border border-border py-4">
           <CardContent className="animate-pulse space-y-3">
             <div className="flex items-center justify-between gap-3">
