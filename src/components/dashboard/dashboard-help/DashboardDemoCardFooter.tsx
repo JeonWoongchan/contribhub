@@ -1,4 +1,4 @@
-import { ExternalLink } from 'lucide-react'
+import { HelpHotspot } from '@/components/help/HelpHotspot'
 import { IssueMetrics } from '@/components/dashboard/issue/IssueMetrics'
 import { RepoHealthBadge } from '@/components/dashboard/issue/RepoHealthBadge'
 import { IssueCardTags } from '@/components/dashboard/issue/IssueCardTags'
@@ -7,7 +7,6 @@ import { DASHBOARD_HELP_DEMO_ISSUE } from '@/constants/dashboard-help'
 import { formatTimeAgo } from '@/lib/format/time-ago'
 import { getCompetitionMeta } from '@/lib/github/issue-badge-meta'
 import { cn } from '@/lib/utils'
-import { DashboardHelpHotspot } from './DashboardHelpHotspot'
 import type { DashboardHelpGuideInteractionProps } from '@/types/dashboard'
 
 const competition = getCompetitionMeta(DASHBOARD_HELP_DEMO_ISSUE.competitionLevel)
@@ -16,7 +15,7 @@ type DemoCardFooterProps = DashboardHelpGuideInteractionProps & {
   demoUpdatedAt: string
 }
 
-export function DemoCardFooter({
+export function DashboardDemoCardFooter({
   activeGuideId,
   demoUpdatedAt,
   onActivateGuide,
@@ -24,7 +23,7 @@ export function DemoCardFooter({
 }: DemoCardFooterProps) {
   return (
     <div className="mt-auto flex flex-col gap-3 text-xs text-muted-foreground">
-      <DashboardHelpHotspot
+      <HelpHotspot
         guideId="stack"
         activeGuideId={activeGuideId}
         onActivateGuide={onActivateGuide}
@@ -36,9 +35,9 @@ export function DemoCardFooter({
           labels={DASHBOARD_HELP_DEMO_ISSUE.labels}
           language={DASHBOARD_HELP_DEMO_ISSUE.language}
         />
-      </DashboardHelpHotspot>
+      </HelpHotspot>
 
-      <DashboardHelpHotspot
+      <HelpHotspot
         guideId="metrics"
         activeGuideId={activeGuideId}
         onActivateGuide={onActivateGuide}
@@ -49,10 +48,10 @@ export function DemoCardFooter({
           commentCount={DASHBOARD_HELP_DEMO_ISSUE.commentCount}
           stargazerCount={DASHBOARD_HELP_DEMO_ISSUE.stargazerCount}
         />
-      </DashboardHelpHotspot>
+      </HelpHotspot>
 
       <div className="flex flex-wrap items-center gap-2">
-        <DashboardHelpHotspot
+        <HelpHotspot
           guideId="health"
           activeGuideId={activeGuideId}
           onActivateGuide={onActivateGuide}
@@ -60,9 +59,9 @@ export function DemoCardFooter({
           className="rounded-xl"
         >
           <RepoHealthBadge score={DASHBOARD_HELP_DEMO_ISSUE.healthScore} />
-        </DashboardHelpHotspot>
+        </HelpHotspot>
 
-        <DashboardHelpHotspot
+        <HelpHotspot
           guideId="competition"
           activeGuideId={activeGuideId}
           onActivateGuide={onActivateGuide}
@@ -72,10 +71,9 @@ export function DemoCardFooter({
           <Badge variant="outline" className={cn('rounded-md', competition.className)}>
             {competition.label}
           </Badge>
-        </DashboardHelpHotspot>
+        </HelpHotspot>
 
         <span className="text-interactive-action-hover">{formatTimeAgo(demoUpdatedAt)}</span>
-        <ExternalLink className="ml-auto h-3 w-3 text-interactive-action opacity-70" />
       </div>
     </div>
   )

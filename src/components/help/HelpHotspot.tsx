@@ -1,22 +1,21 @@
 import type { ReactNode } from 'react'
-import type { DashboardHelpGuideId } from '@/constants/dashboard-help'
 import { cn } from '@/lib/utils'
-import type { DashboardHelpGuideInteractionProps } from '@/types/dashboard'
+import type { HelpGuideInteractionProps } from '@/types/help'
 
-type DashboardHelpHotspotProps = DashboardHelpGuideInteractionProps & {
-  guideId: DashboardHelpGuideId
+type HelpHotspotProps<TGuideId extends string> = HelpGuideInteractionProps<TGuideId> & {
+  guideId: TGuideId
   className?: string
   children: ReactNode
 }
 
-export function DashboardHelpHotspot({
+export function HelpHotspot<TGuideId extends string>({
   guideId,
   activeGuideId,
   onActivateGuide,
   onClearGuide,
   className,
   children,
-}: DashboardHelpHotspotProps) {
+}: HelpHotspotProps<TGuideId>) {
   const isActive = guideId === activeGuideId
 
   return (

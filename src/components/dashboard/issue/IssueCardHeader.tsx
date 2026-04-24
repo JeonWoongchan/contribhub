@@ -1,4 +1,4 @@
-import { Bookmark, ExternalLink } from 'lucide-react'
+import { Bookmark } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { IssueScoreBadge } from './IssueScoreBadge'
@@ -50,7 +50,6 @@ export function IssueCardHeader({
         >
           <h3 className="group flex items-center gap-1 line-clamp-2 text-sm font-medium leading-snug text-card-foreground transition-colors hover:text-interactive-action-hover">
             {issue.title}
-            <ExternalLink className="ml-auto h-3 w-3 shrink-0 text-interactive-action opacity-0 transition-opacity group-hover:opacity-100" />
           </h3>
         </a>
       </div>

@@ -1,9 +1,9 @@
+import { HelpHotspot } from '@/components/help/HelpHotspot'
 import { IssueScoreBadge } from '@/components/dashboard/issue/IssueScoreBadge'
 import { DASHBOARD_HELP_DEMO_ISSUE } from '@/constants/dashboard-help'
-import { DashboardHelpHotspot } from './DashboardHelpHotspot'
 import type { DashboardHelpGuideInteractionProps } from '@/types/dashboard'
 
-export function DemoCardHeader({
+export function DashboardDemoCardHeader({
   activeGuideId,
   onActivateGuide,
   onClearGuide,
@@ -14,7 +14,7 @@ export function DemoCardHeader({
         <span className="truncate text-xs text-muted-foreground">
           {DASHBOARD_HELP_DEMO_ISSUE.repoFullName}
         </span>
-        <DashboardHelpHotspot
+        <HelpHotspot
           guideId="score"
           activeGuideId={activeGuideId}
           onActivateGuide={onActivateGuide}
@@ -22,7 +22,7 @@ export function DemoCardHeader({
           className="rounded-lg"
         >
           <IssueScoreBadge score={DASHBOARD_HELP_DEMO_ISSUE.score} />
-        </DashboardHelpHotspot>
+        </HelpHotspot>
       </div>
 
       <h3 className="line-clamp-2 text-sm font-medium leading-snug text-card-foreground">
