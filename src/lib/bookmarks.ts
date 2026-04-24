@@ -10,6 +10,12 @@ type CreateBookmarkInput = {
   contributionType: ContributionType | null
 }
 
+type ListUserBookmarksOptions = {
+  limit?: number
+  offset?: number
+}
+
+// 사용자 북마크 키 목록 조회 함수
 export async function listUserBookmarkKeys(githubUserId: string): Promise<string[]> {
   const rows = await sql`
     SELECT b.repo_full_name, b.issue_number
@@ -21,7 +27,14 @@ export async function listUserBookmarkKeys(githubUserId: string): Promise<string
   return rows.map((row) => `${row.repo_full_name}#${row.issue_number}`)
 }
 
-export async function listUserBookmarks(githubUserId: string): Promise<Bookmark[]> {
+// 사용자 북마크 목록 조회 함수
+export async function listUserBookmarks(
+  githubUserId: string,
+  options?: ListUserBookmarksOptions
+): Promise<Bookmark[]> {
+  const limit = options?.limit ?? 20
+  const offset = options?.offset ?? 0
+
   const rows = await sql`
     SELECT
       b.id,
@@ -38,6 +51,8 @@ export async function listUserBookmarks(githubUserId: string): Promise<Bookmark[
     JOIN users u ON u.id = b.user_id
     WHERE u.github_id = ${githubUserId}
     ORDER BY b.created_at DESC
+    LIMIT ${limit}
+    OFFSET ${offset}
   `
 
   return rows.map((row) => ({
@@ -51,9 +66,23 @@ export async function listUserBookmarks(githubUserId: string): Promise<Bookmark[
     prUrl: row.pr_url,
     createdAt: row.created_at?.toISOString?.() ?? String(row.created_at),
     updatedAt: row.updated_at?.toISOString?.() ?? String(row.updated_at),
+    githubIssue: null,
   }))
 }
 
+// 사용자 북마크 개수 조회 함수
+export async function countUserBookmarks(githubUserId: string): Promise<number> {
+  const rows = await sql`
+    SELECT COUNT(*)::int AS count
+    FROM bookmarks b
+    JOIN users u ON u.id = b.user_id
+    WHERE u.github_id = ${githubUserId}
+  `
+
+  return rows[0]?.count ?? 0
+}
+
+// 북마크 저장 함수
 export async function createBookmark(githubUserId: string, input: CreateBookmarkInput): Promise<void> {
   await sql`
     INSERT INTO bookmarks (
@@ -85,6 +114,7 @@ export async function createBookmark(githubUserId: string, input: CreateBookmark
   `
 }
 
+// 북마크 삭제 함수
 export async function deleteBookmark(
   githubUserId: string,
   repoFullName: string,

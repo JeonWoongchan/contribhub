@@ -12,7 +12,7 @@ export function IssueList() {
     sourceIssues: issueListState.status === 'done' ? issueListState.issues : [],
     isSourceIssuesReady: issueListState.status === 'done',
   })
-
+  console.log(issueListState)
   return (
     <DataListState
       status={issueListState.status}
