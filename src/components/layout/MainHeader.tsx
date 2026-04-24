@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { Bookmark } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { signOut } from '@/lib/auth'
 
@@ -24,7 +25,7 @@ export function MainHeader({ image, name }: MainHeaderProps) {
           Open Issue Map
         </Link>
         <div className="flex items-center gap-3">
-          {image && (
+          {image ? (
             <div className="overflow-hidden rounded-full ring-1 ring-interactive-selected-border">
               <Image
                 src={image}
@@ -34,8 +35,21 @@ export function MainHeader({ image, name }: MainHeaderProps) {
                 className="h-7 w-7 bg-interactive-selected object-cover"
               />
             </div>
-          )}
-          <span className="text-sm text-muted-foreground">{name ?? '사용자'}</span>
+          ) : null}
+          <span className="max-w-32 truncate text-sm text-muted-foreground sm:max-w-none">
+            {name ?? '사용자'}
+          </span>
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className="text-xs text-muted-foreground hover:bg-interactive-hover hover:text-interactive-action-hover"
+          >
+            <Link href="/bookmarks">
+              <Bookmark />
+              북마크
+            </Link>
+          </Button>
           <form action={logoutAction}>
             <Button
               variant="ghost"

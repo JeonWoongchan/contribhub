@@ -1,38 +1,35 @@
-import { Card, CardContent } from '@/components/ui/card'
 import { IssueCard } from './IssueCard'
 import { IssueListPartialNotice } from './IssueListPartialNotice'
-import type { ScoredIssue } from '@/types/issue'
+import type { IssueCardItem } from '@/types/issue'
 
 type IssueListContentProps = {
-  issues: ScoredIssue[]
+  issues: IssueCardItem[]
   partial: boolean
   failedCount: number
+  pendingBookmarkKeys: string[]
+  onToggleBookmark: (issue: IssueCardItem) => Promise<void>
 }
 
 export function IssueListContent({
   issues,
   partial,
   failedCount,
+  pendingBookmarkKeys,
+  onToggleBookmark,
 }: IssueListContentProps) {
   return (
     <div className="flex flex-col gap-4">
       {partial ? <IssueListPartialNotice failedCount={failedCount} /> : null}
-
-      {issues.length === 0 ? (
-        <Card className="border border-border py-12 text-center">
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              추천할 이슈가 없어요. 프로필 설정을 확인하거나 잠시 후 다시 시도해 주세요.
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {issues.map((issue) => (
-            <IssueCard key={issue.url} issue={issue} />
-          ))}
-        </div>
-      )}
+      <div className="grid gap-4 sm:grid-cols-2">
+        {issues.map((issue) => (
+          <IssueCard
+            key={issue.url}
+            issue={issue}
+            isBookmarkPending={pendingBookmarkKeys.includes(`${issue.repoFullName}#${issue.number}`)}
+            onToggleBookmark={onToggleBookmark}
+          />
+        ))}
+      </div>
     </div>
   )
 }

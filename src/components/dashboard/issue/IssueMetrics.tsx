@@ -1,9 +1,9 @@
 import { MessageCircle, Star } from 'lucide-react'
-import type { ScoredIssue } from '@/types/issue'
+import type { IssueCardItem } from '@/types/issue'
 
 type IssueMetricsProps = {
-  commentCount: ScoredIssue['commentCount']
-  stargazerCount: ScoredIssue['stargazerCount']
+  commentCount: IssueCardItem['commentCount']
+  stargazerCount: IssueCardItem['stargazerCount']
 }
 
 export function IssueMetrics({ commentCount, stargazerCount }: IssueMetricsProps) {

@@ -1,7 +1,4 @@
 import type { DashboardHelpGuideId } from '@/constants/dashboard-help'
+import type { HelpGuideInteractionProps } from '@/types/help'
 
-export type DashboardHelpGuideInteractionProps = {
-  activeGuideId: DashboardHelpGuideId | null
-  onActivateGuide: (guideId: DashboardHelpGuideId) => void
-  onClearGuide: () => void
-}
+export type DashboardHelpGuideInteractionProps = HelpGuideInteractionProps<DashboardHelpGuideId>

@@ -2,35 +2,34 @@ import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { IssueCardFooter } from './IssueCardFooter'
 import { IssueCardHeader } from './IssueCardHeader'
-import type { ScoredIssue } from '@/types/issue'
+import type { IssueCardItem } from '@/types/issue'
 
 type IssueCardProps = {
-  issue: ScoredIssue
+  issue: IssueCardItem
+  isBookmarkPending: boolean
+  onToggleBookmark: (issue: IssueCardItem) => Promise<void>
 }
 
-export function IssueCard({ issue }: IssueCardProps) {
+export function IssueCard({
+  issue,
+  isBookmarkPending,
+  onToggleBookmark,
+}: IssueCardProps) {
   return (
-    <a
-      href={issue.url}
-      target="_blank"
-      rel="noopener noreferrer"
+    <Card
+      size="sm"
       className={cn(
-        'group block outline-none transition-transform duration-150 hover:-translate-y-0.5',
-        'focus-visible:rounded-xl focus-visible:ring-2 focus-visible:ring-interactive-selected-ring/60'
+        'group h-full border border-border py-4 transition-all',
       )}
     >
-      <Card
-        size="sm"
-        className={cn(
-          'h-full border border-border py-4 transition-all',
-          'group-hover:border-interactive-selected-border group-hover:shadow-[0_0_0_1px_var(--color-interactive-selected-border)]'
-        )}
-      >
-        <CardContent className="flex h-full flex-col gap-4">
-          <IssueCardHeader issue={issue} />
-          <IssueCardFooter issue={issue} />
-        </CardContent>
-      </Card>
-    </a>
+      <CardContent className="flex h-full flex-col gap-4">
+        <IssueCardHeader
+          issue={issue}
+          isBookmarkPending={isBookmarkPending}
+          onToggleBookmark={onToggleBookmark}
+        />
+        <IssueCardFooter issue={issue} />
+      </CardContent>
+    </Card>
   )
 }
