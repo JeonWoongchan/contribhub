@@ -2,17 +2,15 @@ import { Card, CardContent } from '@/components/ui/card'
 
 type CardListSkeletonProps = {
   count?: number
-  columns?: 'one' | 'two'
 }
 
 const DEFAULT_COUNT = 4
 
 export function CardListSkeleton({
   count = DEFAULT_COUNT,
-  columns = 'two',
 }: CardListSkeletonProps) {
   return (
-    <div className={columns === 'two' ? 'grid gap-4 sm:grid-cols-2' : 'grid gap-4'}>
+    <div className={'grid gap-4 sm:grid-cols-2'}>
       {Array.from({ length: count }).map((_, index) => (
         <Card key={index} size="sm" className="border border-border py-4">
           <CardContent className="animate-pulse space-y-3">
