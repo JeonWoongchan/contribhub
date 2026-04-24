@@ -4,7 +4,7 @@ import type { IssueCardItem } from '@/types/issue'
 export const BOOKMARK_HELP_GUIDE_ITEMS = [
   {
     id: 'missing-github',
-    title: '이렇게 보이면 GitHub 조회 결과가 없어요',
+    title: '북마크 이슈에 해당하는 GitHub 조회 결과가 없어요',
     description:
       '언어, 라벨, 댓글 수, 저장소 상태 같은 메타데이터가 비어 있으면 북마크 DB 정보만 남아 있는 상태예요.',
   },

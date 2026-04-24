@@ -8,7 +8,7 @@ type HelpTriggerProps = {
 
 export function HelpTrigger({
   onOpen,
-  label = '카드 읽는 법',
+  label = '도움말',
 }: HelpTriggerProps) {
   return (
     <Button

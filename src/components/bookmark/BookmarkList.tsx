@@ -11,6 +11,8 @@ export function BookmarkList() {
   const { optimisticIssues, pendingBookmarkKeys, toggleBookmark } = useIssueBookmarks({
     sourceIssues: bookmarkListState.status === 'done' ? bookmarkListState.issues : [],
     isSourceIssuesReady: bookmarkListState.status === 'done',
+    removeOnUnbookmark: true,
+    onMutationSuccessAction: bookmarkListState.refetch,
   })
 
   return (

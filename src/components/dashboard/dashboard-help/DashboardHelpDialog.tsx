@@ -13,8 +13,8 @@ export function DashboardHelpDialog() {
     <HelpDialogFrame<DashboardHelpGuideId>
       demoUpdatedOffsetMs={DASHBOARD_HELP_DEMO_UPDATED_OFFSET_MS}
       guideItems={DASHBOARD_HELP_GUIDE_ITEMS}
-      eyebrow="카드 읽는 법"
-      title="이슈 카드를 이렇게 읽어보세요"
+      eyebrow="도움말"
+      title="Q. 이슈 카드의 요소들은 무엇을 의미하나요?"
       titleId="dashboard-help-title"
       descriptionId="dashboard-help-description"
       renderDemoCard={(props) => <DashboardDemoCard {...props} />}

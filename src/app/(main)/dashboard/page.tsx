@@ -8,7 +8,7 @@ export default function DashboardPage() {
     <MainSectionShell
       title="추천 이슈"
       description="관심사와 현재 수준을 기준으로 시작하기 좋은 이슈를 모아봤습니다."
-      actions={<Link href="/onboarding">추천 설정 다시하기</Link>}
+      actions={<Link href="/onboarding">온보딩 다시하기</Link>}
       topAside={<DashboardHelpDialog />}
     >
       <IssueList />

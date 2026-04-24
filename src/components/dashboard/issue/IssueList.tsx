@@ -23,7 +23,7 @@ export function IssueList() {
       emptyTitle="추천할 이슈가 없습니다"
       emptyDescription="프로필 설정이나 GitHub 조회 결과에 따라 지금은 보여드릴 추천 이슈가 없습니다."
       emptyDetail="온보딩 설정을 다시 확인하거나 잠시 후 다시 시도해 주세요."
-      emptyAction={<Link href="/onboarding">추천 설정 다시하기</Link>}
+      emptyAction={<Link href="/onboarding">온보딩 다시하기</Link>}
       renderContent={(loadedIssues) => (
         <IssueListContent
           issues={loadedIssues}

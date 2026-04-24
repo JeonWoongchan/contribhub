@@ -13,8 +13,8 @@ export function BookmarkHelpDialog() {
     <HelpDialogFrame<BookmarkHelpGuideId>
       demoUpdatedOffsetMs={BOOKMARK_HELP_DEMO_UPDATED_OFFSET_MS}
       guideItems={BOOKMARK_HELP_GUIDE_ITEMS}
-      eyebrow="북마크 읽는 법"
-      title="북마크 카드를 이렇게 읽어보세요"
+      eyebrow="도움말"
+      title="Q. 북마크 이슈 카드에 데이터가 뜨지 않아요."
       titleId="bookmark-help-title"
       descriptionId="bookmark-help-description"
       renderDemoCard={(props) => <BookmarkDemoCard {...props} />}
