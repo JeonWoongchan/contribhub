@@ -1,4 +1,3 @@
-import { ExternalLink } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { formatTimeAgo } from '@/lib/format/time-ago'
 import { getCompetitionMeta } from '@/lib/github/issue-badge-meta'
@@ -31,7 +30,6 @@ export function IssueCardFooter({ issue }: IssueCardFooterProps) {
           {competition.label}
         </Badge>
         <span className="text-interactive-action-hover">{formatTimeAgo(issue.updatedAt)}</span>
-        <ExternalLink className="ml-auto h-3 w-3 text-interactive-action opacity-0 transition-opacity group-hover:opacity-70" />
       </div>
     </div>
   )

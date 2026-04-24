@@ -42,7 +42,6 @@ export interface ScoredIssue {
   contributionType: ContributionType | null
   competitionLevel: CompetitionLevel
   hasPR: boolean
-
-  // 레포 활성도 (Phase 5에서 채워짐)
+  isBookmarked?: boolean
   healthScore: number | null
 }

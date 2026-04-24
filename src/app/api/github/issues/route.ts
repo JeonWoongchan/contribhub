@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 
 import { err, ErrorCode, ok } from '@/lib/api-response'
 import { requireGithubToken } from '@/lib/auth-utils'
+import { listUserBookmarkKeys } from '@/lib/bookmarks'
 import { getRepoHealthMap } from '@/lib/github/issues/health'
 import { rankIssues } from '@/lib/github/issues/ranking'
 import { fetchCandidateIssues } from '@/lib/github/issues/search'
@@ -27,7 +28,11 @@ export async function GET(req: NextRequest) {
 
   const repoNames = [...new Set(searchResult.issues.map((issue) => issue.repository.nameWithOwner))]
   const healthMap = await getRepoHealthMap(repoNames, auth.accessToken)
-  const issues = rankIssues(searchResult.issues, profile, healthMap)
+  const bookmarkKeys = new Set(await listUserBookmarkKeys(auth.userId))
+  const issues = rankIssues(searchResult.issues, profile, healthMap).map((issue) => ({
+    ...issue,
+    isBookmarked: bookmarkKeys.has(`${issue.repoFullName}#${issue.number}`),
+  }))
 
   return ok({
     issues,

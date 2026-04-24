@@ -13,7 +13,7 @@ export function IssueList() {
       status={state.status}
       items={state.status === 'done' ? state.issues : []}
       errorMessage={state.status === 'error' ? state.message : undefined}
-      onRetry={state.status === 'error' ? state.refetch : undefined}
+      onRetry={state.refetch}
       skeletonCount={6}
       emptyTitle="추천할 이슈가 없습니다"
       emptyDescription="프로필 설정이나 GitHub 조회 결과에 따라 지금은 보여드릴 추천 이슈가 없습니다."
@@ -23,7 +23,9 @@ export function IssueList() {
         <IssueListContent
           failedCount={state.status === 'done' ? state.failedCount : 0}
           issues={issues}
+          onToggleBookmark={state.toggleBookmark}
           partial={state.status === 'done' ? state.partial : false}
+          pendingBookmarkKeys={state.pendingBookmarkKeys}
         />
       )}
     />
