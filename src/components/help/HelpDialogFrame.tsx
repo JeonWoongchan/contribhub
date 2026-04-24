@@ -15,7 +15,7 @@ type HelpDialogFrameProps<TGuideId extends string> = {
   titleId: string
   descriptionId: string
   triggerLabel?: string
-  renderDemoCard: (props: {
+  renderDemoCardAction: (props: {
     activeGuideId: TGuideId | null
     demoUpdatedAt: string
     onActivateGuide: (guideId: TGuideId) => void
@@ -31,7 +31,7 @@ export function HelpDialogFrame<TGuideId extends string>({
   titleId,
   descriptionId,
   triggerLabel,
-  renderDemoCard,
+  renderDemoCardAction,
 }: HelpDialogFrameProps<TGuideId>) {
   const {
     isOpen,
@@ -70,7 +70,7 @@ export function HelpDialogFrame<TGuideId extends string>({
             />
 
             <div className="grid gap-6 px-5 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-              {renderDemoCard({
+              {renderDemoCardAction({
                 activeGuideId,
                 demoUpdatedAt,
                 onActivateGuide: activateGuide,

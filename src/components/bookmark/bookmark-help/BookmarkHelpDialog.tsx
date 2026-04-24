@@ -14,10 +14,10 @@ export function BookmarkHelpDialog() {
       demoUpdatedOffsetMs={BOOKMARK_HELP_DEMO_UPDATED_OFFSET_MS}
       guideItems={BOOKMARK_HELP_GUIDE_ITEMS}
       eyebrow="도움말"
-      title="Q. 북마크 이슈 카드에 데이터가 뜨지 않아요."
+      title="Q. 북마크 이슈 카드의 데이터가 왜 비어 있나요?"
       titleId="bookmark-help-title"
       descriptionId="bookmark-help-description"
-      renderDemoCard={(props) => <BookmarkDemoCard {...props} />}
+      renderDemoCardAction={(props) => <BookmarkDemoCard {...props} />}
     />
   )
 }
