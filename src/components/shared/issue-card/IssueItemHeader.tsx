@@ -1,26 +1,26 @@
 import { Bookmark } from 'lucide-react'
+import { CardHeaderLayout } from '@/components/shared/card/CardHeaderLayout'
+import { CardTitleLink } from '@/components/shared/card/CardTitleLink'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { IssueScoreBadge } from './IssueScoreBadge'
 import type { IssueCardItem } from '@/types/issue'
 
-type IssueCardHeaderProps = {
+type IssueItemHeaderProps = {
   issue: IssueCardItem
   isBookmarkPending: boolean
   onToggleBookmark: (issue: IssueCardItem) => Promise<void>
 }
 
-export function IssueCardHeader({
+export function IssueItemHeader({
   issue,
   isBookmarkPending,
   onToggleBookmark,
-}: IssueCardHeaderProps) {
+}: IssueItemHeaderProps) {
   return (
-    <>
-      <div className="flex items-start justify-between gap-3">
-        <span className="truncate text-xs text-muted-foreground">
-          {issue.repoFullName}
-        </span>
+    <CardHeaderLayout
+      topLeft={<span className="truncate text-xs text-muted-foreground">{issue.repoFullName}</span>}
+      topRight={
         <div className="flex items-center gap-1">
           <Button
             type="button"
@@ -39,20 +39,8 @@ export function IssueCardHeader({
           </Button>
           {issue.score !== null ? <IssueScoreBadge score={issue.score} /> : null}
         </div>
-      </div>
-
-      <div className="flex items-start justify-between gap-3">
-        <a
-          href={issue.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="min-w-0 outline-none"
-        >
-          <h3 className="group flex items-center gap-1 line-clamp-2 text-sm font-medium leading-snug text-card-foreground transition-colors hover:text-interactive-action-hover">
-            {issue.title}
-          </h3>
-        </a>
-      </div>
-    </>
+      }
+      title={<CardTitleLink href={issue.url}>{issue.title}</CardTitleLink>}
+    />
   )
 }

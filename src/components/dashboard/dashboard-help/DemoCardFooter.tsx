@@ -1,7 +1,7 @@
 import { ExternalLink } from 'lucide-react'
-import { IssueMetrics } from '@/components/dashboard/issue/IssueMetrics'
-import { RepoHealthBadge } from '@/components/dashboard/issue/RepoHealthBadge'
-import { IssueCardTags } from '@/components/dashboard/issue/IssueCardTags'
+import { IssueMetricsRow } from '@/components/shared/issue-card/IssueMetricsRow'
+import { RepoHealthBadge } from '@/components/shared/issue-card/RepoHealthBadge'
+import { IssueTagList } from '@/components/shared/issue-card/IssueTagList'
 import { Badge } from '@/components/ui/badge'
 import { DASHBOARD_HELP_DEMO_ISSUE } from '@/constants/dashboard-help'
 import { formatTimeAgo } from '@/lib/format/time-ago'
@@ -31,7 +31,7 @@ export function DemoCardFooter({
         onClearGuide={onClearGuide}
         className="rounded-xl"
       >
-        <IssueCardTags
+        <IssueTagList
           difficultyLevel={DASHBOARD_HELP_DEMO_ISSUE.difficultyLevel}
           labels={DASHBOARD_HELP_DEMO_ISSUE.labels}
           language={DASHBOARD_HELP_DEMO_ISSUE.language}
@@ -45,7 +45,7 @@ export function DemoCardFooter({
         onClearGuide={onClearGuide}
         className="rounded-xl"
       >
-        <IssueMetrics
+        <IssueMetricsRow
           commentCount={DASHBOARD_HELP_DEMO_ISSUE.commentCount}
           stargazerCount={DASHBOARD_HELP_DEMO_ISSUE.stargazerCount}
         />

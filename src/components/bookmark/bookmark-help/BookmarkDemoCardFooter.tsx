@@ -1,5 +1,5 @@
 import { HelpHotspot } from '@/components/help/HelpHotspot'
-import { IssueMetrics } from '@/components/dashboard/issue/IssueMetrics'
+import { IssueMetricsRow } from '@/components/shared/issue-card/IssueMetricsRow'
 import type { BookmarkHelpGuideId } from '@/constants/bookmark-help'
 import { BOOKMARK_HELP_DEMO_ISSUE } from '@/constants/bookmark-help'
 import { formatTimeAgo } from '@/lib/format/time-ago'
@@ -46,7 +46,7 @@ export function BookmarkDemoCardFooter({
         onClearGuide={onClearGuide}
         className="rounded-lg"
       >
-        <IssueMetrics
+        <IssueMetricsRow
           commentCount={BOOKMARK_HELP_DEMO_ISSUE.commentCount}
           stargazerCount={BOOKMARK_HELP_DEMO_ISSUE.stargazerCount}
         />

@@ -3,17 +3,17 @@ import { IssueItemFooter } from '@/components/shared/issue-card/IssueItemFooter'
 import { IssueItemHeader } from '@/components/shared/issue-card/IssueItemHeader'
 import type { IssueCardItem } from '@/types/issue'
 
-type IssueCardProps = {
+type BookmarkCardProps = {
   issue: IssueCardItem
   isBookmarkPending: boolean
   onToggleBookmark: (issue: IssueCardItem) => Promise<void>
 }
 
-export function IssueCard({
+export function BookmarkCard({
   issue,
   isBookmarkPending,
   onToggleBookmark,
-}: IssueCardProps) {
+}: BookmarkCardProps) {
   return (
     <CardShell className="group transition-all" contentClassName="gap-4">
       <IssueItemHeader

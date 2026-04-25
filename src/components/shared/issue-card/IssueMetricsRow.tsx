@@ -1,14 +1,14 @@
 import { MessageCircle, Star } from 'lucide-react'
 import type { IssueCardItem } from '@/types/issue'
 
-type IssueMetricsProps = {
+type IssueMetricsRowProps = {
   commentCount: IssueCardItem['commentCount']
   stargazerCount: IssueCardItem['stargazerCount']
 }
 
-export function IssueMetrics({ commentCount, stargazerCount }: IssueMetricsProps) {
+export function IssueMetricsRow({ commentCount, stargazerCount }: IssueMetricsRowProps) {
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <>
       <span className="flex items-center gap-1">
         <Star className="h-3 w-3" />
         {stargazerCount.toLocaleString()}
@@ -17,6 +17,6 @@ export function IssueMetrics({ commentCount, stargazerCount }: IssueMetricsProps
         <MessageCircle className="h-3 w-3" />
         {commentCount}
       </span>
-    </div>
+    </>
   )
 }
