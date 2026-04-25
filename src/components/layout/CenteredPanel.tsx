@@ -9,10 +9,10 @@ type CenteredPanelProps = {
 
 export function CenteredPanel({ children, className, contentClassName }: CenteredPanelProps) {
   return (
-    <div className={cn('flex min-h-screen items-center justify-center bg-gray-50 px-4', className)}>
+    <div className={cn('flex min-h-screen items-center justify-center bg-muted px-4', className)}>
       <div
         className={cn(
-          'w-full max-w-lg rounded-2xl border border-gray-100 bg-white p-8 shadow-sm',
+          'w-full max-w-lg rounded-2xl border border-border bg-card p-8 shadow-sm',
           contentClassName
         )}
       >

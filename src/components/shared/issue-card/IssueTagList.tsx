@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/badge'
+import { CardTagsRow } from '@/components/shared/card/CardTagsRow'
 import { DIFFICULTY_LABELS_KO } from '@/lib/github/issue-badge-meta'
 import type { DifficultyLevel } from '@/types/issue'
 
@@ -10,7 +11,7 @@ type IssueTagListProps = {
 
 export function IssueTagList({ difficultyLevel, labels, language }: IssueTagListProps) {
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <CardTagsRow>
       {language && (
         <Badge
           variant="outline"
@@ -29,6 +30,6 @@ export function IssueTagList({ difficultyLevel, labels, language }: IssueTagList
           {label}
         </Badge>
       ))}
-    </div>
+    </CardTagsRow>
   )
 }

@@ -13,9 +13,9 @@ type PRCardHeaderProps = {
 
 // PR 상태별 표시 라벨 및 색상 정의
 const STATE_META: Record<string, { label: string; className: string }> = {
-  OPEN: { label: '진행 중', className: 'border-green-500/30 bg-green-500/10 text-green-700' },
-  MERGED: { label: '병합됨', className: 'border-purple-500/30 bg-purple-500/10 text-purple-700' },
-  CLOSED: { label: '닫힘', className: 'border-red-500/30 bg-red-500/10 text-red-700' },
+  OPEN: { label: '진행 중', className: 'border-brand-subtle-border bg-interactive-action text-interactive-action-foreground' },
+  MERGED: { label: '병합됨', className: 'border-status-success-border bg-status-success text-status-success-foreground' },
+  CLOSED: { label: '닫힘', className: 'border-status-danger-border bg-status-danger text-status-danger-foreground' },
 }
 
 export function PRCardHeader({ pr }: PRCardHeaderProps) {

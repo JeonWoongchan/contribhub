@@ -35,7 +35,7 @@ export function DataListState<T>({
   }
 
   if (status === 'error') {
-    return <CardListError message={errorMessage ?? '목록을 불러오지 못했습니다.'} onRetry={onRetry ?? (() => {})} />
+    return <CardListError message={errorMessage ?? '목록을 불러오지 못했습니다.'} onRetry={onRetry} />
   }
 
   if (items.length === 0) {
