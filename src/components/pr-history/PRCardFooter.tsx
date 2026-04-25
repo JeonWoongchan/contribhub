@@ -32,8 +32,8 @@ export function PRCardFooter({ pr }: PRCardFooterProps) {
       <CardMetricsRow>
         <span className="flex items-center gap-1">
           <FileCode className="size-3.5" />
-          <span className="text-green-600">+{pr.additions}</span>
-          <span className="text-red-600">-{pr.deletions}</span>
+          <span className="text-status-success-foreground">+{pr.additions}</span>
+          <span className="text-status-danger-foreground">-{pr.deletions}</span>
         </span>
         <span className="flex items-center gap-1">
           <MessageSquare className="size-3.5" />

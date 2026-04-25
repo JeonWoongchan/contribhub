@@ -1,4 +1,4 @@
-import { BookmarkCard } from './BookmarkCard'
+import { IssueCard } from '@/components/dashboard/issue/IssueCard'
 import type { IssueCardItem } from '@/types/issue'
 
 type BookmarkListContentProps = {
@@ -15,7 +15,7 @@ export function BookmarkListContent({
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       {issues.map((issue) => (
-        <BookmarkCard
+        <IssueCard
           key={issue.url}
           issue={issue}
           isBookmarkPending={pendingBookmarkKeys.includes(`${issue.repoFullName}#${issue.number}`)}
