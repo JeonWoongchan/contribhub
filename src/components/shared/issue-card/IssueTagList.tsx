@@ -2,13 +2,13 @@ import { Badge } from '@/components/ui/badge'
 import { DIFFICULTY_LABELS_KO } from '@/lib/github/issue-badge-meta'
 import type { DifficultyLevel } from '@/types/issue'
 
-type IssueCardTagsProps = {
+type IssueTagListProps = {
   difficultyLevel: DifficultyLevel | null
   labels: readonly string[]
   language: string | null
 }
 
-export function IssueCardTags({ difficultyLevel, labels, language }: IssueCardTagsProps) {
+export function IssueTagList({ difficultyLevel, labels, language }: IssueTagListProps) {
   return (
     <div className="flex flex-wrap gap-1.5">
       {language && (

@@ -1,6 +1,8 @@
 // PR 카드 헤더 — 레포지토리, 상태 배지, 제목 표시
 
 import { GitPullRequest } from 'lucide-react'
+import { CardHeaderLayout } from '@/components/shared/card/CardHeaderLayout'
+import { CardTitleLink } from '@/components/shared/card/CardTitleLink'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import type { PullRequestItem } from '@/types/pull-request'
@@ -20,9 +22,8 @@ export function PRCardHeader({ pr }: PRCardHeaderProps) {
   const stateMeta = STATE_META[pr.state]
 
   return (
-    <>
-      {/* 헤더: 레포지토리 + 상태 배지 */}
-      <div className="flex items-start justify-between gap-3">
+    <CardHeaderLayout
+      topLeft={
         <a
           href={pr.repoUrl}
           target="_blank"
@@ -31,20 +32,19 @@ export function PRCardHeader({ pr }: PRCardHeaderProps) {
         >
           {pr.repoFullName}
         </a>
-        {stateMeta && (
-          <Badge variant="outline" className={cn('shrink-0 rounded-md', stateMeta.className)}>
+      }
+      topRight={
+        stateMeta ? (
+          <Badge variant="outline" className={cn('rounded-md', stateMeta.className)}>
             {stateMeta.label}
           </Badge>
-        )}
-      </div>
-
-      {/* PR 제목 링크 */}
-      <a href={pr.url} target="_blank" rel="noopener noreferrer" className="min-w-0 outline-none">
-        <h3 className="flex items-center gap-1.5 text-sm font-medium leading-snug text-card-foreground transition-colors hover:text-interactive-action-hover line-clamp-2">
-          <GitPullRequest className="size-4 shrink-0" />
+        ) : null
+      }
+      title={
+        <CardTitleLink href={pr.url} icon={<GitPullRequest className="size-4 shrink-0" />}>
           {pr.title}
-        </h3>
-      </a>
-    </>
+        </CardTitleLink>
+      }
+    />
   )
 }

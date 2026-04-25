@@ -13,7 +13,7 @@ export function IssueScoreBadge({ score, className }: IssueScoreBadgeProps) {
       variant="outline"
       className={cn(
         'shrink-0 rounded-md border-transparent bg-interactive-action text-interactive-action-foreground',
-        className
+        className,
       )}
     >
       <Zap className="h-3 w-3" />

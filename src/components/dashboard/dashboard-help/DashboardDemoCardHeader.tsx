@@ -1,5 +1,5 @@
 import { HelpHotspot } from '@/components/help/HelpHotspot'
-import { IssueScoreBadge } from '@/components/dashboard/issue/IssueScoreBadge'
+import { IssueScoreBadge } from '@/components/shared/issue-card/IssueScoreBadge'
 import { DASHBOARD_HELP_DEMO_ISSUE } from '@/constants/dashboard-help'
 import type { DashboardHelpGuideInteractionProps } from '@/types/dashboard'
 

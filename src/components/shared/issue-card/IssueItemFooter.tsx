@@ -1,30 +1,33 @@
 import { Badge } from '@/components/ui/badge'
+import { CardMetricsRow } from '@/components/shared/card/CardMetricsRow'
 import { formatTimeAgo } from '@/lib/format/time-ago'
 import { getCompetitionMeta } from '@/lib/github/issue-badge-meta'
 import { cn } from '@/lib/utils'
-import { IssueCardTags } from './IssueCardTags'
-import { IssueMetrics } from './IssueMetrics'
+import { IssueMetricsRow } from './IssueMetricsRow'
+import { IssueTagList } from './IssueTagList'
 import { RepoHealthBadge } from './RepoHealthBadge'
 import type { IssueCardItem } from '@/types/issue'
 
-type IssueCardFooterProps = {
+type IssueItemFooterProps = {
   issue: IssueCardItem
 }
 
-export function IssueCardFooter({ issue }: IssueCardFooterProps) {
+export function IssueItemFooter({ issue }: IssueItemFooterProps) {
   const competition = issue.competitionLevel ? getCompetitionMeta(issue.competitionLevel) : null
 
   return (
     <div className="mt-auto flex flex-col gap-3 text-xs text-muted-foreground">
-      <IssueCardTags
+      <IssueTagList
         difficultyLevel={issue.difficultyLevel}
         labels={issue.labels}
         language={issue.language}
       />
 
-      <IssueMetrics commentCount={issue.commentCount} stargazerCount={issue.stargazerCount} />
+      <CardMetricsRow>
+        <IssueMetricsRow commentCount={issue.commentCount} stargazerCount={issue.stargazerCount} />
+      </CardMetricsRow>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <CardMetricsRow className="gap-2">
         <RepoHealthBadge score={issue.healthScore} />
         {competition ? (
           <Badge variant="outline" className={cn('rounded-md', competition.className)}>
@@ -32,7 +35,7 @@ export function IssueCardFooter({ issue }: IssueCardFooterProps) {
           </Badge>
         ) : null}
         <span className="text-interactive-action-hover">{formatTimeAgo(issue.updatedAt)}</span>
-      </div>
+      </CardMetricsRow>
     </div>
   )
 }

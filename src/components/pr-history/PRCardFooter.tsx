@@ -1,6 +1,8 @@
 // PR 카드 푸터 — 태그와 메트릭스 표시
 
 import { FileCode, MessageSquare, Star } from 'lucide-react'
+import { CardMetricsRow } from '@/components/shared/card/CardMetricsRow'
+import { CardTagsRow } from '@/components/shared/card/CardTagsRow'
 import { Badge } from '@/components/ui/badge'
 import { formatTimeAgo } from '@/lib/format/time-ago'
 import type { PullRequestItem } from '@/types/pull-request'
@@ -13,7 +15,7 @@ export function PRCardFooter({ pr }: PRCardFooterProps) {
   return (
     <div className="mt-auto flex flex-col gap-3">
       {/* 태그: 언어 + 라벨 */}
-      <div className="flex flex-wrap gap-1.5">
+      <CardTagsRow>
         {pr.language && (
           <Badge variant="secondary" className="rounded-md text-xs">
             {pr.language}
@@ -24,10 +26,10 @@ export function PRCardFooter({ pr }: PRCardFooterProps) {
             {label}
           </Badge>
         ))}
-      </div>
+      </CardTagsRow>
 
       {/* 메트릭스: 코드 변경, 댓글, 스타, 날짜 */}
-      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+      <CardMetricsRow>
         <span className="flex items-center gap-1">
           <FileCode className="size-3.5" />
           <span className="text-green-600">+{pr.additions}</span>
@@ -42,7 +44,7 @@ export function PRCardFooter({ pr }: PRCardFooterProps) {
           {pr.stargazerCount.toLocaleString()}
         </span>
         <span className="ml-auto text-interactive-action-hover">{formatTimeAgo(pr.createdAt)}</span>
-      </div>
+      </CardMetricsRow>
     </div>
   )
 }
