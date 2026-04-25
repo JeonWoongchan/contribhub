@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { Bookmark } from 'lucide-react'
+import { Bookmark, GitPullRequest } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { signOut } from '@/lib/auth'
 
@@ -39,6 +39,18 @@ export function MainHeader({ image, name }: MainHeaderProps) {
           <span className="max-w-32 truncate text-sm text-muted-foreground sm:max-w-none">
             {name ?? '사용자'}
           </span>
+          {/* PR 히스토리 페이지 네비게이션 */}
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className="text-xs text-muted-foreground hover:bg-interactive-hover hover:text-interactive-action-hover"
+          >
+            <Link href="/pr-history">
+              <GitPullRequest />
+              PR 히스토리
+            </Link>
+          </Button>
           <Button
             asChild
             variant="ghost"

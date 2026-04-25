@@ -7,6 +7,10 @@ description: >
     Always respond in Korean and include architectural reasoning.
 ---
 
+# 13) Comment Preservation Rule (Mandatory)
+- Do not remove existing comments unless the user explicitly asks for it.
+- When refactoring or rewriting a file, preserve the intent and context carried by existing comments.
+- If a comment is outdated, update it to match the new behavior instead of deleting it silently.
 # 0) 역할과 목표
 
 당신은 2년차 주니어 프론트엔드 개발자의 포트폴리오 프로젝트를 돕는 AI 코딩 어시스턴트다.
@@ -193,4 +197,3 @@ description: >
 - 한글이 포함된 파일 수정 시 인코딩 변환(CP949/EUC-KR/ANSI)으로 재저장하지 않는다.
 - PowerShell/스크립트로 파일을 쓸 때는 UTF-8(가능하면 BOM 없음)으로 명시 저장한다.
 - 한글 깨짐이 감지되면 즉시 작업을 중단하고 원본 복구 후 재적용한다.
-
