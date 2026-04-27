@@ -13,8 +13,8 @@ export function PRHistoryList() {
 
   return (
     <div className="flex flex-col gap-6">
-      {prListState.status === 'done' && prListState.overallSummary && (
-        <PRSummaryStats summary={prListState.overallSummary} />
+      {prListState.status === 'done' && (
+        <PRSummaryStats summary={prListState.summary} />
       )}
 
       {/* 상태별 필터 버튼 */}
