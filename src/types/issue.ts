@@ -14,6 +14,7 @@ export interface RawIssue {
   labels: { nodes: { name: string }[] }
   repository: {
     nameWithOwner: string
+    url: string
     primaryLanguage: { name: string } | null
     stargazerCount: number
   }
@@ -29,6 +30,7 @@ export interface ScoredIssue {
   title: string
   url: string
   repoFullName: string
+  repoUrl: string
   language: string | null
   stargazerCount: number
   labels: string[]
@@ -51,6 +53,7 @@ export interface IssueCardItem {
   title: string
   url: string
   repoFullName: string
+  repoUrl: string
   language: string | null
   stargazerCount: number
   labels: string[]

@@ -41,6 +41,7 @@ function buildBookmarkIssuesQuery(bookmarks: Bookmark[]): string {
               }
               repository {
                 nameWithOwner
+                url
                 primaryLanguage { name }
                 stargazerCount
               }

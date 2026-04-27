@@ -424,6 +424,7 @@ export function scoreIssue(
     title: raw.title,
     url: raw.url,
     repoFullName: raw.repository.nameWithOwner,
+    repoUrl: raw.repository.url,
     language,
     stargazerCount: raw.repository.stargazerCount,
     labels: labelNames,

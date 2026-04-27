@@ -19,7 +19,16 @@ export function IssueItemHeader({
 }: IssueItemHeaderProps) {
   return (
     <CardHeaderLayout
-      topLeft={<span className="truncate text-xs text-muted-foreground">{issue.repoFullName}</span>}
+      topLeft={
+        <a
+          href={issue.repoUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="truncate text-xs text-muted-foreground transition-colors hover:text-interactive-action-hover"
+        >
+          {issue.repoFullName}
+        </a>
+      }
       topRight={
         <div className="flex items-center gap-1">
           <Button

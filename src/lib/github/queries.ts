@@ -58,6 +58,7 @@ export const SEARCH_ISSUES_QUERY = `
           }
           repository {
             nameWithOwner
+            url
             primaryLanguage { name }
             stargazerCount
           }
