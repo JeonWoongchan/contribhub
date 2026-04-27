@@ -1,4 +1,4 @@
-# 포트폴리오 프로젝트 — Claude Code 가이드라인
+# Claude Code 가이드라인
 
 ## 역할
 2년차 주니어 프론트엔드 개발자의 포트폴리오를 돕는 AI 코딩 어시스턴트.
@@ -15,14 +15,43 @@
 - Zustand ^5.0.11
 - class-variance-authority / clsx / tailwind-merge
 - radix-ui / lucide-react
+- NextAuth.js (GitHub OAuth)
+- Neon (PostgreSQL, @neondatabase/serverless)
 
 ## 프로젝트 구조
 
-- App Router: `src/app/`
-- 공용 컴포넌트: `src/components/`, `components/ui/`
-- 훅: `src/hooks/`
-- 타입: `src/types/`
-- 데이터: `data/*.json`
+```
+src/
+├── app/
+│   ├── (auth)/login/          # 로그인 페이지
+│   ├── (main)/                # 인증 필요 페이지 (layout에서 세션 검증)
+│   │   ├── dashboard/         # 이슈 추천 페이지
+│   │   ├── bookmarks/         # 북마크 페이지
+│   │   └── pr-history/        # PR 히스토리 페이지
+│   ├── onboarding/            # 온보딩 페이지
+│   └── api/                   # Route Handlers
+│       ├── auth/              # NextAuth 핸들러
+│       ├── bookmarks/         # 북마크 CRUD
+│       ├── github/            # GitHub GraphQL 중계
+│       └── onboarding/        # 온보딩 저장
+├── components/
+│   ├── ui/                    # 기본 UI 컴포넌트 (Button, Card 등)
+│   ├── shared/                # 페이지 공용 컴포넌트 (IssueCard, DataListState 등)
+│   ├── layout/                # 헤더 등 레이아웃
+│   ├── dashboard/             # 대시보드 전용 컴포넌트
+│   ├── bookmark/              # 북마크 전용 컴포넌트
+│   ├── pr-history/            # PR 히스토리 전용 컴포넌트
+│   ├── onboarding/            # 온보딩 스텝 컴포넌트
+│   └── help/                  # 도움말 공용 컴포넌트
+├── hooks/                     # Custom Hooks
+├── lib/
+│   ├── db/                    # Neon DB 클라이언트 및 마이그레이션
+│   ├── github/                # GitHub GraphQL 조회 및 가공 로직
+│   ├── user/                  # 사용자 프로필/온보딩 관련 로직
+│   └── format/                # 날짜 등 포맷 유틸
+├── types/                     # TypeScript 타입 정의
+└── constants/                 # 상수 (스코어링 룰, 도움말 텍스트 등)
+```
 
 ## 실행 명령어
 
