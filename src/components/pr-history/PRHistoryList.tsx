@@ -3,6 +3,7 @@
 
 import Link from 'next/link'
 import { DataListState } from '@/components/shared/DataListState'
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll'
 import { usePullRequestList } from '@/hooks/usePullRequestList'
 import { PRHistoryContent } from './PRHistoryContent'
 import { PRStateFilter } from './PRStateFilter'
@@ -10,6 +11,8 @@ import { PRSummaryStats } from './PRSummaryStats'
 
 export function PRHistoryList() {
   const prListState = usePullRequestList()
+  const allItems = prListState.status === 'done' ? prListState.items : []
+  const { visibleItems, sentinelRef, hasMore } = useInfiniteScroll(allItems)
 
   return (
     <div className="flex flex-col gap-6">
@@ -23,7 +26,7 @@ export function PRHistoryList() {
       {/* 로딩/에러/빈 상태/콘텐츠 분기 처리 */}
       <DataListState
         status={prListState.status}
-        items={prListState.status === 'done' ? prListState.items : []}
+        items={allItems}
         errorMessage={prListState.status === 'error' ? prListState.message : undefined}
         onRetry={prListState.refetch}
         skeletonCount={6}
@@ -31,8 +34,9 @@ export function PRHistoryList() {
         emptyDescription="아직 GitHub에 제출한 Pull Request가 없습니다."
         emptyDetail="오픈소스 프로젝트에 기여해 보세요."
         emptyAction={<Link href="/dashboard">추천 이슈 보러가기</Link>}
-        renderContent={(items) => <PRHistoryContent items={items} />}
+        renderContent={() => <PRHistoryContent items={visibleItems} />}
       />
+      {hasMore && <div ref={sentinelRef} className="h-10" />}
     </div>
   )
 }
