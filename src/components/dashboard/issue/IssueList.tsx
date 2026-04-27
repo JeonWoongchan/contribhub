@@ -8,20 +8,21 @@ import { useIssueList } from '@/hooks/useIssueList'
 import { IssueListContent } from './IssueListContent'
 
 export function IssueList() {
-  const issueListState = useIssueList()
+  const { issues, partial, failedCount, isPending, isError, errorMessage, refetch } = useIssueList()
   const { optimisticIssues, pendingBookmarkKeys, toggleBookmark } = useIssueBookmarks({
-    sourceIssues: issueListState.status === 'done' ? issueListState.issues : [],
-    isSourceIssuesReady: issueListState.status === 'done',
+    sourceIssues: issues,
+    isSourceIssuesReady: !isPending && !isError,
   })
   const { visibleItems, sentinelRef, hasMore } = useInfiniteScroll(optimisticIssues)
 
   return (
     <>
       <DataListState
-        status={issueListState.status}
+        isPending={isPending}
+        isError={isError}
         items={optimisticIssues}
-        errorMessage={issueListState.status === 'error' ? issueListState.message : undefined}
-        onRetry={issueListState.refetch}
+        errorMessage={errorMessage}
+        onRetry={refetch}
         skeletonCount={6}
         emptyTitle="추천할 이슈가 없습니다"
         emptyDescription="프로필 설정이나 GitHub 조회 결과에 따라 지금은 보여드릴 추천 이슈가 없습니다."
@@ -30,8 +31,8 @@ export function IssueList() {
         renderContent={() => (
           <IssueListContent
             issues={visibleItems}
-            partial={issueListState.status === 'done' ? issueListState.partial : false}
-            failedCount={issueListState.status === 'done' ? issueListState.failedCount : 0}
+            partial={partial}
+            failedCount={failedCount}
             onToggleBookmark={toggleBookmark}
             pendingBookmarkKeys={pendingBookmarkKeys}
           />

@@ -8,22 +8,23 @@ import { useIssueBookmarks } from '@/hooks/useIssueBookmarks'
 import { BookmarkListContent } from './BookmarkListContent'
 
 export function BookmarkList() {
-  const bookmarkListState = useBookmarkList()
+  const { issues, isPending, isError, errorMessage, refetch } = useBookmarkList()
   const { optimisticIssues, pendingBookmarkKeys, toggleBookmark } = useIssueBookmarks({
-    sourceIssues: bookmarkListState.status === 'done' ? bookmarkListState.issues : [],
-    isSourceIssuesReady: bookmarkListState.status === 'done',
+    sourceIssues: issues,
+    isSourceIssuesReady: !isPending && !isError,
     removeOnUnbookmark: true,
-    onMutationSuccessAction: bookmarkListState.refetch,
+    onMutationSuccessAction: refetch,
   })
   const { visibleItems, sentinelRef, hasMore } = useInfiniteScroll(optimisticIssues)
 
   return (
     <>
       <DataListState
-        status={bookmarkListState.status}
+        isPending={isPending}
+        isError={isError}
         items={optimisticIssues}
-        errorMessage={bookmarkListState.status === 'error' ? bookmarkListState.message : undefined}
-        onRetry={bookmarkListState.refetch}
+        errorMessage={errorMessage}
+        onRetry={refetch}
         skeletonCount={6}
         emptyTitle="저장한 북마크가 없습니다"
         emptyDescription="대시보드에서 관심 있는 이슈를 저장하면 여기에서 북마크 목록을 확인할 수 있습니다."

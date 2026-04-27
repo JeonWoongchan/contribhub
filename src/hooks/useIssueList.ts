@@ -1,6 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
+import { fetchApi } from '@/lib/fetch-api'
 import type { ScoredIssue } from '@/types/issue'
 import { QUERY_KEYS } from './queryKeys'
 
@@ -10,50 +11,33 @@ type IssueListData = {
     failedQueryCount?: number
 }
 
-type IssueListResponse =
-    | { ok: true; data: IssueListData }
-    | { ok: false; error?: { message?: string } }
-
-type IssueListState =
-    | { status: 'loading' }
-    | { status: 'error'; message: string }
-    | { status: 'done'; issues: ScoredIssue[]; partial: boolean; failedCount: number }
-
-type IssueListResult = IssueListState & { refetch: () => void }
+export type UseIssueListResult = {
+    issues: ScoredIssue[]
+    partial: boolean
+    failedCount: number
+    isPending: boolean
+    isError: boolean
+    errorMessage: string
+    refetch: () => void
+}
 
 const DEFAULT_ERROR_MESSAGE = '오류가 발생했습니다.'
 
-async function fetchIssues(): Promise<IssueListData> {
-    const res = await fetch('/api/github/issues')
-    const json = (await res.json()) as IssueListResponse
-    if (!json.ok) throw new Error(json.error?.message ?? DEFAULT_ERROR_MESSAGE)
-    return json.data
-}
+const fetchIssues = () => fetchApi<IssueListData>('/api/github/issues', DEFAULT_ERROR_MESSAGE)
 
-export function useIssueList(): IssueListResult {
+export function useIssueList(): UseIssueListResult {
     const { data, isPending, isError, error, refetch } = useQuery({
         queryKey: QUERY_KEYS.issues,
         queryFn: fetchIssues,
     })
 
-    function doRefetch() {
-        void refetch()
-    }
-
-    if (isPending) return { status: 'loading', refetch: doRefetch }
-    if (isError) {
-        return {
-            status: 'error',
-            message: error instanceof Error ? error.message : DEFAULT_ERROR_MESSAGE,
-            refetch: doRefetch,
-        }
-    }
-
     return {
-        status: 'done',
-        issues: data.issues,
-        partial: data.partialResults ?? false,
-        failedCount: data.failedQueryCount ?? 0,
-        refetch: doRefetch,
+        issues: data?.issues ?? [],
+        partial: data?.partialResults ?? false,
+        failedCount: data?.failedQueryCount ?? 0,
+        isPending,
+        isError,
+        errorMessage: isError && error instanceof Error ? error.message : DEFAULT_ERROR_MESSAGE,
+        refetch: () => { void refetch() },
     }
 }
