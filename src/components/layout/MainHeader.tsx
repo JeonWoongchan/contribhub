@@ -1,79 +1,33 @@
-import Image from 'next/image'
 import Link from 'next/link'
-import { Bookmark, GitPullRequest } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { signOut } from '@/lib/auth'
+import { UserAvatar } from './UserAvatar'
+import { UserMenu } from './UserMenu'
 
 type MainHeaderProps = {
-  image: string | null | undefined
-  name: string | null | undefined
+    image: string | null | undefined
+    name: string | null | undefined
 }
 
 async function logoutAction() {
-  'use server'
-  await signOut({ redirectTo: '/login' })
+    'use server'
+    await signOut({ redirectTo: '/login' })
 }
 
 export function MainHeader({ image, name }: MainHeaderProps) {
-  return (
-    <header className="sticky top-0 z-10 border-b border-border bg-background/85 backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-        <Link
-          href="/dashboard"
-          className="text-sm font-semibold tracking-tight text-foreground transition-colors hover:text-interactive-action-hover"
-        >
-          Open Issue Map
-        </Link>
-        <div className="flex items-center gap-3">
-          {image ? (
-            <div className="overflow-hidden rounded-full ring-1 ring-interactive-selected-border">
-              <Image
-                src={image}
-                alt={name ?? 'avatar'}
-                width={28}
-                height={28}
-                className="h-7 w-7 bg-interactive-selected object-cover"
-              />
+    return (
+        <header className="sticky top-0 z-10 border-b border-border bg-background/85 backdrop-blur-md">
+            <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
+                <Link
+                    href="/dashboard"
+                    className="text-sm font-semibold tracking-tight text-foreground transition-colors hover:text-interactive-action-hover"
+                >
+                    Open Issue Map
+                </Link>
+                <div className="flex items-center gap-3">
+                    <UserAvatar image={image} name={name} />
+                    <UserMenu logoutAction={logoutAction} />
+                </div>
             </div>
-          ) : null}
-          <span className="max-w-32 truncate text-sm text-muted-foreground sm:max-w-none">
-            {name ?? '사용자'}
-          </span>
-          {/* PR 히스토리 페이지 네비게이션 */}
-          <Button
-            asChild
-            variant="ghost"
-            size="sm"
-            className="text-xs text-muted-foreground hover:bg-interactive-hover hover:text-interactive-action-hover"
-          >
-            <Link href="/pr-history">
-              <GitPullRequest />
-              PR 히스토리
-            </Link>
-          </Button>
-          <Button
-            asChild
-            variant="ghost"
-            size="sm"
-            className="text-xs text-muted-foreground hover:bg-interactive-hover hover:text-interactive-action-hover"
-          >
-            <Link href="/bookmarks">
-              <Bookmark />
-              북마크
-            </Link>
-          </Button>
-          <form action={logoutAction}>
-            <Button
-              variant="ghost"
-              size="sm"
-              type="submit"
-              className="text-xs text-muted-foreground hover:bg-interactive-hover hover:text-interactive-action-hover"
-            >
-              로그아웃
-            </Button>
-          </form>
-        </div>
-      </div>
-    </header>
-  )
+        </header>
+    )
 }

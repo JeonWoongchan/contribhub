@@ -7,6 +7,8 @@ import type { ContributionType, ExperienceLevel, Purpose, WeeklyHours } from '@/
 export const STAR_CUTOFF = 10
 export const REPO_HEALTH_CACHE_TTL_HOURS = 1
 export const MATCH_SCORE_MINIMUM = 0
+// GitHub API 권장 캐시 TTL (Cache-Control: max-age=60 기준)
+export const GITHUB_API_CACHE_TTL_SECONDS = 60
 
 // 온보딩의 선호 언어와 GitHub 저장소 primaryLanguage를 비교한다.
 // 정확히 같은 언어는 가장 높은 점수를 주고, 같은 계열 언어는 부분 점수를 준다.

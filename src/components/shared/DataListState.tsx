@@ -3,10 +3,9 @@ import { CardListEmpty } from '@/components/shared/CardListEmpty'
 import { CardListError } from '@/components/shared/CardListError'
 import { CardListSkeleton } from '@/components/shared/CardListSkeleton'
 
-type DataListStatus = 'loading' | 'error' | 'done'
-
 type DataListStateProps<T> = {
-  status: DataListStatus
+  isPending: boolean
+  isError: boolean
   items: T[]
   errorMessage?: string
   onRetry?: () => void
@@ -15,11 +14,12 @@ type DataListStateProps<T> = {
   emptyDescription: string
   emptyDetail?: string
   emptyAction?: ReactNode
-  renderContent: (items: T[]) => ReactNode
+  renderContent: () => ReactNode
 }
 
 export function DataListState<T>({
-  status,
+  isPending,
+  isError,
   items,
   errorMessage,
   onRetry,
@@ -30,11 +30,11 @@ export function DataListState<T>({
   emptyAction,
   renderContent,
 }: DataListStateProps<T>) {
-  if (status === 'loading') {
+  if (isPending) {
     return <CardListSkeleton count={skeletonCount} />
   }
 
-  if (status === 'error') {
+  if (isError) {
     return <CardListError message={errorMessage ?? '목록을 불러오지 못했습니다.'} onRetry={onRetry} />
   }
 
@@ -49,5 +49,5 @@ export function DataListState<T>({
     )
   }
 
-  return <>{renderContent(items)}</>
+  return <>{renderContent()}</>
 }

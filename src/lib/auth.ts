@@ -24,6 +24,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // 최초 로그인 시에만 진입 — GitHub OAuth 토큰 + 유저 정보 JWT에 저장
         token.accessToken = account.access_token
         token.githubId = String(profile?.id)
+        token.githubLogin = profile?.login as string
 
         // 로그인 시 1회만 DB upsert
         await sql`
@@ -47,6 +48,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     // 네트워크 요청 없이 쿠키 읽기만 하므로 매우 가벼움
     async session({ session, token }) {
       session.user.id = token.githubId as string
+      session.user.login = token.githubLogin ?? ''
       return session
     },
   },

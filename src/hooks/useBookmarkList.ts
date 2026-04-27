@@ -1,94 +1,47 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { fetchApi } from '@/lib/fetch-api'
 import type { IssueCardItem } from '@/types/issue'
+import { QUERY_KEYS } from './queryKeys'
 
 type BookmarkPageInfo = {
-  limit: number
-  offset: number
-  total: number
-  hasMore: boolean
+    limit: number
+    offset: number
+    total: number
+    hasMore: boolean
 }
 
-type BookmarkListResponse =
-  | {
-      ok: true
-      data: {
-        issues: IssueCardItem[]
-        pageInfo: BookmarkPageInfo
-      }
-    }
-  | {
-      ok: false
-      error?: {
-        message?: string
-      }
-    }
+type BookmarkListData = {
+    issues: IssueCardItem[]
+    pageInfo: BookmarkPageInfo
+}
 
-type BookmarkListState =
-  | { status: 'loading' }
-  | { status: 'error'; message: string }
-  | {
-      status: 'done'
-      issues: IssueCardItem[]
-      pageInfo: BookmarkPageInfo
-    }
-
-type BookmarkListResult = BookmarkListState & {
-  refetch: () => void
+export type UseBookmarkListResult = {
+    issues: IssueCardItem[]
+    pageInfo: BookmarkPageInfo | undefined
+    isPending: boolean
+    isError: boolean
+    errorMessage: string
+    refetch: () => void
 }
 
 const DEFAULT_ERROR_MESSAGE = '북마크 목록을 불러오지 못했습니다.'
-const NETWORK_ERROR_MESSAGE = '네트워크 오류가 발생했습니다.'
 
-export function useBookmarkList(): BookmarkListResult {
-  const [requestId, setRequestId] = useState(0)
-  const [state, setState] = useState<BookmarkListState>({
-    status: 'loading',
-  })
+const fetchBookmarks = () => fetchApi<BookmarkListData>('/api/bookmarks', DEFAULT_ERROR_MESSAGE)
 
-  useEffect(() => {
-    const controller = new AbortController()
+export function useBookmarkList(): UseBookmarkListResult {
+    const { data, isPending, isError, error, refetch } = useQuery({
+        queryKey: QUERY_KEYS.bookmarks,
+        queryFn: fetchBookmarks,
+    })
 
-    async function fetchBookmarks() {
-      setState({ status: 'loading' })
-
-      try {
-        const response = await fetch('/api/bookmarks', { signal: controller.signal })
-        const json = (await response.json()) as BookmarkListResponse
-
-        if (!json.ok) {
-          setState({ status: 'error', message: json.error?.message ?? DEFAULT_ERROR_MESSAGE })
-          return
-        }
-
-        setState({
-          status: 'done',
-          issues: json.data.issues,
-          pageInfo: json.data.pageInfo,
-        })
-      } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          return
-        }
-
-        setState({ status: 'error', message: NETWORK_ERROR_MESSAGE })
-      }
+    return {
+        issues: data?.issues ?? [],
+        pageInfo: data?.pageInfo,
+        isPending,
+        isError,
+        errorMessage: isError && error instanceof Error ? error.message : DEFAULT_ERROR_MESSAGE,
+        refetch: () => { void refetch() },
     }
-
-    void fetchBookmarks()
-
-    return () => {
-      controller.abort()
-    }
-  }, [requestId])
-
-  function refetch() {
-    setRequestId((value) => value + 1)
-  }
-
-  return {
-    ...state,
-    refetch,
-  }
 }
