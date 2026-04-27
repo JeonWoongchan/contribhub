@@ -4,22 +4,18 @@ import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchApi } from '@/lib/fetch-api'
 import type { PullRequestItem, PullRequestState, PullRequestSummary } from '@/types/pull-request'
-import { QUERY_KEYS } from './queryKeys'
+import { QUERY_KEYS, toBaseResult, type BaseQueryResult } from './queryKeys'
 
 type PRListData = {
     items: PullRequestItem[]
     summary: PullRequestSummary
 }
 
-export type UsePullRequestListResult = {
+export type UsePullRequestListResult = BaseQueryResult & {
     items: PullRequestItem[]
     summary: PullRequestSummary | undefined
-    isPending: boolean
-    isError: boolean
-    errorMessage: string
     stateFilter: PullRequestState | null
     setStateFilter: (state: PullRequestState | null) => void
-    refetch: () => void
 }
 
 const DEFAULT_ERROR = 'PR 목록을 불러오지 못했습니다.'
@@ -35,24 +31,21 @@ function filterByState(items: PullRequestItem[], stateFilter: PullRequestState |
 export function usePullRequestList(): UsePullRequestListResult {
     const [stateFilter, setStateFilter] = useState<PullRequestState | null>(null)
 
-    const { data, isPending, isError, error, refetch } = useQuery({
+    const query = useQuery({
         queryKey: QUERY_KEYS.pullRequests,
         queryFn: fetchPullRequests,
     })
 
     const items = useMemo(
-        () => filterByState(data?.items ?? [], stateFilter),
-        [data, stateFilter],
+        () => filterByState(query.data?.items ?? [], stateFilter),
+        [query.data, stateFilter],
     )
 
     return {
+        ...toBaseResult(query, DEFAULT_ERROR),
         items,
-        summary: data?.summary,
-        isPending,
-        isError,
-        errorMessage: isError && error instanceof Error ? error.message : DEFAULT_ERROR,
+        summary: query.data?.summary,
         stateFilter,
         setStateFilter,
-        refetch: () => { void refetch() },
     }
 }
