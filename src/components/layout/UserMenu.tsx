@@ -18,7 +18,7 @@ export function UserMenu({ logoutAction }: UserMenuProps) {
     const router = useRouter()
 
     return (
-        <DropdownMenu>
+        <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Menu className="size-5 shrink-0 opacity-60 cursor-pointer" />
             </DropdownMenuTrigger>
