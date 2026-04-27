@@ -1,90 +1,59 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import type { ScoredIssue } from '@/types/issue'
+import { QUERY_KEYS } from './queryKeys'
 
-type IssueListResponse =
-  | {
-      ok: true
-      data: {
-        issues: ScoredIssue[]
-        partialResults?: boolean
-        failedQueryCount?: number
-      }
-    }
-  | {
-      ok: false
-      error?: {
-        message?: string
-      }
-    }
-
-type IssueListState =
-  | { status: 'loading' }
-  | { status: 'error'; message: string }
-  | {
-      status: 'done'
-      issues: ScoredIssue[]
-      partial: boolean
-      failedCount: number
-    }
-
-type IssueListResult = IssueListState & {
-  refetch: () => void
+type IssueListData = {
+    issues: ScoredIssue[]
+    partialResults?: boolean
+    failedQueryCount?: number
 }
 
+type IssueListResponse =
+    | { ok: true; data: IssueListData }
+    | { ok: false; error?: { message?: string } }
+
+type IssueListState =
+    | { status: 'loading' }
+    | { status: 'error'; message: string }
+    | { status: 'done'; issues: ScoredIssue[]; partial: boolean; failedCount: number }
+
+type IssueListResult = IssueListState & { refetch: () => void }
+
 const DEFAULT_ERROR_MESSAGE = '오류가 발생했습니다.'
-const NETWORK_ERROR_MESSAGE = '네트워크 오류가 발생했습니다.'
+
+async function fetchIssues(): Promise<IssueListData> {
+    const res = await fetch('/api/github/issues')
+    const json = (await res.json()) as IssueListResponse
+    if (!json.ok) throw new Error(json.error?.message ?? DEFAULT_ERROR_MESSAGE)
+    return json.data
+}
 
 export function useIssueList(): IssueListResult {
-  const [requestId, setRequestId] = useState(0)
-  const [state, setState] = useState<IssueListState>({
-    status: 'loading',
-  })
+    const { data, isPending, isError, error, refetch } = useQuery({
+        queryKey: QUERY_KEYS.issues,
+        queryFn: fetchIssues,
+    })
 
-  useEffect(() => {
-    const controller = new AbortController()
-
-    async function fetchIssues() {
-      setState({ status: 'loading' })
-
-      try {
-        const response = await fetch('/api/github/issues', { signal: controller.signal })
-        const json = (await response.json()) as IssueListResponse
-
-        if (!json.ok) {
-          setState({ status: 'error', message: json.error?.message ?? DEFAULT_ERROR_MESSAGE })
-          return
-        }
-
-        setState({
-          status: 'done',
-          issues: json.data.issues,
-          partial: json.data.partialResults ?? false,
-          failedCount: json.data.failedQueryCount ?? 0,
-        })
-      } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          return
-        }
-
-        setState({ status: 'error', message: NETWORK_ERROR_MESSAGE })
-      }
+    function doRefetch() {
+        void refetch()
     }
 
-    void fetchIssues()
-
-    return () => {
-      controller.abort()
+    if (isPending) return { status: 'loading', refetch: doRefetch }
+    if (isError) {
+        return {
+            status: 'error',
+            message: error instanceof Error ? error.message : DEFAULT_ERROR_MESSAGE,
+            refetch: doRefetch,
+        }
     }
-  }, [requestId])
 
-  function refetch() {
-    setRequestId((value) => value + 1)
-  }
-
-  return {
-    ...state,
-    refetch,
-  }
+    return {
+        status: 'done',
+        issues: data.issues,
+        partial: data.partialResults ?? false,
+        failedCount: data.failedQueryCount ?? 0,
+        refetch: doRefetch,
+    }
 }
