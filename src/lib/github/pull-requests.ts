@@ -5,7 +5,6 @@ import { VIEWER_PULL_REQUESTS_QUERY } from '@/lib/github/queries'
 import type {
   RawPullRequest,
   PullRequestItem,
-  PullRequestPageInfo,
   PullRequestState,
   PullRequestSummary,
 } from '@/types/pull-request'
@@ -15,13 +14,22 @@ interface ViewerPRsResult {
   viewer: {
     pullRequests: {
       totalCount: number
-      pageInfo: PullRequestPageInfo
+      pageInfo: {
+        hasNextPage: boolean
+        endCursor: string | null
+      }
       nodes: RawPullRequest[]
     }
   }
 }
 
-// 1단계: GraphQL 원시 데이터를 클라이언트용 평탄 구조로 변환
+// 본인 레포에 올린 PR 제외 — repoFullName은 "owner/repo" 형태
+function excludeOwnRepoPRs(items: PullRequestItem[], viewerLogin: string): PullRequestItem[] {
+  if (!viewerLogin) return items
+  return items.filter((item) => item.repoFullName.split('/')[0] !== viewerLogin)
+}
+
+// GraphQL 원시 데이터를 클라이언트용 평탄 구조로 변환
 function toPullRequestItem(raw: RawPullRequest): PullRequestItem {
   return {
     title: raw.title,
@@ -44,10 +52,10 @@ function toPullRequestItem(raw: RawPullRequest): PullRequestItem {
   }
 }
 
-// 2단계: 현재 로드된 PR 항목으로 요약 통계 계산
-function computeSummary(items: PullRequestItem[], totalCount: number): PullRequestSummary {
+// 필터링된 전체 항목으로 요약 통계 계산
+function computeSummary(items: PullRequestItem[]): PullRequestSummary {
   return {
-    totalCount,
+    totalCount: items.length,
     mergedCount: items.filter((pr) => pr.state === 'MERGED').length,
     openCount: items.filter((pr) => pr.state === 'OPEN').length,
     closedCount: items.filter((pr) => pr.state === 'CLOSED').length,
@@ -56,15 +64,14 @@ function computeSummary(items: PullRequestItem[], totalCount: number): PullReque
   }
 }
 
-async function fetchPullRequestConnection({
-  accessToken,
-  first,
-  after,
-  states,
-}: FetchPullRequestsParams): Promise<ViewerPRsResult['viewer']['pullRequests']> {
+async function fetchPullRequestPage(
+  accessToken: string,
+  after: string | null,
+  states: PullRequestState[] | null,
+): Promise<ViewerPRsResult['viewer']['pullRequests']> {
   const data = await githubGraphQL<ViewerPRsResult>(
     VIEWER_PULL_REQUESTS_QUERY,
-    { first, after, states },
+    { first: 100, after, states },
     accessToken,
   )
 
@@ -74,87 +81,33 @@ async function fetchPullRequestConnection({
 export type FetchPullRequestsParams = {
   accessToken: string
   viewerLogin?: string
-  first?: number
-  after?: string | null
   states?: PullRequestState[] | null
 }
 
 export type FetchPullRequestsResult = {
   items: PullRequestItem[]
-  pageInfo: PullRequestPageInfo
   summary: PullRequestSummary
 }
 
-// 3단계: GraphQL 호출 → 데이터 변환 → 요약 통계 생성 후 반환
+// 전체 페이지를 순회하며 PR을 수집 → 필터링 → 통계 계산 후 반환
 export async function fetchViewerPullRequests({
   accessToken,
   viewerLogin = '',
-  first = 20,
-  after = null,
   states = null,
 }: FetchPullRequestsParams): Promise<FetchPullRequestsResult> {
-  const { totalCount, pageInfo, nodes } = await fetchPullRequestConnection({
-    accessToken,
-    first,
-    after,
-    states,
-  })
-
-  // 본인 레포에 올린 PR 제외 — repoFullName은 "owner/repo" 형태
-  const items = nodes
-    .map(toPullRequestItem)
-    .filter((item) => !viewerLogin || item.repoFullName.split('/')[0] !== viewerLogin)
-
-  return {
-    items,
-    pageInfo,
-    summary: computeSummary(items, totalCount),
-  }
-}
-
-export async function fetchViewerPullRequestSummary(
-  accessToken: string,
-): Promise<PullRequestSummary> {
-  const pageSize = 100
   let after: string | null = null
-  let totalCount = 0
-  let mergedCount = 0
-  let openCount = 0
-  let closedCount = 0
-  let totalAdditions = 0
-  let totalDeletions = 0
   let hasNextPage = true
+  const allItems: PullRequestItem[] = []
 
   while (hasNextPage) {
-    const connection = await fetchPullRequestConnection({
-      accessToken,
-      first: pageSize,
-      after,
-      states: null,
-    })
-
-    if (totalCount === 0) {
-      totalCount = connection.totalCount
-    }
-
-    for (const item of connection.nodes.map(toPullRequestItem)) {
-      if (item.state === 'MERGED') mergedCount += 1
-      if (item.state === 'OPEN') openCount += 1
-      if (item.state === 'CLOSED') closedCount += 1
-      totalAdditions += item.additions
-      totalDeletions += item.deletions
-    }
-
+    const connection = await fetchPullRequestPage(accessToken, after, states)
+    allItems.push(...excludeOwnRepoPRs(connection.nodes.map(toPullRequestItem), viewerLogin))
     hasNextPage = connection.pageInfo.hasNextPage
     after = connection.pageInfo.endCursor
   }
 
   return {
-    totalCount,
-    mergedCount,
-    openCount,
-    closedCount,
-    totalAdditions,
-    totalDeletions,
+    items: allItems,
+    summary: computeSummary(allItems),
   }
 }
