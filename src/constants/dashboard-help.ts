@@ -43,6 +43,7 @@ export const DASHBOARD_HELP_DEMO_ISSUE: Omit<ScoredIssue, 'createdAt' | 'updated
   title: 'docs: clarify missing explanation in starter example',
   url: 'https://github.com/vercel/next.js/issues',
   repoFullName: 'vercel/next.js',
+  repoUrl: 'https://github.com/vercel/next.js',
   language: 'TypeScript',
   stargazerCount: 129000,
   labels: ['documentation', 'good first issue'],

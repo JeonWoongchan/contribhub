@@ -25,6 +25,7 @@ export const BOOKMARK_HELP_DEMO_ISSUE: Omit<IssueCardItem, 'createdAt' | 'update
   title: 'docs: broken link in getting-started guide',
   url: 'https://github.com/example/docs/issues/2048',
   repoFullName: 'example/docs',
+  repoUrl: 'https://github.com/example/docs',
   language: null,
   stargazerCount: 0,
   labels: [],
