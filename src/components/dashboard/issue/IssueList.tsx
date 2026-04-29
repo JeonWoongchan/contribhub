@@ -1,15 +1,15 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { SearchBar } from '@/components/shared/SearchBar'
 import { SearchDataListState } from '@/components/shared/SearchDataListState'
-import { CardListSkeleton } from '@/components/shared/CardListSkeleton'
+import { InfiniteScrollTrigger } from '@/components/shared/InfiniteScrollTrigger'
 import { DashboardHelpDialog } from '@/components/dashboard/dashboard-help/DashboardHelpDialog'
 import { useIssueBookmarks } from '@/hooks/useIssueBookmarks'
 import { useIssueList } from '@/hooks/useIssueList'
 import { useSearchFilter } from '@/hooks/useSearchFilter'
-import { useScrollSentinel } from '@/hooks/useScrollSentinel'
+import { useInfiniteScrollDisplay } from '@/hooks/useScrollSentinel'
 import { IssueListContent } from './IssueListContent'
 
 export function IssueList() {
@@ -33,17 +33,12 @@ export function IssueList() {
 
     const [query, setQuery] = useState('')
     const filteredItems = useSearchFilter(optimisticIssues, query)
-    // 다음 페이지가 있을 때 홀수 개면 마지막 1개를 숨겨 그리드를 짝수로 유지
-    const displayItems = hasNextPage && filteredItems.length % 2 !== 0
-        ? filteredItems.slice(0, -1)
-        : filteredItems
-
-    // sentinel 요소가 뷰포트에 진입하면 다음 페이지 요청 — 중복 요청 방지를 위해 isFetchingNextPage 체크
-    const sentinelRef = useScrollSentinel(
-        useCallback(() => {
-            if (hasNextPage && !isFetchingNextPage) fetchNextPage()
-        }, [hasNextPage, isFetchingNextPage, fetchNextPage]),
-    )
+    const { displayItems, sentinelRef } = useInfiniteScrollDisplay({
+        items: filteredItems,
+        hasNextPage,
+        fetchNextPage,
+        isFetchingNextPage,
+    })
 
     return (
         <div className="flex flex-col gap-4">
@@ -83,12 +78,11 @@ export function IssueList() {
                 )}
             />
 
-            {hasNextPage && (
-                <>
-                    {isFetchingNextPage && <CardListSkeleton count={2} />}
-                    <div ref={sentinelRef} className="h-10" />
-                </>
-            )}
+            <InfiniteScrollTrigger
+                hasNextPage={hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+                sentinelRef={sentinelRef}
+            />
         </div>
     )
 }

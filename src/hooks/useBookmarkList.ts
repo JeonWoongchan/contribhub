@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { fetchApi } from '@/lib/fetch-api'
 import type { IssueCardItem } from '@/types/issue'
-import { QUERY_KEYS } from './queryKeys'
+import { QUERY_KEYS, toBaseResult, type BaseQueryResult } from './queryKeys'
 
 type BookmarkPageInfo = {
     limit: number
@@ -18,15 +18,11 @@ type BookmarkListPage = {
     pageInfo: BookmarkPageInfo
 }
 
-export type UseBookmarkListResult = {
+export type UseBookmarkListResult = BaseQueryResult & {
     issues: IssueCardItem[]
     hasNextPage: boolean
     fetchNextPage: () => void
     isFetchingNextPage: boolean
-    isPending: boolean
-    isError: boolean
-    errorMessage: string
-    refetch: () => void
 }
 
 const DEFAULT_ERROR_MESSAGE = '북마크 목록을 불러오지 못했습니다.'
@@ -49,15 +45,10 @@ export function useBookmarkList(): UseBookmarkListResult {
     )
 
     return {
+        ...toBaseResult(query, DEFAULT_ERROR_MESSAGE),
         issues,
         hasNextPage: query.hasNextPage,
         fetchNextPage: () => { void query.fetchNextPage() },
         isFetchingNextPage: query.isFetchingNextPage,
-        isPending: query.isPending,
-        isError: query.isError,
-        errorMessage: query.isError && query.error instanceof Error
-            ? query.error.message
-            : DEFAULT_ERROR_MESSAGE,
-        refetch: () => { void query.refetch() },
     }
 }
