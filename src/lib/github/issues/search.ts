@@ -15,8 +15,7 @@ export type IssueSearchResult = {
 
 function buildIssueQueries(languages: string[]): string[] {
   return languages.flatMap((lang) => [
-    `is:open is:issue label:"good first issue" language:${lang} sort:created`,
-    `is:open is:issue label:"help wanted" language:${lang} sort:created`,
+    `is:open is:issue label:"help wanted" language:${lang}`,
   ])
 }
 
@@ -50,7 +49,7 @@ export async function fetchCandidateIssues(
 
   const settled = await Promise.allSettled(
     queries.map((query) =>
-      githubGraphQL<SearchResult>(SEARCH_ISSUES_QUERY, { query, first: 30 }, accessToken)
+      githubGraphQL<SearchResult>(SEARCH_ISSUES_QUERY, { query, first: 10 }, accessToken)
     )
   )
 
