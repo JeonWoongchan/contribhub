@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { requireGithubToken } from '@/lib/auth-utils'
-import { getRepoHealth } from '@/lib/github/repo-health'
+import { getRepoHealth } from '@/lib/github/repo-health/calculate'
 import { GitHubRateLimitError, GitHubNotFoundError } from '@/lib/github/client'
 import { ok, err, ErrorCode } from '@/lib/api-response'
 

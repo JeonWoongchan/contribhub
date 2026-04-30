@@ -1,6 +1,6 @@
 import sql from '@/lib/db'
 import { REPO_HEALTH_CACHE_TTL_HOURS } from '@/constants/scoring-rules'
-import { getRepoHealth } from '@/lib/github/repo-health'
+import { getRepoHealth } from '@/lib/github/repo-health/calculate'
 
 export async function getRepoHealthMap(
   repoNames: string[],

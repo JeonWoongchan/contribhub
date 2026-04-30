@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge'
 import { CardTagsRow } from '@/components/shared/card/CardTagsRow'
-import { DIFFICULTY_LABELS_KO } from '@/lib/github/issue-badge-meta'
+import { DIFFICULTY_LABELS_KO } from '@/lib/github/issues/badge-meta'
 import type { DifficultyLevel } from '@/types/issue'
 
 type IssueTagListProps = {

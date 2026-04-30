@@ -1,3 +1,4 @@
+import type { ScoreThreshold } from '@/constants/scoring-rules'
 import type { ContributionType, ExperienceLevel } from './user'
 
 export type CompetitionLevel = 'OPEN' | 'ACTIVE' | 'HAS_PR'
@@ -7,9 +8,15 @@ export type IssueFilters = {
   language: string | null
   difficultyLevel: DifficultyLevel | null
   contributionType: ContributionType | null
+  minScore: ScoreThreshold | null
 }
 
-export const EMPTY_ISSUE_FILTERS: IssueFilters = { language: null, difficultyLevel: null, contributionType: null }
+export const EMPTY_ISSUE_FILTERS: IssueFilters = {
+  language: null,
+  difficultyLevel: null,
+  contributionType: null,
+  minScore: null,
+}
 
 export interface RawIssue {
   number: number

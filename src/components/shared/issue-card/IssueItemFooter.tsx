@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge'
 import { CardMetricsRow } from '@/components/shared/card/CardMetricsRow'
 import { formatTimeAgo } from '@/utils/format/time-ago'
-import { getCompetitionMeta } from '@/lib/github/issue-badge-meta'
+import { getCompetitionMeta } from '@/lib/github/issues/badge-meta'
 import { cn } from '@/lib/utils'
 import { IssueMetricsRow } from './IssueMetricsRow'
 import { IssueTagList } from './IssueTagList'

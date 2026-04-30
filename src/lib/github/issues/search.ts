@@ -1,6 +1,46 @@
 import { githubGraphQL, GitHubRateLimitError } from '@/lib/github/client'
-import { SEARCH_ISSUES_QUERY } from '@/lib/github/queries'
 import type { RawIssue } from '@/types/issue'
+
+const SEARCH_ISSUES_QUERY = `
+  query SearchIssues($query: String!, $first: Int!, $after: String) {
+    search(query: $query, type: ISSUE, first: $first, after: $after) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      nodes {
+        ... on Issue {
+          number
+          title
+          url
+          body
+          createdAt
+          updatedAt
+          comments { totalCount }
+          labels(first: 10) {
+            nodes { name }
+          }
+          repository {
+            nameWithOwner
+            url
+            primaryLanguage { name }
+            stargazerCount
+          }
+          timelineItems(first: 5, itemTypes: [CROSS_REFERENCED_EVENT]) {
+            nodes {
+              __typename
+              ... on CrossReferencedEvent {
+                source {
+                  __typename
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`
 
 interface PageInfo {
     hasNextPage: boolean

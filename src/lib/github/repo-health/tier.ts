@@ -1,5 +1,5 @@
 import { HEALTH_SCORE_TIERS } from '@/constants/scoring-rules'
-import type { HealthTier } from '@/lib/github/issue-badge-meta'
+import type { HealthTier } from '@/lib/github/issues/badge-meta'
 
 // 레포 활성도 점수를 표시용 등급으로 변환하는 함수.
 export function getHealthTier(score: number): HealthTier {

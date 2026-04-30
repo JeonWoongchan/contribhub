@@ -1,6 +1,47 @@
 import { githubGraphQL } from '@/lib/github/client'
-import { VIEWER_PULL_REQUESTS_QUERY } from '@/lib/github/queries'
 import type { RawPullRequest, PullRequestItem, PullRequestState, PullRequestSummary } from '@/types/pull-request'
+
+const VIEWER_PULL_REQUESTS_QUERY = `
+  query ViewerPullRequests($first: Int!, $after: String, $states: [PullRequestState!]) {
+    viewer {
+      pullRequests(
+        first: $first
+        after: $after
+        states: $states
+        orderBy: { field: CREATED_AT, direction: DESC }
+      ) {
+        totalCount
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          title
+          url
+          state
+          createdAt
+          mergedAt
+          closedAt
+          additions
+          deletions
+          changedFiles
+          comments { totalCount }
+          reviews { totalCount }
+          labels(first: 5) {
+            nodes { name }
+          }
+          commits { totalCount }
+          repository {
+            nameWithOwner
+            url
+            stargazerCount
+            primaryLanguage { name }
+          }
+        }
+      }
+    }
+  }
+`
 
 interface ViewerPRsResult {
     viewer: {

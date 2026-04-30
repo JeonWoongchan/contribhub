@@ -309,3 +309,6 @@ export const REPO_HEALTH_WEIGHTS = {
 } as const
 
 export const HEALTH_THRESHOLD = 50
+
+export const SCORE_FILTER_THRESHOLDS = [50, 60, 70, 80, 90] as const
+export type ScoreThreshold = typeof SCORE_FILTER_THRESHOLDS[number]

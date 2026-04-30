@@ -1,6 +1,7 @@
 'use client'
 
 import { CONTRIBUTION_TYPES, EXPERIENCE_LEVELS } from '@/constants/contribution-levels'
+import { SCORE_FILTER_THRESHOLDS } from '@/constants/scoring-rules'
 import { cn } from '@/lib/utils'
 import type { IssueFilters } from '@/types/issue'
 
@@ -84,6 +85,16 @@ export function IssueListFilter({ filters, availableLanguages, onChangeAction }:
             label={type.label}
             selected={filters.contributionType === type.value}
             onClickAction={() => toggle('contributionType', type.value)}
+          />
+        ))}
+      </FilterRow>
+      <FilterRow label="추천 점수">
+        {SCORE_FILTER_THRESHOLDS.map((threshold) => (
+          <FilterPill
+            key={threshold}
+            label={`${threshold}점+`}
+            selected={filters.minScore === threshold}
+            onClickAction={() => toggle('minScore', threshold)}
           />
         ))}
       </FilterRow>

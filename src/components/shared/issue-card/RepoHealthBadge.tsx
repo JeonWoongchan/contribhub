@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge'
-import { getHealthTier } from '@/lib/github/health-tier'
+import { getHealthTier } from '@/lib/github/repo-health/tier'
 import { cn } from '@/lib/utils'
 
 type RepoHealthBadgeProps = {

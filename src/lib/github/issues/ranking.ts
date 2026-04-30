@@ -1,5 +1,5 @@
 import { HEALTH_THRESHOLD, TIME_FILTER } from '@/constants/scoring-rules'
-import { scoreIssue } from '@/lib/github/scorer'
+import { scoreIssue } from '@/lib/github/issues/scorer'
 import type { RawIssue, ScoredIssue } from '@/types/issue'
 import type { ContributionType } from '@/types/user'
 import type { OnboardingProfile } from '@/lib/user/profile'
