@@ -19,13 +19,11 @@ export function OptionCard({
   return (
     <Button
       type="button"
-      variant="outline"
+      variant="interactive"
       onClick={onClick}
       className={cn(
         'h-auto w-full justify-start rounded-xl px-4 py-3 text-left whitespace-normal shadow-none',
-        selected
-          ? 'border-interactive-selected-border bg-interactive-selected text-interactive-selected-foreground ring-1 ring-interactive-selected-ring hover:bg-interactive-selected'
-          : 'border-interactive-border hover:border-interactive-hover-border hover:bg-interactive-hover',
+        selected && 'border-interactive-selected-border bg-interactive-selected text-interactive-selected-foreground ring-1 ring-interactive-selected-ring hover:bg-interactive-selected',
         className
       )}
     >
