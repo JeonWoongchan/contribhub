@@ -4,7 +4,7 @@ import { FileCode, MessageSquare, Star } from 'lucide-react'
 import { CardMetricsRow } from '@/components/shared/card/CardMetricsRow'
 import { CardTagsRow } from '@/components/shared/card/CardTagsRow'
 import { Badge } from '@/components/ui/badge'
-import { formatTimeAgo } from '@/lib/format/time-ago'
+import { formatTimeAgo } from '@/utils/format/time-ago'
 import type { PullRequestItem } from '@/types/pull-request'
 
 type PRCardFooterProps = {

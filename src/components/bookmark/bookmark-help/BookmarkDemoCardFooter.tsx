@@ -2,7 +2,7 @@ import { HelpHotspot } from '@/components/help/HelpHotspot'
 import { IssueMetricsRow } from '@/components/shared/issue-card/IssueMetricsRow'
 import type { BookmarkHelpGuideId } from '@/constants/bookmark-help'
 import { BOOKMARK_HELP_DEMO_ISSUE } from '@/constants/bookmark-help'
-import { formatTimeAgo } from '@/lib/format/time-ago'
+import { formatTimeAgo } from '@/utils/format/time-ago'
 import type { HelpGuideInteractionProps } from '@/types/help'
 
 type BookmarkDemoCardFooterProps = HelpGuideInteractionProps<BookmarkHelpGuideId> & {
