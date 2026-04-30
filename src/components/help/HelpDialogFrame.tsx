@@ -15,6 +15,7 @@ type HelpDialogFrameProps<TGuideId extends string> = {
   titleId: string
   descriptionId: string
   triggerLabel?: string
+  footer?: ReactNode
   renderDemoCardAction: (props: {
     activeGuideId: TGuideId | null
     demoUpdatedAt: string
@@ -31,6 +32,7 @@ export function HelpDialogFrame<TGuideId extends string>({
   titleId,
   descriptionId,
   triggerLabel,
+  footer,
   renderDemoCardAction,
 }: HelpDialogFrameProps<TGuideId>) {
   const {
@@ -83,6 +85,11 @@ export function HelpDialogFrame<TGuideId extends string>({
                 onClearGuide={clearActiveGuide}
               />
             </div>
+            {footer ? (
+              <div className="border-t border-border/70 bg-muted/20 px-5 py-4 text-sm leading-6 text-muted-foreground sm:px-6">
+                {footer}
+              </div>
+            ) : null}
           </div>
         </div>
       ) : null}
