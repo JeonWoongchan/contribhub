@@ -3,7 +3,6 @@ CREATE TABLE users (
   github_id     TEXT NOT NULL UNIQUE,
   github_login  TEXT NOT NULL,
   avatar_url    TEXT,
-  access_token  TEXT NOT NULL,
   created_at    TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -28,8 +27,6 @@ CREATE TABLE bookmarks (
   issue_title         TEXT NOT NULL,
   issue_url           TEXT NOT NULL,
   contribution_type   TEXT,
-  status              TEXT DEFAULT 'saved',
-  pr_url              TEXT,
   created_at          TIMESTAMPTZ DEFAULT NOW(),
   updated_at          TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(user_id, repo_full_name, issue_number)

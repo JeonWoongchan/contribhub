@@ -43,8 +43,6 @@ export async function listUserBookmarks(
       b.issue_title,
       b.issue_url,
       b.contribution_type,
-      b.status,
-      b.pr_url,
       b.created_at,
       b.updated_at
     FROM bookmarks b
@@ -62,8 +60,6 @@ export async function listUserBookmarks(
     issueTitle: row.issue_title,
     issueUrl: row.issue_url,
     contributionType: row.contribution_type,
-    status: row.status,
-    prUrl: row.pr_url,
     createdAt: row.created_at?.toISOString?.() ?? String(row.created_at),
     updatedAt: row.updated_at?.toISOString?.() ?? String(row.updated_at),
     githubIssue: null,
@@ -92,7 +88,6 @@ export async function createBookmark(githubUserId: string, input: CreateBookmark
       issue_title,
       issue_url,
       contribution_type,
-      status,
       updated_at
     )
     VALUES (
@@ -102,7 +97,6 @@ export async function createBookmark(githubUserId: string, input: CreateBookmark
       ${input.issueTitle},
       ${input.issueUrl},
       ${input.contributionType},
-      'saved',
       NOW()
     )
     ON CONFLICT (user_id, repo_full_name, issue_number)

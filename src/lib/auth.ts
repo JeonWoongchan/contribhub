@@ -28,18 +28,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         // 로그인 시 1회만 DB upsert
         await sql`
-          INSERT INTO users (github_id, github_login, avatar_url, access_token)
+          INSERT INTO users (github_id, github_login, avatar_url)
           VALUES (
             ${String(profile?.id)},
             ${profile?.login as string},
-            ${profile?.avatar_url as string},
-            ${account.access_token}
+            ${profile?.avatar_url as string}
           )
           ON CONFLICT (github_id)
           DO UPDATE SET
             github_login = EXCLUDED.github_login,
-            avatar_url   = EXCLUDED.avatar_url,
-            access_token = EXCLUDED.access_token
+            avatar_url   = EXCLUDED.avatar_url
         `
       }
       return token

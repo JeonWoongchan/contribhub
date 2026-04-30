@@ -39,7 +39,7 @@ function toFallbackIssueCardItem(bookmark: Bookmark): IssueCardItem {
     difficultyLevel: null,
     contributionType: bookmark.contributionType,
     competitionLevel: null,
-    hasPR: Boolean(bookmark.prUrl),
+    hasPR: false,
     isBookmarked: true,
     healthScore: null,
   }
