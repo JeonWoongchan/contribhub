@@ -23,7 +23,6 @@ export function applyFilters(issues: ScoredIssue[], filters: IssueFilters): Scor
         if (filters.language && issue.language !== filters.language) return false
         if (filters.difficultyLevel && issue.difficultyLevel !== filters.difficultyLevel) return false
         if (filters.contributionType && issue.contributionType !== filters.contributionType) return false
-        if (filters.minScore !== null && issue.score < filters.minScore) return false
-        return true
+        return !(filters.minScore !== null && issue.score < filters.minScore);
     })
 }
