@@ -1,6 +1,6 @@
 "use client"
 
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Bookmark, LogOut, Menu, GitPullRequest, UserRound } from 'lucide-react'
 import {
   DropdownMenu,
@@ -15,25 +15,29 @@ type UserMenuProps = {
 }
 
 export function UserMenu({ logoutAction }: UserMenuProps) {
-  const router = useRouter()
-
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <Menu className="size-5 shrink-0 cursor-pointer opacity-60" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={12}>
-        <DropdownMenuItem onSelect={() => router.push('/profile')}>
-          <UserRound />
-          마이페이지
+        <DropdownMenuItem asChild>
+          <Link href="/profile">
+            <UserRound />
+            마이페이지
+          </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => router.push('/pr-history')}>
-          <GitPullRequest />
-          PR 히스토리
+        <DropdownMenuItem asChild>
+          <Link href="/pr-history">
+            <GitPullRequest />
+            PR 히스토리
+          </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => router.push('/bookmarks')}>
-          <Bookmark />
-          북마크
+        <DropdownMenuItem asChild>
+          <Link href="/bookmarks">
+            <Bookmark />
+            북마크
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
