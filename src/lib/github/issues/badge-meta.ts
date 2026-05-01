@@ -1,4 +1,5 @@
 import type { CompetitionLevel, DifficultyLevel } from '@/types/issue'
+import type { PullRequestState } from '@/types/pull-request'
 
 export type CompetitionMeta = {
   label: string
@@ -37,4 +38,12 @@ export const DIFFICULTY_LABELS_KO: Record<DifficultyLevel, string> = {
 
 export function getCompetitionMeta(level: CompetitionLevel): CompetitionMeta {
   return COMPETITION_META[level]
+}
+
+export type PRStateMeta = { label: string; className: string }
+
+export const PR_STATE_META: Record<PullRequestState, PRStateMeta> = {
+  OPEN: { label: '진행중', className: 'border-brand-subtle-border bg-interactive-action text-interactive-action-foreground' },
+  MERGED: { label: '병합됨', className: 'border-status-success-border bg-status-success text-status-success-foreground' },
+  CLOSED: { label: '닫힘', className: 'border-status-danger-border bg-status-danger text-status-danger-foreground' },
 }

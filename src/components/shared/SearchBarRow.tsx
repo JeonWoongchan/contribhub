@@ -9,22 +9,10 @@ type SearchBarRowProps = {
     helpSlot?: ReactNode
 }
 
-export function SearchBarRow({
-    value,
-    onChangeAction,
-    resultCount,
-    placeholder,
-    helpSlot,
-}: SearchBarRowProps) {
+export function SearchBarRow({ helpSlot, ...searchBarProps }: SearchBarRowProps) {
     return (
         <div className="flex items-center gap-2">
-            <SearchBar
-                value={value}
-                onChangeAction={onChangeAction}
-                resultCount={resultCount}
-                placeholder={placeholder}
-                className="flex-1"
-            />
+            <SearchBar {...searchBarProps} className="flex-1" />
             {helpSlot}
         </div>
     )

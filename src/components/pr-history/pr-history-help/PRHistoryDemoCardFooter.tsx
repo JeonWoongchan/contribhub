@@ -28,11 +28,11 @@ export function PRHistoryDemoCardFooter({
                 className="rounded-xl"
             >
                 <CardTagsRow>
-                    {PR_HISTORY_HELP_DEMO_PR.language ? (
+                    {PR_HISTORY_HELP_DEMO_PR.language && (
                         <Badge variant="secondary" className="rounded-md text-xs">
                             {PR_HISTORY_HELP_DEMO_PR.language}
                         </Badge>
-                    ) : null}
+                    )}
                     {PR_HISTORY_HELP_DEMO_PR.labels.slice(0, 3).map((label) => (
                         <Badge key={label} variant="outline" className="rounded-md text-xs">
                             {label}

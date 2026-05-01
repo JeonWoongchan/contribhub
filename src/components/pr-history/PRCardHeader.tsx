@@ -5,21 +5,15 @@ import { CardHeaderLayout } from '@/components/shared/card/CardHeaderLayout'
 import { CardTitleLink } from '@/components/shared/card/CardTitleLink'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { PR_STATE_META } from '@/lib/github/issues/badge-meta'
 import type { PullRequestItem } from '@/types/pull-request'
 
 type PRCardHeaderProps = {
   pr: PullRequestItem
 }
 
-// PR 상태별 표시 라벨 및 색상 정의
-const STATE_META: Record<string, { label: string; className: string }> = {
-  OPEN: { label: '진행 중', className: 'border-brand-subtle-border bg-interactive-action text-interactive-action-foreground' },
-  MERGED: { label: '병합됨', className: 'border-status-success-border bg-status-success text-status-success-foreground' },
-  CLOSED: { label: '닫힘', className: 'border-status-danger-border bg-status-danger text-status-danger-foreground' },
-}
-
 export function PRCardHeader({ pr }: PRCardHeaderProps) {
-  const stateMeta = STATE_META[pr.state]
+  const stateMeta = PR_STATE_META[pr.state]
 
   return (
     <CardHeaderLayout
