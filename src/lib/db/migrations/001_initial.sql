@@ -43,5 +43,4 @@ CREATE TABLE repo_health_cache (
 );
 
 CREATE INDEX idx_bookmarks_user_id ON bookmarks(user_id);
-CREATE INDEX idx_bookmarks_status ON bookmarks(status);
 CREATE INDEX idx_repo_health_cache_cached_at ON repo_health_cache(cached_at);
