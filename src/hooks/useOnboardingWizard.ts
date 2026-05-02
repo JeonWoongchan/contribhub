@@ -1,19 +1,37 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { useMutation } from '@tanstack/react-query'
 import { isStepComplete, ONBOARDING_STEPS, POPULAR_LANGUAGES } from '@/constants/contribution-levels'
 import type { FormState } from '@/types/onboarding'
 import type { ContributionType, ExperienceLevel, Purpose, WeeklyHours } from '@/types/user'
+import type { ApiResponse } from '@/types/api'
+
+const DEFAULT_ERROR_MESSAGE = '온보딩 저장에 실패했습니다.'
 
 export function useOnboardingWizard(initialLanguages: string[] = []) {
   const router = useRouter()
   const [step, setStep] = useState(0)
-  const [loading, setLoading] = useState(false)
   const [form, setForm] = useState<FormState>({
     experienceLevel: null,
     contributionTypes: [],
     topLanguages: initialLanguages,
     weeklyHours: null,
     purpose: null,
+  })
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch('/api/onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      const json = (await res.json()) as ApiResponse<{ success: boolean }>
+      if (!json.ok) throw new Error(json.error?.message ?? DEFAULT_ERROR_MESSAGE)
+    },
+    onSuccess: () => {
+      router.push('/dashboard')
+    },
   })
 
   const canNext = isStepComplete(step, form)
@@ -64,35 +82,17 @@ export function useOnboardingWizard(initialLanguages: string[] = []) {
     setForm((currentForm) => ({ ...currentForm, purpose: value }))
   }
 
-  async function handleSubmit() {
-    setLoading(true)
-
-    try {
-      const response = await fetch('/api/onboarding', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      })
-
-      if (!response.ok) {
-        return
-      }
-
-      router.push('/dashboard')
-    } catch {
-      return
-    } finally {
-      setLoading(false)
-    }
-  }
-
   return {
     canNext,
     form,
     goNext,
     goPrev,
-    handleSubmit,
-    loading,
+    handleSubmit: () => { mutation.mutate() },
+    isPending: mutation.isPending,
+    isError: mutation.isError,
+    errorMessage: mutation.isError && mutation.error instanceof Error
+      ? mutation.error.message
+      : DEFAULT_ERROR_MESSAGE,
     step,
     toggleAllTopLanguages,
     toggleContributionType,

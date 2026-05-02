@@ -18,7 +18,7 @@ export default function OnboardingWizard({ initialLanguages }: { initialLanguage
     goNext,
     goPrev,
     handleSubmit,
-    loading,
+    isPending,
     step,
     toggleAllTopLanguages,
     toggleContributionType,
@@ -85,8 +85,8 @@ export default function OnboardingWizard({ initialLanguages }: { initialLanguage
           </OnboardingWizardButton>
         ) : null}
         {isLastStep ? (
-          <OnboardingWizardButton disabled={!canNext || loading} onClick={handleSubmit}>
-            {loading ? '저장 중...' : '시작하기'}
+          <OnboardingWizardButton disabled={!canNext || isPending} onClick={handleSubmit}>
+            {isPending ? '저장 중...' : '시작하기'}
           </OnboardingWizardButton>
         ) : (
           <OnboardingWizardButton disabled={!canNext} onClick={goNext}>
