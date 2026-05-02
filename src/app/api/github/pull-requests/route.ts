@@ -7,6 +7,7 @@ import { requireGithubToken } from '@/lib/auth-utils'
 import { GitHubRateLimitError } from '@/lib/github/client'
 import { fetchViewerPullRequests } from '@/lib/github/pull-requests'
 import { GITHUB_API_CACHE_TTL_SECONDS, PAGE_SIZE } from '@/constants/scoring-rules'
+import { offsetSchema } from '@/lib/validators/pagination'
 
 const stateSchema = z.enum(['OPEN', 'MERGED', 'CLOSED']).nullable().catch(null)
 
@@ -15,7 +16,7 @@ export async function GET(req: NextRequest) {
     if (!auth.ok) return err(auth.error, auth.status, auth.code)
 
     const { searchParams } = new URL(req.url)
-    const offset = Math.max(Number(searchParams.get('offset') ?? '0') || 0, 0)
+    const offset = offsetSchema.parse(searchParams.get('offset'))
     const stateFilter = stateSchema.parse(searchParams.get('state'))
 
     // PR 데이터는 사용자별로 다르므로 캐시 키에 userId 포함

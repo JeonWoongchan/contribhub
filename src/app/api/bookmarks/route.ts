@@ -5,6 +5,8 @@ import { requireGithubToken } from '@/lib/auth-utils'
 import { createBookmark, deleteBookmark } from '@/lib/bookmarks'
 import { getBookmarkList } from '@/lib/bookmark-list'
 import { bookmarkDeleteSchema, bookmarkPostSchema } from '@/lib/validators/bookmarks'
+import { offsetSchema } from '@/lib/validators/pagination'
+import { z } from 'zod'
 
 export async function GET(req: NextRequest) {
   // GitHub 토큰 기반 사용자 인증 단계.
@@ -13,8 +15,8 @@ export async function GET(req: NextRequest) {
 
   // 페이지네이션 쿼리 파라미터 정규화 단계.
   const { searchParams } = new URL(req.url)
-  const limit = Math.min(Number(searchParams.get('limit') ?? '10') || 10, 20)
-  const offset = Math.max(Number(searchParams.get('offset') ?? '0') || 0, 0)
+  const limit = z.coerce.number().int().min(1).max(20).catch(10).parse(searchParams.get('limit'))
+  const offset = offsetSchema.parse(searchParams.get('offset'))
 
   // 북마크 목록 조회 서비스 호출 단계.
   const bookmarkList = await getBookmarkList({

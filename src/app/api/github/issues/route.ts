@@ -6,6 +6,7 @@ import { INITIAL_BATCH } from '@/lib/github/batch'
 import { parseIssueFilters } from '@/lib/github/issues/filters'
 import { fetchIssueListPage } from '@/lib/github/issues/service'
 import { loadOnboardingProfile } from '@/lib/user/profile'
+import { offsetSchema } from '@/lib/validators/pagination'
 
 export async function GET(req: NextRequest) {
     const auth = await requireGithubToken(req)
@@ -15,7 +16,7 @@ export async function GET(req: NextRequest) {
     if (!profile) return err('Onboarding not complete', 400, ErrorCode.ONBOARDING_REQUIRED)
 
     const { searchParams } = new URL(req.url)
-    const offset = Math.max(Number(searchParams.get('offset') ?? '0') || 0, 0)
+    const offset = offsetSchema.parse(searchParams.get('offset'))
     const batchParam = searchParams.get('batch') ?? INITIAL_BATCH
     const filters = parseIssueFilters(searchParams)
 
