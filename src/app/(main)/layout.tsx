@@ -13,7 +13,13 @@ export default async function MainLayout({
   const session = await auth()
   if (!session) redirect('/login')
 
-  const isDone = await getOnboardingStatus(session.user.id)
+  // DB 장애 시 레이아웃 전체가 터지는 것을 방지 — 에러를 Next.js 에러 바운더리로 위임
+  let isDone: boolean
+  try {
+    isDone = await getOnboardingStatus(session.user.id)
+  } catch {
+    throw new Error('서비스에 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.')
+  }
   if (!isDone) redirect('/onboarding')
 
   return (

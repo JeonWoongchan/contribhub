@@ -1,3 +1,5 @@
+import { GITHUB_API_TIMEOUT_MS } from '@/constants/scoring-rules'
+
 export class GitHubRateLimitError extends Error {
   constructor() {
     super('RATE_LIMITED')
@@ -24,6 +26,7 @@ export async function githubGraphQL<T>(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ query, variables }),
+    signal: AbortSignal.timeout(GITHUB_API_TIMEOUT_MS),
   })
 
   if (!res.ok) {

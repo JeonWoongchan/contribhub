@@ -90,9 +90,7 @@ export function useOnboardingWizard(initialLanguages: string[] = []) {
     handleSubmit: () => { mutation.mutate() },
     isPending: mutation.isPending,
     isError: mutation.isError,
-    errorMessage: mutation.isError && mutation.error instanceof Error
-      ? mutation.error.message
-      : DEFAULT_ERROR_MESSAGE,
+    errorMessage: mutation.isError ? mutation.error.message : DEFAULT_ERROR_MESSAGE,
     step,
     toggleAllTopLanguages,
     toggleContributionType,

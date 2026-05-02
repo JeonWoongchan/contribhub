@@ -2,6 +2,7 @@ import { headers } from 'next/headers'
 import { getToken } from 'next-auth/jwt'
 
 import type { GitHubRepo } from '@/types/github'
+import { GITHUB_API_TIMEOUT_MS } from '@/constants/scoring-rules'
 
 const GITHUB_USER_REPOS_URL = 'https://api.github.com/user/repos?per_page=100&sort=updated'
 
@@ -36,6 +37,7 @@ export async function fetchUserRepos(accessToken: string): Promise<GitHubRepo[]>
       Accept: 'application/vnd.github.v3+json',
     },
     cache: 'no-store',
+    signal: AbortSignal.timeout(GITHUB_API_TIMEOUT_MS),
   })
 
   if (!response.ok) {
