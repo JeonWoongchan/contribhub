@@ -1,19 +1,14 @@
 import { unstable_cache } from 'next/cache'
 import { NextRequest } from 'next/server'
+import { z } from 'zod'
 
 import { err, ErrorCode, ok } from '@/lib/api-response'
 import { requireGithubToken } from '@/lib/auth-utils'
 import { GitHubRateLimitError } from '@/lib/github/client'
 import { fetchViewerPullRequests } from '@/lib/github/pull-requests'
 import { GITHUB_API_CACHE_TTL_SECONDS, PAGE_SIZE } from '@/constants/scoring-rules'
-import type { PullRequestState } from '@/types/pull-request'
 
-const VALID_STATES = new Set<PullRequestState>(['OPEN', 'MERGED', 'CLOSED'])
-
-function parseState(value: string | null): PullRequestState | null {
-    if (value && VALID_STATES.has(value as PullRequestState)) return value as PullRequestState
-    return null
-}
+const stateSchema = z.enum(['OPEN', 'MERGED', 'CLOSED']).nullable().catch(null)
 
 export async function GET(req: NextRequest) {
     const auth = await requireGithubToken(req)
@@ -21,7 +16,7 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url)
     const offset = Math.max(Number(searchParams.get('offset') ?? '0') || 0, 0)
-    const stateFilter = parseState(searchParams.get('state'))
+    const stateFilter = stateSchema.parse(searchParams.get('state'))
 
     // PR 데이터는 사용자별로 다르므로 캐시 키에 userId 포함
     const getCachedPRs = unstable_cache(

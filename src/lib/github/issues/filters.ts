@@ -1,20 +1,23 @@
-import { CONTRIBUTION_TYPES, EXPERIENCE_LEVELS } from '@/constants/contribution-levels'
+import { z } from 'zod'
 import { SCORE_FILTER_THRESHOLDS } from '@/constants/scoring-rules'
+import type { ScoreThreshold } from '@/constants/scoring-rules'
 import type { IssueFilters, ScoredIssue } from '@/types/issue'
 
-const VALID_DIFFICULTY_LEVELS = new Set<string>(EXPERIENCE_LEVELS.map((l) => l.value))
-const VALID_CONTRIBUTION_TYPES = new Set<string>(CONTRIBUTION_TYPES.map((t) => t.value))
-const VALID_SCORE_THRESHOLDS = new Set<number>(SCORE_FILTER_THRESHOLDS)
+// URL 쿼리 파라미터는 임의 문자열 — 허용 목록 외 값은 null로 폴백
+const difficultyLevelSchema = z.enum(['beginner', 'junior', 'mid', 'senior']).nullable().catch(null)
+const contributionTypeSchema = z.enum(['doc', 'bug', 'feat', 'test', 'review']).nullable().catch(null)
+// Set.has()는 number → ScoreThreshold 좁히기를 지원하지 않아 타입 단언이 최소 필요
+const validScoreSet = new Set<number>(SCORE_FILTER_THRESHOLDS)
+const minScoreSchema = z.coerce.number().transform(
+    (n): ScoreThreshold | null => validScoreSet.has(n) ? (n as ScoreThreshold) : null
+)
 
 export function parseIssueFilters(searchParams: URLSearchParams): IssueFilters {
-    const difficultyParam = searchParams.get('difficultyLevel')
-    const contributionParam = searchParams.get('contributionType')
-    const minScoreParam = Number(searchParams.get('minScore'))
     return {
         language: searchParams.get('language'),
-        difficultyLevel: VALID_DIFFICULTY_LEVELS.has(difficultyParam ?? '') ? difficultyParam as IssueFilters['difficultyLevel'] : null,
-        contributionType: VALID_CONTRIBUTION_TYPES.has(contributionParam ?? '') ? contributionParam as IssueFilters['contributionType'] : null,
-        minScore: VALID_SCORE_THRESHOLDS.has(minScoreParam) ? minScoreParam as IssueFilters['minScore'] : null,
+        difficultyLevel: difficultyLevelSchema.parse(searchParams.get('difficultyLevel')),
+        contributionType: contributionTypeSchema.parse(searchParams.get('contributionType')),
+        minScore: minScoreSchema.parse(searchParams.get('minScore')),
     }
 }
 

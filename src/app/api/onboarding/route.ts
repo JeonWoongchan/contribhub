@@ -2,7 +2,7 @@ import { auth } from '@/lib/auth'
 import { NextRequest } from 'next/server'
 import { ok, err, ErrorCode } from '@/lib/api-response'
 import { saveOnboardingSurvey } from '@/lib/user/onboarding'
-import type { OnboardingSurvey } from '@/types/user'
+import { onboardingSurveySchema } from '@/lib/validators/onboarding'
 
 /**
  * POST /api/onboarding
@@ -22,8 +22,12 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const survey = (await req.json()) as OnboardingSurvey
-    await saveOnboardingSurvey(session.user.id, survey)
+    const body = (await req.json().catch(() => null)) as unknown
+    const result = onboardingSurveySchema.safeParse(body)
+    if (!result.success) {
+      return err('Invalid onboarding payload', 400)
+    }
+    await saveOnboardingSurvey(session.user.id, result.data)
     return ok({ success: true })
   } catch (error) {
     console.error('Onboarding error:', error)
