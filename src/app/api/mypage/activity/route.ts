@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { err, ok } from '@/lib/api-response'
+import { err, ErrorCode, ok } from '@/lib/api-response'
 import { requireGithubToken } from '@/lib/auth-utils'
 import { getGitHubErrorResponse } from '@/lib/github/error-response'
 import { getMyPageActivity } from '@/lib/user/my-page'
@@ -13,6 +13,10 @@ export async function GET(req: NextRequest) {
 
     return ok(data)
   } catch (error) {
-    return getGitHubErrorResponse(error, { fallbackMessage: '활동 데이터를 불러오지 못했습니다.' })
+    return getGitHubErrorResponse(error, {
+      fallbackMessage: '활동 데이터를 불러오지 못했습니다.',
+      fallbackStatus: 500,
+      fallbackCode: ErrorCode.INTERNAL_ERROR,
+    })
   }
 }
