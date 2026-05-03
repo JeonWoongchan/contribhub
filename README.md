@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Open Issue Map
 
-## Getting Started
+> 오픈소스 첫 기여, 어디서 시작해야 할지 모르겠다면
 
-First, run the development server:
+GitHub 계정으로 로그인하고 간단한 설문에 답하면, 지금 내 수준과 시간에 맞는 오픈소스 이슈를 추천받을 수 있습니다.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+**[서비스 바로가기 →](https://open-issue-map.vercel.app)**
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 주요 기능
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**맞춤 이슈 추천**  
+선호 언어, 경험 수준, 기여 방식, 주간 가용 시간, 기여 목적을 입력하면 GitHub에서 적합한 이슈를 찾아 매칭 점수와 함께 보여줍니다.
 
-## Learn More
+**저장소 건강도 반영**  
+PR 응답 속도, merge rate, 최근 커밋 빈도를 기반으로 관리가 활발한 저장소의 이슈를 우선 추천합니다. 기여 후 피드백을 받을 가능성이 높은 저장소를 고를 수 있습니다.
 
-To learn more about Next.js, take a look at the following resources:
+**북마크**  
+관심 이슈를 저장하고 나중에 다시 확인할 수 있습니다. GitHub API가 일시적으로 응답하지 않아도 저장된 목록은 유지됩니다.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**PR 히스토리**  
+내가 오픈소스에 기여한 PR 목록과 코드 변경 통계를 한 화면에서 확인할 수 있습니다.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 기술 스택
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| 영역 | 기술 |
+|------|------|
+| 프레임워크 | Next.js 15 (App Router) |
+| UI | React 19, Tailwind CSS v4, shadcn/ui |
+| 언어 | TypeScript (strict) |
+| 인증 | NextAuth v5, GitHub OAuth |
+| 데이터베이스 | Neon PostgreSQL |
+| 서버 상태 | TanStack Query v5 |
+| 입력 검증 | Zod v4 |
+| 테스트 | Vitest, GitHub Actions CI |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 기술적으로 해결한 문제들
+
+### 8차원 맞춤 스코어링
+
+단순 키워드 매칭이 아닌, 사용자 프로필과 이슈 메타데이터를 8개 차원에서 비교해 점수를 계산합니다. 각 차원(언어 일치도, 난이도, 기여 방식, 경쟁도, 저장소 건강도, 목적 적합성, 시간 예산, 경험 수준)은 상수 테이블로 분리되어 있어 가중치 조정이 UI 코드에 영향을 주지 않습니다.
+
+### GitHub OAuth 토큰 클라이언트 비노출
+
+GitHub API 토큰을 브라우저에 직접 전달하지 않습니다. 토큰은 서버 측 HttpOnly JWT 쿠키 내부에만 유지되고, API 호출은 Route Handler가 대신 수행합니다.
+
+### 낙관적 업데이트 race condition 해결
+
+북마크 토글 시 서버 응답 전에 UI를 먼저 반영합니다. 기존 snapshot 복원 방식은 두 이슈를 동시에 토글할 때 한 쪽의 낙관적 변경을 덮어쓰는 race condition이 있었습니다. 현재 상태에서 해당 항목만 되돌리는 함수형 undo 패턴으로 교체했습니다.
+
+### 서버·클라이언트 이중 캐시 전략
+
+GitHub API 응답은 `unstable_cache`로 서버에서 재사용하고, 저장소 건강도는 DB에 1시간 TTL로 캐싱합니다. 클라이언트의 페이지네이션·필터 상태는 TanStack Query가 관리합니다. 두 캐시 계층의 성격이 달라 분리했습니다.
+
+---
+
+## 테스트
+
+핵심 비즈니스 로직에 대한 단위 테스트를 작성하고 CI에서 자동 실행합니다.
+
+- 스코어링 엔진, 필터 파싱, PR 통계 계산 등 순수 함수 37개 테스트
+- GitHub Actions — `master` 브랜치 PR 시 lint + test 통과 필수

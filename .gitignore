@@ -31,8 +31,22 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files — 실제 값이 담긴 파일은 절대 커밋하지 않는다
 .env*
+# 단, 값이 비어 있는 템플릿 파일은 커밋 허용
+!.env.example
+
+# ── 개발자 전용 파일 (공개 레포에 올라가면 안 되는 것들) ──────────────────────
+# 내부 문서: DB 스키마·알고리즘 가중치·아키텍처 상세 포함
+docs/
+# 디자인 시스템 내부 문서
+DESIGN.md
+# Claude Code AI 어시스턴트 설정 — 로컬 머신 경로 포함
+.claude/
+# Claude Code 에이전트 스킬 파일
+.agents/
+# AI 협업 개발 가이드라인 — 내부 컨벤션 및 개발자 자기 서술 포함
+CLAUDE.md
 
 # vercel
 .vercel

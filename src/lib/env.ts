@@ -13,4 +13,5 @@ export const env = {
     DATABASE_URL: requireEnv('DATABASE_URL'),
     GITHUB_CLIENT_ID: requireEnv('GITHUB_CLIENT_ID'),
     GITHUB_CLIENT_SECRET: requireEnv('GITHUB_CLIENT_SECRET'),
+    AUTH_SECRET: requireEnv('AUTH_SECRET'),
 } as const

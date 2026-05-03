@@ -2,6 +2,7 @@ import { auth } from '@/lib/auth'
 import { getToken } from 'next-auth/jwt'
 import type { NextRequest } from 'next/server'
 import { ErrorCode } from '@/lib/api-response'
+import { env } from '@/lib/env'
 
 export type AuthResult =
   | { ok: true; userId: string; accessToken: string; githubLogin: string }
@@ -15,7 +16,8 @@ export async function requireGithubToken(req: NextRequest): Promise<AuthResult> 
     return { ok: false, error: 'Unauthorized', status: 401, code: ErrorCode.UNAUTHORIZED }
   }
 
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+  // NextAuth v5는 AUTH_SECRET을 사용한다. NEXTAUTH_SECRET은 v4 이름으로 다른 변수다.
+  const token = await getToken({ req, secret: env.AUTH_SECRET })
   if (!token?.accessToken) {
     return { ok: false, error: 'No access token', status: 401, code: ErrorCode.NO_ACCESS_TOKEN }
   }
