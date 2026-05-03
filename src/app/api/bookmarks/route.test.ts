@@ -2,6 +2,8 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import { GET, POST, DELETE } from '@/app/api/bookmarks/route'
 import { ErrorCode } from '@/lib/api-response'
 import { NextRequest } from 'next/server'
+import type { Mock } from 'vitest'
+import type { Session } from 'next-auth'
 
 vi.mock('@/lib/auth', () => ({ auth: vi.fn() }))
 vi.mock('@/lib/auth-utils', () => ({ requireGithubToken: vi.fn() }))
@@ -12,13 +14,16 @@ import { auth } from '@/lib/auth'
 import { requireGithubToken } from '@/lib/auth-utils'
 import { createBookmark, deleteBookmark } from '@/lib/bookmarks'
 import { getBookmarkList } from '@/lib/bookmark-list'
-const mockAuth = vi.mocked(auth)
+const mockAuth = auth as unknown as Mock<() => Promise<Session | null>>
 const mockRequireToken = vi.mocked(requireGithubToken)
 const mockCreate = vi.mocked(createBookmark)
 const mockDelete = vi.mocked(deleteBookmark)
 const mockGetList = vi.mocked(getBookmarkList)
 
-afterEach(() => vi.clearAllMocks())
+afterEach(() => {
+  vi.restoreAllMocks()
+  vi.clearAllMocks()
+})
 
 // ─── 헬퍼 ───────────────────────────────────────────────────────────────────
 
@@ -40,6 +45,10 @@ function authFail() {
   })
 }
 
+function silenceConsoleError() {
+  return vi.spyOn(console, 'error').mockImplementation(() => undefined)
+}
+
 const validPostBody = {
   issueNumber: 42,
   repoFullName: 'owner/repo',
@@ -47,6 +56,14 @@ const validPostBody = {
   issueUrl: 'https://github.com/owner/repo/issues/42',
   contributionType: 'bug',
 }
+
+const session = {
+  user: {
+    id: 'user-1',
+    login: 'testuser',
+  },
+  expires: '2099-01-01T00:00:00.000Z',
+} satisfies Session
 
 // ─── GET ─────────────────────────────────────────────────────────────────────
 
@@ -63,7 +80,7 @@ describe('GET /api/bookmarks', () => {
 
   it('정상 요청 시 북마크 목록을 반환한다', async () => {
     authOk()
-    const bookmarkList = { issues: [], pageInfo: { total: 0, hasMore: false } }
+    const bookmarkList = { issues: [], pageInfo: { limit: 10, offset: 0, total: 0, hasMore: false } }
     mockGetList.mockResolvedValue(bookmarkList)
 
     const res = await GET(new NextRequest('http://localhost/api/bookmarks?limit=10&offset=0'))
@@ -76,7 +93,10 @@ describe('GET /api/bookmarks', () => {
 
   it('limit/offset 파라미터가 없으면 기본값을 사용한다', async () => {
     authOk()
-    mockGetList.mockResolvedValue({ issues: [], pageInfo: { total: 0, hasMore: false } })
+    mockGetList.mockResolvedValue({
+      issues: [],
+      pageInfo: { limit: 10, offset: 0, total: 0, hasMore: false },
+    })
 
     await GET(new NextRequest('http://localhost/api/bookmarks'))
 
@@ -86,6 +106,7 @@ describe('GET /api/bookmarks', () => {
   })
 
   it('getBookmarkList 예외 발생 시 500을 반환한다', async () => {
+    const consoleError = silenceConsoleError()
     authOk()
     mockGetList.mockRejectedValue(new Error('DB error'))
 
@@ -94,6 +115,7 @@ describe('GET /api/bookmarks', () => {
 
     expect(res.status).toBe(500)
     expect(json.ok).toBe(false)
+    expect(consoleError).toHaveBeenCalledOnce()
   })
 })
 
@@ -114,7 +136,7 @@ describe('POST /api/bookmarks', () => {
   })
 
   it('요청 body가 JSON이 아니면 400을 반환한다', async () => {
-    mockAuth.mockResolvedValueOnce({ user: { id: 'user-1' } } as never)
+    mockAuth.mockResolvedValueOnce(session)
 
     const res = await POST(new Request('http://localhost/api/bookmarks', {
       method: 'POST',
@@ -125,8 +147,13 @@ describe('POST /api/bookmarks', () => {
   })
 
   it('필수 필드 누락 시 400을 반환한다', async () => {
-    mockAuth.mockResolvedValueOnce({ user: { id: 'user-1' } } as never)
-    const { issueTitle: _, ...invalid } = validPostBody
+    mockAuth.mockResolvedValueOnce(session)
+    const invalid = {
+      issueNumber: validPostBody.issueNumber,
+      repoFullName: validPostBody.repoFullName,
+      issueUrl: validPostBody.issueUrl,
+      contributionType: validPostBody.contributionType,
+    }
 
     const res = await POST(new Request('http://localhost/api/bookmarks', {
       method: 'POST',
@@ -137,7 +164,7 @@ describe('POST /api/bookmarks', () => {
   })
 
   it('정상 요청 시 201과 { saved: true }를 반환한다', async () => {
-    mockAuth.mockResolvedValueOnce({ user: { id: 'user-1' } } as never)
+    mockAuth.mockResolvedValueOnce(session)
     mockCreate.mockResolvedValueOnce(undefined)
 
     const res = await POST(new Request('http://localhost/api/bookmarks', {
@@ -151,7 +178,8 @@ describe('POST /api/bookmarks', () => {
   })
 
   it('createBookmark 예외 발생 시 500을 반환한다', async () => {
-    mockAuth.mockResolvedValueOnce({ user: { id: 'user-1' } } as never)
+    const consoleError = silenceConsoleError()
+    mockAuth.mockResolvedValueOnce(session)
     mockCreate.mockRejectedValue(new Error('DB error'))
 
     const res = await POST(new Request('http://localhost/api/bookmarks', {
@@ -160,6 +188,7 @@ describe('POST /api/bookmarks', () => {
     }))
 
     expect(res.status).toBe(500)
+    expect(consoleError).toHaveBeenCalledOnce()
   })
 })
 
@@ -178,7 +207,7 @@ describe('DELETE /api/bookmarks', () => {
   })
 
   it('필수 필드 누락 시 400을 반환한다', async () => {
-    mockAuth.mockResolvedValueOnce({ user: { id: 'user-1' } } as never)
+    mockAuth.mockResolvedValueOnce(session)
 
     const res = await DELETE(new Request('http://localhost/api/bookmarks', {
       method: 'DELETE',
@@ -189,7 +218,7 @@ describe('DELETE /api/bookmarks', () => {
   })
 
   it('정상 요청 시 200과 { deleted: true }를 반환한다', async () => {
-    mockAuth.mockResolvedValueOnce({ user: { id: 'user-1' } } as never)
+    mockAuth.mockResolvedValueOnce(session)
     mockDelete.mockResolvedValueOnce(undefined)
 
     const res = await DELETE(new Request('http://localhost/api/bookmarks', {
@@ -203,7 +232,8 @@ describe('DELETE /api/bookmarks', () => {
   })
 
   it('deleteBookmark 예외 발생 시 500을 반환한다', async () => {
-    mockAuth.mockResolvedValueOnce({ user: { id: 'user-1' } } as never)
+    const consoleError = silenceConsoleError()
+    mockAuth.mockResolvedValueOnce(session)
     mockDelete.mockRejectedValue(new Error('DB error'))
 
     const res = await DELETE(new Request('http://localhost/api/bookmarks', {
@@ -212,5 +242,6 @@ describe('DELETE /api/bookmarks', () => {
     }))
 
     expect(res.status).toBe(500)
+    expect(consoleError).toHaveBeenCalledOnce()
   })
 })

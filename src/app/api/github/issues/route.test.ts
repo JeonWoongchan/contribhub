@@ -18,7 +18,10 @@ const mockAuth = vi.mocked(requireGithubToken)
 const mockProfile = vi.mocked(loadOnboardingProfile)
 const mockFetch = vi.mocked(fetchIssueListPage)
 
-afterEach(() => vi.clearAllMocks())
+afterEach(() => {
+  vi.restoreAllMocks()
+  vi.clearAllMocks()
+})
 
 const profile = {
   topLanguages: ['TypeScript'],
@@ -39,6 +42,10 @@ function authOk() {
 
 function req(params = '') {
   return new NextRequest(`http://localhost/api/github/issues${params}`)
+}
+
+function silenceConsoleError() {
+  return vi.spyOn(console, 'error').mockImplementation(() => undefined)
 }
 
 describe('GET /api/github/issues', () => {
@@ -121,6 +128,7 @@ describe('GET /api/github/issues', () => {
   })
 
   it('예외 발생 시 500을 반환한다', async () => {
+    const consoleError = silenceConsoleError()
     authOk()
     mockProfile.mockResolvedValue(profile)
     mockFetch.mockRejectedValue(new Error('unexpected'))
@@ -130,6 +138,7 @@ describe('GET /api/github/issues', () => {
 
     expect(res.status).toBe(500)
     expect(json.error?.code).toBe(ErrorCode.INTERNAL_ERROR)
+    expect(consoleError).toHaveBeenCalledOnce()
   })
 
   it('offset과 batch 쿼리 파라미터를 fetchIssueListPage에 전달한다', async () => {

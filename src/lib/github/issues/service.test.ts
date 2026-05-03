@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import { fetchIssueListPage } from '@/lib/github/issues/service'
 import { encodeBatch, INITIAL_BATCH } from '@/lib/github/batch'
 import { PAGE_SIZE } from '@/constants/scoring-rules'
+import { EMPTY_ISSUE_FILTERS } from '@/types/issue'
 import type { OnboardingProfile } from '@/lib/user/profile'
 import type { RawIssue, ScoredIssue } from '@/types/issue'
 import type { IssueSearchResult } from '@/lib/github/issues/search'
@@ -39,10 +40,10 @@ const baseArgs = {
   userId: 'user-1',
   accessToken: 'token',
   profile,
-  filters: {},
+  filters: EMPTY_ISSUE_FILTERS,
   offset: 0,
   batchParam: INITIAL_BATCH,
-}
+} satisfies Parameters<typeof fetchIssueListPage>[0]
 
 function makeSearchResult(overrides: Partial<IssueSearchResult> = {}): IssueSearchResult {
   return {
@@ -96,7 +97,7 @@ function makeScoredIssue(overrides: Partial<ScoredIssue> = {}): ScoredIssue {
     score: 50,
     difficultyLevel: null,
     contributionType: null,
-    competitionLevel: 'low',
+    competitionLevel: 'OPEN',
     hasPR: false,
     isBookmarked: false,
     healthScore: 80,
@@ -106,11 +107,11 @@ function makeScoredIssue(overrides: Partial<ScoredIssue> = {}): ScoredIssue {
 
 function setupDeps(
   rawIssues: RawIssue[],
-  scoredIssues: ScoredIssue[],
+  scoredIssues: ScoredIssue[] = [],
   searchOverrides: Partial<IssueSearchResult> = {}
 ) {
   mockSearch.mockResolvedValue(makeSearchResult({ issues: rawIssues, ...searchOverrides }))
-  mockHealthMap.mockResolvedValue({})
+  mockHealthMap.mockResolvedValue(new Map())
   mockBookmarks.mockResolvedValue([])
   mockRank.mockReturnValue(scoredIssues)
   mockFilter.mockImplementation((issues) => issues)  // isBookmarked 설정 후의 rankedIssues를 그대로 통과
@@ -215,7 +216,7 @@ describe('fetchIssueListPage — 북마크 병합', () => {
       makeScoredIssue({ repoFullName: 'owner/repo', number: 2 }),
     ]
     mockSearch.mockResolvedValue(makeSearchResult({ issues: [makeRawIssue()] }))
-    mockHealthMap.mockResolvedValue({})
+    mockHealthMap.mockResolvedValue(new Map())
     mockBookmarks.mockResolvedValue(['owner/repo#1'])
     mockRank.mockReturnValue(scored)
     mockFilter.mockImplementation((issues) => issues)
