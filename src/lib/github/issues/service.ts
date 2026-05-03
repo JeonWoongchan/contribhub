@@ -22,7 +22,7 @@ export type IssuePageData = {
     failedQueryCount: number
 }
 
-export type IssuePageError = { error: 'rate_limited' } | { error: 'all_failed' }
+export type IssuePageError = { error: 'rate_limited' } | { error: 'unauthorized' } | { error: 'all_failed' }
 
 export async function fetchIssueListPage({
     userId,
@@ -58,6 +58,9 @@ export async function fetchIssueListPage({
 
     if (searchResult.rateLimited && searchResult.issues.length === 0) {
         return { error: 'rate_limited' }
+    }
+    if (searchResult.unauthorized && searchResult.issues.length === 0) {
+        return { error: 'unauthorized' }
     }
     if (searchResult.failedQueryCount === searchResult.totalQueryCount && searchResult.totalQueryCount > 0) {
         return { error: 'all_failed' }

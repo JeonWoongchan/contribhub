@@ -32,6 +32,9 @@ export async function GET(req: NextRequest) {
 
         if ('error' in result) {
             if (result.error === 'rate_limited') return err('GitHub rate limit exceeded', 429, ErrorCode.RATE_LIMITED)
+            if (result.error === 'unauthorized') {
+                return err('GitHub authorization expired. Please sign in again.', 401, ErrorCode.UNAUTHORIZED)
+            }
             return err('Failed to fetch GitHub issues', 502, ErrorCode.GITHUB_ERROR)
         }
 

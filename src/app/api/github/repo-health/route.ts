@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server'
 import { requireGithubToken } from '@/lib/auth-utils'
 import { getRepoHealth } from '@/lib/github/repo-health/calculate'
-import { GitHubRateLimitError, GitHubNotFoundError } from '@/lib/github/client'
 import { ok, err, ErrorCode } from '@/lib/api-response'
+import { getGitHubErrorResponse } from '@/lib/github/error-response'
 
 export async function GET(req: NextRequest) {
   const auth = await requireGithubToken(req)
@@ -19,12 +19,11 @@ export async function GET(req: NextRequest) {
     const healthScore = await getRepoHealth(repo, auth.accessToken)
     return ok({ repo, healthScore })
   } catch (e) {
-    if (e instanceof GitHubRateLimitError) {
-      return err('GitHub rate limit exceeded', 429, ErrorCode.RATE_LIMITED)
-    }
-    if (e instanceof GitHubNotFoundError) {
-      return err('Repository not found', 404, ErrorCode.INVALID_REPO)
-    }
-    return err('Failed to fetch repo health', 500, ErrorCode.INTERNAL_ERROR)
+    return getGitHubErrorResponse(e, {
+      fallbackMessage: 'Failed to fetch repo health',
+      fallbackStatus: 500,
+      fallbackCode: ErrorCode.INTERNAL_ERROR,
+      notFoundMessage: 'Repository not found',
+    })
   }
 }

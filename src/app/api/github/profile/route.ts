@@ -1,7 +1,8 @@
 import { NextRequest } from 'next/server'
 import { ok, err, ErrorCode } from '@/lib/api-response'
 import { requireGithubToken } from '@/lib/auth-utils'
-import { GitHubProfileError, getTopLanguagesByAccessToken } from '@/lib/github/profile'
+import { getGitHubErrorResponse } from '@/lib/github/error-response'
+import { getTopLanguagesByAccessToken } from '@/lib/github/profile'
 
 /**
  * GET /api/github/profile
@@ -25,10 +26,6 @@ export async function GET(req: NextRequest) {
     const topLanguages = await getTopLanguagesByAccessToken(auth.accessToken)
     return ok({ topLanguages })
   } catch (error) {
-    if (error instanceof GitHubProfileError) {
-      return err(error.message, error.status, ErrorCode.GITHUB_ERROR)
-    }
-
-    return err('Failed to fetch GitHub profile', 500, ErrorCode.INTERNAL_ERROR)
+    return getGitHubErrorResponse(error, { fallbackMessage: 'Failed to fetch GitHub profile', fallbackStatus: 500, fallbackCode: ErrorCode.INTERNAL_ERROR })
   }
 }

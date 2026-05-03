@@ -7,6 +7,13 @@ export class GitHubRateLimitError extends Error {
   }
 }
 
+export class GitHubUnauthorizedError extends Error {
+  constructor() {
+    super('UNAUTHORIZED')
+    this.name = 'GitHubUnauthorizedError'
+  }
+}
+
 export class GitHubNotFoundError extends Error {
   constructor() {
     super('NOT_FOUND')
@@ -30,6 +37,12 @@ export async function githubGraphQL<T>(
   })
 
   if (!res.ok) {
+    if (res.status === 401) {
+      throw new GitHubUnauthorizedError()
+    }
+    if (res.status === 403 && res.headers.get('x-ratelimit-remaining') === '0') {
+      throw new GitHubRateLimitError()
+    }
     throw new Error(`GitHub GraphQL error: ${res.status}`)
   }
 

@@ -1,4 +1,4 @@
-import { githubGraphQL, GitHubRateLimitError } from '@/lib/github/client'
+import { githubGraphQL, GitHubRateLimitError, GitHubUnauthorizedError } from '@/lib/github/client'
 import type { RawIssue } from '@/types/issue'
 
 const SEARCH_ISSUES_QUERY = `
@@ -62,6 +62,7 @@ export type IssueSearchResult = {
     failedQueryCount: number
     totalQueryCount: number
     rateLimited: boolean
+    unauthorized: boolean
 }
 
 // 언어별 GitHub 이슈 검색 쿼리 문자열 생성
@@ -95,6 +96,7 @@ export async function fetchCandidateIssues(
             failedQueryCount: 0,
             totalQueryCount: 0,
             rateLimited: false,
+            unauthorized: false,
         }
     }
 
@@ -136,5 +138,6 @@ export async function fetchCandidateIssues(
         failedQueryCount: failedResults.length,
         totalQueryCount: queries.length,
         rateLimited: failedResults.some((result) => result.reason instanceof GitHubRateLimitError),
+        unauthorized: failedResults.some((result) => result.reason instanceof GitHubUnauthorizedError),
     }
 }

@@ -42,6 +42,12 @@ export async function fetchUserRepos(accessToken: string): Promise<GitHubRepo[]>
   })
 
   if (!response.ok) {
+    if (response.status === 401) {
+      throw new GitHubProfileError('GitHub authorization expired', 401)
+    }
+    if (response.status === 403 && response.headers.get('x-ratelimit-remaining') === '0') {
+      throw new GitHubProfileError('GitHub rate limit exceeded', 429)
+    }
     throw new GitHubProfileError('GitHub API error', response.status)
   }
 

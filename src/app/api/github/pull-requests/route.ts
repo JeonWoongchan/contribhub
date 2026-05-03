@@ -2,9 +2,9 @@ import { unstable_cache } from 'next/cache'
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 
-import { err, ErrorCode, ok } from '@/lib/api-response'
+import { err, ok } from '@/lib/api-response'
 import { requireGithubToken } from '@/lib/auth-utils'
-import { GitHubRateLimitError } from '@/lib/github/client'
+import { getGitHubErrorResponse } from '@/lib/github/error-response'
 import { fetchViewerPullRequests } from '@/lib/github/pull-requests'
 import { GITHUB_API_CACHE_TTL_SECONDS, PAGE_SIZE } from '@/constants/scoring-rules'
 import { offsetSchema } from '@/lib/validators/pagination'
@@ -41,9 +41,6 @@ export async function GET(req: NextRequest) {
             offset,
         })
     } catch (error) {
-        if (error instanceof GitHubRateLimitError) {
-            return err('GitHub API 요청 한도를 초과했습니다.', 429, ErrorCode.RATE_LIMITED)
-        }
-        return err('PR 목록을 불러오지 못했습니다.', 502, ErrorCode.GITHUB_ERROR)
+        return getGitHubErrorResponse(error, { fallbackMessage: 'PR 목록을 불러오지 못했습니다.' })
     }
 }
