@@ -3,6 +3,7 @@ import { getToken } from 'next-auth/jwt'
 
 import type { GitHubRepo } from '@/types/github'
 import { GITHUB_API_TIMEOUT_MS } from '@/constants/scoring-rules'
+import { env } from '@/lib/env'
 
 const GITHUB_USER_REPOS_URL = 'https://api.github.com/user/repos?per_page=100&sort=updated'
 
@@ -55,7 +56,7 @@ export async function getTopLanguagesByAccessToken(accessToken: string): Promise
 async function getAccessToken(): Promise<string | null> {
   const token = await getToken({
     req: { headers: await headers() } as Request,
-    secret: process.env.NEXTAUTH_SECRET,
+    secret: env.AUTH_SECRET,
   })
 
   return token?.accessToken ?? null
