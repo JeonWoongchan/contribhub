@@ -1,0 +1,62 @@
+# CI 파이프라인
+# 언제 실행되나?
+#   - master·dev 브랜치에 push할 때
+#   - master 브랜치를 대상으로 하는 Pull Request를 열거나 업데이트할 때
+#
+# 무엇을 하나?
+#   1. 코드 체크아웃
+#   2. pnpm·Node.js 환경 셋업
+#   3. 의존성 설치
+#   4. 린트 검사 (ESLint)
+#   5. 단위 테스트 (Vitest)
+#
+# 이 파일이 있으면?
+#   GitHub PR 화면에 CI 통과 여부가 표시된다.
+#   master 브랜치 protection rule에서 "ci" 잡을 필수로 설정하면
+#   테스트가 실패한 PR은 머지 버튼이 비활성화된다.
+
+name: CI
+
+on:
+  push:
+    branches: [master, dev]
+  pull_request:
+    branches: [master]
+
+jobs:
+  ci:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 현재 브랜치의 코드를 러너에 내려받는다.
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      # 2. pnpm 패키지 매니저를 설치한다.
+      - name: pnpm 설치
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      # 3. Node.js를 설치하고, pnpm 캐시를 활성화한다.
+      #    캐시가 있으면 pnpm install 시간이 크게 줄어든다.
+      - name: Node.js 설치
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      # 4. lockfile 기준으로 의존성을 설치한다.
+      #    --frozen-lockfile: lockfile과 package.json이 다르면 실패 → 의도치 않은 업그레이드 방지
+      - name: 의존성 설치
+        run: pnpm install --frozen-lockfile
+
+      # 5. ESLint로 코드 품질을 검사한다.
+      - name: 린트 검사
+        run: pnpm lint
+
+      # 6. Vitest로 단위 테스트를 실행한다.
+      #    하나라도 실패하면 잡 전체가 실패로 표시된다.
+      - name: 단위 테스트
+        run: pnpm test

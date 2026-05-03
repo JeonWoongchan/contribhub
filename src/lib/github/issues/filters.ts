@@ -8,7 +8,9 @@ const difficultyLevelSchema = z.enum(['beginner', 'junior', 'mid', 'senior']).nu
 const contributionTypeSchema = z.enum(['doc', 'bug', 'feat', 'test', 'review']).nullable().catch(null)
 // Set.has()는 number → ScoreThreshold 좁히기를 지원하지 않아 타입 단언이 최소 필요
 const validScoreSet = new Set<number>(SCORE_FILTER_THRESHOLDS)
-const minScoreSchema = z.coerce.number().transform(
+// Zod v4는 NaN을 invalid_type으로 취급해 'abc' 같은 비숫자 입력 시 예외를 던진다.
+// .catch(0)으로 폴백 — 0은 SCORE_FILTER_THRESHOLDS에 없으므로 transform에서 null이 된다.
+const minScoreSchema = z.coerce.number().catch(0).transform(
     (n): ScoreThreshold | null => validScoreSet.has(n) ? (n as ScoreThreshold) : null
 )
 

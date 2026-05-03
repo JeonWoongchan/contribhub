@@ -57,7 +57,7 @@ interface ViewerPRsResult {
 }
 
 // 본인 소유 레포에 올린 PR 제외 — 오픈소스 기여 목록만 남김
-function excludeOwnRepoPRs(items: PullRequestItem[], viewerLogin: string): PullRequestItem[] {
+export function excludeOwnRepoPRs(items: PullRequestItem[], viewerLogin: string): PullRequestItem[] {
     if (!viewerLogin) return items
     return items.filter((item) => item.repoFullName.split('/')[0] !== viewerLogin)
 }
@@ -86,7 +86,7 @@ function toPullRequestItem(raw: RawPullRequest): PullRequestItem {
 }
 
 // PR 목록 전체 기준 요약 통계 계산
-function computeSummary(items: PullRequestItem[]): PullRequestSummary {
+export function computeSummary(items: PullRequestItem[]): PullRequestSummary {
     return {
         totalCount: items.length,
         mergedCount: items.filter((pr) => pr.state === 'MERGED').length,
