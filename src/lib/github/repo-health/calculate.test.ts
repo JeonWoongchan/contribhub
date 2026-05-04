@@ -138,6 +138,72 @@ describe('getRepoHealth — 점수 계산', () => {
     expect(await computeScore(repo)).toBe(63)
   })
 
+  it('최근 커밋 기준: 29일은 30점, 31일은 20점 (임계값 30일 경계)', async () => {
+    // RECENT_COMMIT 규칙: <= 30일 → 30점, <= 90일 → 20점
+    // PR/이슈 없음으로 다른 차원을 0으로 격리
+    const base = {
+      mergedPullRequests: { nodes: [] },
+      closedPullRequests: { nodes: [] },
+      issues: { nodes: [] },
+    }
+
+    const score29 = await computeScore({ ...base, pushedAt: daysAgo(29) })
+    const score31 = await computeScore({ ...base, pushedAt: daysAgo(31) })
+
+    expect(score29).toBe(30)  // 29 <= 30 → 30점
+    expect(score31).toBe(20)  // 31 > 30, 31 <= 90 → 20점
+  })
+
+  it('최근 커밋 기준: 89일은 20점, 91일은 10점 (임계값 90일 경계)', async () => {
+    const base = {
+      mergedPullRequests: { nodes: [] },
+      closedPullRequests: { nodes: [] },
+      issues: { nodes: [] },
+    }
+
+    const score89 = await computeScore({ ...base, pushedAt: daysAgo(89) })
+    const score91 = await computeScore({ ...base, pushedAt: daysAgo(91) })
+
+    expect(score89).toBe(20)  // 89 <= 90 → 20점
+    expect(score91).toBe(10)  // 91 > 90, 91 <= 180 → 10점
+  })
+
+  it('최근 커밋 기준: 179일은 10점, 181일은 0점 (임계값 180일 경계)', async () => {
+    const base = {
+      mergedPullRequests: { nodes: [] },
+      closedPullRequests: { nodes: [] },
+      issues: { nodes: [] },
+    }
+
+    const score179 = await computeScore({ ...base, pushedAt: daysAgo(179) })
+    const score181 = await computeScore({ ...base, pushedAt: daysAgo(181) })
+
+    expect(score179).toBe(10)  // 179 <= 180 → 10점
+    expect(score181).toBe(0)   // 181 > 180, Infinity rule → 0점
+  })
+
+  it('머지율 80%는 25점, 75%는 15점 (임계값 0.8 경계)', async () => {
+    // 4/(4+1) = 0.8, 3/(3+1) = 0.75 — pushedAt을 충분히 오래 전으로 설정해 RECENT_COMMIT=0
+    const base = { pushedAt: daysAgo(500), issues: { nodes: [] } }
+
+    const score80 = await computeScore({
+      ...base,
+      mergedPullRequests: { nodes: Array.from({ length: 4 }, () => makePR(1)) },
+      closedPullRequests: { nodes: [makeClosedPR()] },
+    })
+    const score75 = await computeScore({
+      ...base,
+      mergedPullRequests: { nodes: Array.from({ length: 3 }, () => makePR(1)) },
+      closedPullRequests: { nodes: [makeClosedPR()] },
+    })
+
+    expect(score80).toBeGreaterThan(score75)
+    // 머지율 0.8 → MERGE_RATE 25점, 빠른 PR 1일 → PR_RESPONSE_SPEED 30점
+    expect(score80).toBe(0 + 30 + 25 + 0)  // RECENT_COMMIT=0, PR_SPEED=30, MERGE=25, MAINTAINER=0
+    // 머지율 0.75 → MERGE_RATE 15점
+    expect(score75).toBe(0 + 30 + 15 + 0)
+  })
+
   it('메인테이너가 아닌 댓글만 있는 이슈는 응답률 0%로 낮은 점수를 준다', async () => {
     const repo = {
       pushedAt: daysAgo(10),

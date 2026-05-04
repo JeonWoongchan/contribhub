@@ -152,4 +152,40 @@ describe('GET /api/github/issues', () => {
       expect.objectContaining({ offset: 10, batchParam: 'abc123' })
     )
   })
+
+  it('허용된 minScore 쿼리 파라미터를 파싱해 filters에 담아 전달한다', async () => {
+    authOk()
+    mockProfile.mockResolvedValue(profile)
+    mockFetch.mockResolvedValue({ error: 'all_failed' })
+
+    await GET(req('?offset=0&minScore=90'))
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.objectContaining({ filters: expect.objectContaining({ minScore: 90 }) })
+    )
+  })
+
+  it('허용 목록에 없는 minScore(55)는 null로 파싱되어 전달된다', async () => {
+    authOk()
+    mockProfile.mockResolvedValue(profile)
+    mockFetch.mockResolvedValue({ error: 'all_failed' })
+
+    await GET(req('?offset=0&minScore=55'))
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.objectContaining({ filters: expect.objectContaining({ minScore: null }) })
+    )
+  })
+
+  it('language 쿼리 파라미터를 filters에 담아 전달한다', async () => {
+    authOk()
+    mockProfile.mockResolvedValue(profile)
+    mockFetch.mockResolvedValue({ error: 'all_failed' })
+
+    await GET(req('?offset=0&language=TypeScript'))
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.objectContaining({ filters: expect.objectContaining({ language: 'TypeScript' }) })
+    )
+  })
 })

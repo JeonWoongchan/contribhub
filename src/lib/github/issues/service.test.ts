@@ -230,6 +230,77 @@ describe('fetchIssueListPage — 북마크 병합', () => {
   })
 })
 
+describe('fetchIssueListPage — 필터 전달', () => {
+  it('applyFilters가 전달받은 filters로 호출된다', async () => {
+    const scored = [makeScoredIssue()]
+    const filters = { ...EMPTY_ISSUE_FILTERS, minScore: 90 as const }
+    setupDeps([makeRawIssue()], scored)
+
+    await fetchIssueListPage({ ...baseArgs, filters })
+
+    expect(mockFilter).toHaveBeenCalledWith(expect.any(Array), filters)
+  })
+
+  it('applyFilters 결과 길이가 total에 반영된다', async () => {
+    const allScored = Array.from({ length: 15 }, (_, i) => makeScoredIssue({ number: i + 1 }))
+    mockSearch.mockResolvedValue(makeSearchResult({ issues: [makeRawIssue()] }))
+    mockHealthMap.mockResolvedValue(new Map())
+    mockBookmarks.mockResolvedValue([])
+    mockRank.mockReturnValue(allScored)
+    // minScore 필터가 걸려 3개만 남는 상황을 시뮬레이션
+    mockFilter.mockReturnValue(allScored.slice(0, 3))
+
+    const result = await fetchIssueListPage(baseArgs)
+
+    expect('error' in result).toBe(false)
+    if ('error' in result) return
+    expect(result.total).toBe(3)
+    expect(result.issues).toHaveLength(3)
+  })
+
+  it('필터 후 이슈가 PAGE_SIZE 미만이고 GitHub에 다음 페이지가 있으면 nextBatch를 반환한다', async () => {
+    // 90+ 필터로 배치 내 이슈가 적더라도 다음 GitHub 배치 커서가 전달되어야 한다
+    const allScored = Array.from({ length: 20 }, (_, i) => makeScoredIssue({ number: i + 1 }))
+    mockSearch.mockResolvedValue(
+      makeSearchResult({ issues: [makeRawIssue()], hasMoreOnGithub: true, endCursors: { TypeScript: 'cursor-xyz' } })
+    )
+    mockHealthMap.mockResolvedValue(new Map())
+    mockBookmarks.mockResolvedValue([])
+    mockRank.mockReturnValue(allScored)
+    mockFilter.mockReturnValue(allScored.slice(0, PAGE_SIZE - 1))
+
+    const result = await fetchIssueListPage(baseArgs)
+
+    expect('error' in result).toBe(false)
+    if ('error' in result) return
+    expect(result.total).toBe(PAGE_SIZE - 1)
+    expect(result.nextBatch).not.toBeNull()
+  })
+
+  it('availableLanguages는 필터 적용 전 rankedIssues 기준으로 수집된다', async () => {
+    // language 필터를 걸어도 UI의 언어 선택지는 전체 배치 기준으로 제공해야 한다
+    const allScored = [
+      makeScoredIssue({ number: 1, language: 'TypeScript' }),
+      makeScoredIssue({ number: 2, language: 'Go' }),
+      makeScoredIssue({ number: 3, language: 'Python' }),
+    ]
+    mockSearch.mockResolvedValue(makeSearchResult({ issues: [makeRawIssue()] }))
+    mockHealthMap.mockResolvedValue(new Map())
+    mockBookmarks.mockResolvedValue([])
+    mockRank.mockReturnValue(allScored)
+    // TypeScript 이슈만 필터를 통과하는 상황
+    mockFilter.mockReturnValue([allScored[0]])
+
+    const result = await fetchIssueListPage(baseArgs)
+
+    expect('error' in result).toBe(false)
+    if ('error' in result) return
+    // 필터 결과(1개)와 무관하게 배치 전체 언어 3종이 반환된다
+    expect(result.availableLanguages).toHaveLength(3)
+    expect(result.availableLanguages).toEqual(expect.arrayContaining(['TypeScript', 'Go', 'Python']))
+  })
+})
+
 describe('fetchIssueListPage — 메타데이터', () => {
   it('partialResults는 failedQueryCount > 0일 때 true이다', async () => {
     const scored = [makeScoredIssue()]

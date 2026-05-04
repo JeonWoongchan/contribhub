@@ -211,6 +211,33 @@ describe('scoreIssue', () => {
             })
             expect(scoreIssue(issue, makeProfile()).competitionLevel).toBe('ACTIVE')
         })
+
+        it('댓글 1개는 OPEN 상태다', () => {
+            // 1개는 ACTIVE 기준(2개) 미만 — 여전히 OPEN이지만 ONE_COMMENT 패널티 적용
+            const issue = makeRawIssue({ comments: { totalCount: 1 }, timelineItems: { nodes: [] } })
+            expect(scoreIssue(issue, makeProfile()).competitionLevel).toBe('OPEN')
+        })
+
+        it('댓글 2개는 ACTIVE의 최소 기준이다', () => {
+            // 2개부터 MEDIUM_ACTIVITY로 ACTIVE 전환 — 경계값
+            const issue = makeRawIssue({ comments: { totalCount: 2 }, timelineItems: { nodes: [] } })
+            expect(scoreIssue(issue, makeProfile()).competitionLevel).toBe('ACTIVE')
+        })
+
+        it('댓글 10개는 VERY_HIGH_ACTIVITY 기준이다', () => {
+            // 10개 이상은 가장 높은 경쟁도 페널티 적용 — 경계값
+            const issue = makeRawIssue({ comments: { totalCount: 10 }, timelineItems: { nodes: [] } })
+            expect(scoreIssue(issue, makeProfile()).competitionLevel).toBe('ACTIVE')
+        })
+
+        it('댓글 2개 미만이어도 PR이 있으면 HAS_PR이다', () => {
+            // hasPR 체크가 commentCount보다 우선 — 댓글 없어도 PR이 있으면 HAS_PR
+            const issue = makeRawIssue({
+                comments: { totalCount: 0 },
+                timelineItems: { nodes: [{ __typename: 'CrossReferencedEvent' }] },
+            })
+            expect(scoreIssue(issue, makeProfile()).competitionLevel).toBe('HAS_PR')
+        })
     })
 
     // ── 채점 방향 검증 ──────────────────────────────────────────────────────

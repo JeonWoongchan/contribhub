@@ -146,4 +146,54 @@ describe('applyFilters', () => {
     it('빈 이슈 배열은 빈 배열을 반환한다', () => {
         expect(applyFilters([], { ...noFilters, language: 'TypeScript' })).toHaveLength(0)
     })
+
+    it('minScore 기준값보다 1점 낮은 이슈는 통과하지 못한다', () => {
+        // 경계값 아래(threshold-1)가 제외되는지 검증 — 70점 기준일 때 69점은 탈락
+        const issue = makeScoredIssue({ score: 69 })
+        const result = applyFilters([issue], { ...noFilters, minScore: 70 })
+        expect(result).toHaveLength(0)
+    })
+
+    it('language가 null인 이슈는 language 필터에서 제외된다', () => {
+        // GitHub primaryLanguage가 없는 이슈는 language 필터 적용 시 탈락해야 한다
+        const issues = [
+            makeScoredIssue({ language: 'TypeScript' }),
+            makeScoredIssue({ number: 2, language: null }),
+        ]
+        const result = applyFilters(issues, { ...noFilters, language: 'TypeScript' })
+        expect(result).toHaveLength(1)
+        expect(result[0].language).toBe('TypeScript')
+    })
+
+    it('높은 threshold(90)를 통과한 이슈는 낮은 threshold(50)에서도 통과한다', () => {
+        // 90+ 필터 → 50+ 필터로 낮출 때 기존 목록이 유지되고 추가 이슈가 포함되어야 한다
+        const issues = [
+            makeScoredIssue({ number: 1, score: 95 }),
+            makeScoredIssue({ number: 2, score: 90 }),
+            makeScoredIssue({ number: 3, score: 55 }),
+            makeScoredIssue({ number: 4, score: 45 }),
+        ]
+        const high = applyFilters(issues, { ...noFilters, minScore: 90 })
+        const low  = applyFilters(issues, { ...noFilters, minScore: 50 })
+
+        // 90+ 통과 이슈는 반드시 50+ 결과에도 포함된다(수퍼셋 성질)
+        for (const issue of high) {
+            expect(low.some((i) => i.number === issue.number)).toBe(true)
+        }
+        // 낮은 threshold는 같거나 더 많은 이슈를 포함한다
+        expect(low.length).toBeGreaterThanOrEqual(high.length)
+        // 45점짜리는 50+ 기준도 통과하지 못한다
+        expect(low.some((i) => i.number === 4)).toBe(false)
+    })
+
+    it.each([...SCORE_FILTER_THRESHOLDS])(
+        'SCORE_FILTER_THRESHOLDS %i: 기준값은 통과, 기준값-1은 탈락',
+        (threshold) => {
+            const atThreshold = makeScoredIssue({ number: 1, score: threshold })
+            const below       = makeScoredIssue({ number: 2, score: threshold - 1 })
+            const result = applyFilters([atThreshold, below], { ...noFilters, minScore: threshold })
+            expect(result).toHaveLength(1)
+            expect(result[0].number).toBe(1)
+        }
+    )
 })

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { SearchBarRow } from '@/components/shared/SearchBarRow'
 import { SearchDataListState } from '@/components/shared/SearchDataListState'
@@ -32,6 +32,17 @@ export function IssueList() {
         availableLanguages,
     } = useIssueList(filters)
 
+    const [lastAvailableLanguages, setLastAvailableLanguages] = useState<string[]>([])
+
+    useEffect(() => {
+        if (!isPending && !isError) {
+            setLastAvailableLanguages(availableLanguages)
+        }
+    }, [availableLanguages, isError, isPending])
+
+    const filterAvailableLanguages =
+        isPending && lastAvailableLanguages.length > 0 ? lastAvailableLanguages : availableLanguages
+
     const { optimisticIssues, pendingBookmarkKeys, toggleBookmark } = useIssueBookmarks({
         sourceIssues: issues,
         isSourceIssuesReady: !isPending && !isError,
@@ -57,7 +68,7 @@ export function IssueList() {
 
             <IssueListFilter
                 filters={filters}
-                availableLanguages={availableLanguages}
+                availableLanguages={filterAvailableLanguages}
                 onChangeAction={setFilters}
             />
 
