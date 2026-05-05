@@ -36,8 +36,22 @@ export function useIssueBookmarks({
       return
     }
 
-    // 서버에서 받은 최신 이슈 목록을 낙관적 상태의 기준값으로 동기화하는 처리부.
-    setOptimisticIssues(sourceIssues)
+    // 무한 스크롤로 sourceIssues가 교체될 때 낙관적 isBookmarked 상태를 보존하는 병합 처리부.
+    // 단순 교체(setOptimisticIssues(sourceIssues))를 하면 pending 중이거나 이미 반영된
+    // 낙관적 북마크 상태가 서버 원본값으로 덮어씌워진다.
+    setOptimisticIssues((current) => {
+      const bookmarkStateMap = new Map(
+        current.map((i) => [getBookmarkKey(i), i.isBookmarked])
+      )
+      return sourceIssues.map((issue) => {
+        const key = getBookmarkKey(issue)
+        const optimisticBookmarked = bookmarkStateMap.get(key)
+        // 낙관적 상태가 존재하는 항목은 isBookmarked를 유지하고 나머지 필드는 최신값으로 교체
+        return optimisticBookmarked !== undefined
+          ? { ...issue, isBookmarked: optimisticBookmarked }
+          : issue
+      })
+    })
   }, [isSourceIssuesReady, sourceIssues])
 
   // 대시보드 이슈 카드 기준 북마크 저장 및 해제 토글 처리부.
