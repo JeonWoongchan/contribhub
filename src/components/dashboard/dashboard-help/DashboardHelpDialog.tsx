@@ -1,6 +1,7 @@
 'use client'
 
 import { HelpDialogFrame } from '@/components/help/HelpDialogFrame'
+import { HelpReportFooter } from '@/components/help/HelpReportFooter'
 import {
   DASHBOARD_HELP_DEMO_UPDATED_OFFSET_MS,
   DASHBOARD_HELP_GUIDE_ITEMS,
@@ -17,6 +18,7 @@ export function DashboardHelpDialog() {
       title="Q. 이슈 카드의 요소는 무엇을 의미하나요?"
       titleId="dashboard-help-title"
       descriptionId="dashboard-help-description"
+      footer={<HelpReportFooter />}
       renderDemoCardAction={(props) => <DashboardDemoCard {...props} />}
     />
   )

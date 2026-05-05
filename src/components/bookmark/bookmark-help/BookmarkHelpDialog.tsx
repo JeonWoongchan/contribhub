@@ -1,6 +1,7 @@
 'use client'
 
 import { HelpDialogFrame } from '@/components/help/HelpDialogFrame'
+import { HelpReportFooter } from '@/components/help/HelpReportFooter'
 import {
   BOOKMARK_HELP_DEMO_UPDATED_OFFSET_MS,
   BOOKMARK_HELP_GUIDE_ITEMS,
@@ -18,10 +19,13 @@ export function BookmarkHelpDialog() {
       titleId="bookmark-help-title"
       descriptionId="bookmark-help-description"
       footer={
-        <p>
-          북마크 이슈의 추천 점수는 현재 온보딩 답변 기준으로 계산됩니다. 온보딩을 다시 수정하면
-          북마크 목록의 추천 점수도 함께 달라질 수 있습니다.
-        </p>
+        <>
+          <p>
+            북마크 이슈의 추천 점수는 현재 온보딩 답변 기준으로 계산됩니다. 온보딩을 다시 수정하면
+            북마크 목록의 추천 점수도 함께 달라질 수 있습니다.
+          </p>
+          <HelpReportFooter />
+        </>
       }
       renderDemoCardAction={(props) => <BookmarkDemoCard {...props} />}
     />
