@@ -15,7 +15,10 @@ async function logoutAction() {
 
 export function MainHeader({ image, name }: MainHeaderProps) {
     return (
-        <header className="sticky top-0 z-10 border-b border-border bg-background/85 backdrop-blur-md">
+        <header
+            data-scroll-lock-offset
+            className="sticky top-0 z-10 border-b border-border bg-background/85 backdrop-blur-md"
+        >
             <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
                 <Link
                     href="/dashboard"
