@@ -5,6 +5,7 @@ type SearchBarRowProps = {
     value: string
     onChangeAction: (value: string) => void
     resultCount?: number
+    totalCount?: number
     placeholder?: string
     helpSlot?: ReactNode
 }

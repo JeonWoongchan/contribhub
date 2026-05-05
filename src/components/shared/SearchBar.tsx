@@ -6,6 +6,7 @@ type SearchBarProps = {
   onChangeAction: (value: string) => void
   placeholder?: string
   resultCount?: number
+  totalCount?: number
   className?: string
 }
 
@@ -14,6 +15,7 @@ export function SearchBar({
   onChangeAction,
   placeholder = '이슈 제목 또는 레포명 검색',
   resultCount,
+  totalCount,
   className,
 }: SearchBarProps) {
   return (
@@ -39,7 +41,10 @@ export function SearchBar({
         ) : null}
       </div>
       {value && resultCount !== undefined ? (
-        <span className="shrink-0 text-xs text-muted-foreground">{resultCount}개 결과</span>
+        <span className="shrink-0 text-xs text-muted-foreground">
+          {resultCount}개 결과
+          {totalCount !== undefined ? ` · 로드된 ${totalCount}개 항목 기준` : null}
+        </span>
       ) : null}
     </div>
   )

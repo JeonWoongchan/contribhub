@@ -51,6 +51,7 @@ export function PRHistoryList() {
                     value={query}
                     onChangeAction={setQuery}
                     resultCount={query ? filteredItems.length : undefined}
+                    totalCount={query ? items.length : undefined}
                     placeholder="PR 제목 또는 레포명 검색"
                     helpSlot={<PRHistoryHelpDialog />}
                 />

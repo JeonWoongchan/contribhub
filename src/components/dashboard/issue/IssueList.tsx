@@ -64,6 +64,7 @@ export function IssueList() {
                 value={query}
                 onChangeAction={setQuery}
                 resultCount={query ? filteredItems.length : undefined}
+                totalCount={query ? optimisticIssues.length : undefined}
                 helpSlot={<DashboardHelpDialog />}
             />
 

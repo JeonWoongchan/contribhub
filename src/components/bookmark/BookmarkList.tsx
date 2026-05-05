@@ -47,6 +47,7 @@ export function BookmarkList() {
                 value={query}
                 onChangeAction={setQuery}
                 resultCount={query ? filteredItems.length : undefined}
+                totalCount={query ? optimisticIssues.length : undefined}
                 helpSlot={<BookmarkHelpDialog />}
             />
 
