@@ -28,7 +28,6 @@ export function BookmarkList() {
         sourceIssues: issues,
         isSourceIssuesReady: !isPending && !isError,
         removeOnUnbookmark: true,
-        onMutationSuccessAction: refetch,
     })
 
     const [query, setQuery] = useState('')

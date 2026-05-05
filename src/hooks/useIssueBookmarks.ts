@@ -1,16 +1,17 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { isUnauthorizedApiResponse, redirectToLogin } from '@/lib/client-auth'
 import type { ApiResponse } from '@/types/api'
 import type { IssueCardItem } from '@/types/issue'
 import type { ContributionType } from '@/types/user'
+import { QUERY_KEYS } from './queryKeys'
 
 type UseIssueBookmarksOptions = {
   sourceIssues: IssueCardItem[]
   isSourceIssuesReady: boolean
   removeOnUnbookmark?: boolean
-  onMutationSuccessAction?: () => void | Promise<void>
 }
 
 // 카드 단위 북마크 식별 키 생성 유틸리티 함수 선언부.
@@ -22,8 +23,9 @@ export function useIssueBookmarks({
   sourceIssues,
   isSourceIssuesReady,
   removeOnUnbookmark = false,
-  onMutationSuccessAction,
 }: UseIssueBookmarksOptions) {
+  const queryClient = useQueryClient()
+
   // 북마크 토글 결과를 반영하는 낙관적 이슈 목록 상태 선언부.
   // 추천 이슈 목록을 복사하고 북마크 여부를 추가 관리해서 사용
   const [optimisticIssues, setOptimisticIssues] = useState<IssueCardItem[]>([])
@@ -40,11 +42,20 @@ export function useIssueBookmarks({
     // 단순 교체(setOptimisticIssues(sourceIssues))를 하면 pending 중이거나 이미 반영된
     // 낙관적 북마크 상태가 서버 원본값으로 덮어씌워진다.
     setOptimisticIssues((current) => {
+      if (pendingBookmarkKeys.length === 0) {
+        return sourceIssues
+      }
+
+      const pendingBookmarkKeySet = new Set(pendingBookmarkKeys)
       const bookmarkStateMap = new Map(
         current.map((i) => [getBookmarkKey(i), i.isBookmarked])
       )
       return sourceIssues.map((issue) => {
         const key = getBookmarkKey(issue)
+        if (!pendingBookmarkKeySet.has(key)) {
+          return issue
+        }
+
         const optimisticBookmarked = bookmarkStateMap.get(key)
         // 낙관적 상태가 존재하는 항목은 isBookmarked를 유지하고 나머지 필드는 최신값으로 교체
         return optimisticBookmarked !== undefined
@@ -52,7 +63,7 @@ export function useIssueBookmarks({
           : issue
       })
     })
-  }, [isSourceIssuesReady, sourceIssues])
+  }, [isSourceIssuesReady, pendingBookmarkKeys, sourceIssues])
 
   // 대시보드 이슈 카드 기준 북마크 저장 및 해제 토글 처리부.
   async function toggleBookmark(issue: IssueCardItem) {
@@ -123,7 +134,11 @@ export function useIssueBookmarks({
         return
       }
 
-      await onMutationSuccessAction?.()
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.issues, refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.bookmarks }),
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myPageActivity }),
+      ])
     } catch {
       // 네트워크 예외 발생 시 낙관적 업데이트 롤백 실행부.
       undoOptimisticUpdate()

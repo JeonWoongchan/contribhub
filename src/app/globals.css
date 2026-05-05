@@ -75,6 +75,8 @@
 
 /* Radix AlertDialog와 도움말 다이얼로그의 스크롤 잠금 보상값을 공유한다. */
 body {
+  --removed-body-scroll-bar-size: 0px;
+  --help-scroll-bar-size: 0px;
   --app-scroll-lock-size: 0px;
 }
 
