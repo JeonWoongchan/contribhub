@@ -55,7 +55,7 @@ export function HelpDialogFrame<TGuideId extends string>({
 
       {isOpen ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 py-6 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 py-4 backdrop-blur-sm sm:py-6"
           onClick={closeDialog}
           role="presentation"
         >
@@ -64,7 +64,7 @@ export function HelpDialogFrame<TGuideId extends string>({
             aria-modal="true"
             aria-labelledby={titleId}
             aria-describedby={descriptionId}
-            className="w-full max-w-4xl overflow-hidden rounded-2xl border border-border bg-background shadow-2xl"
+            className="flex max-h-[calc(100svh-2rem)] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl sm:max-h-[calc(100svh-3rem)]"
             onClick={(event) => event.stopPropagation()}
           >
             <HelpHeader
@@ -75,7 +75,7 @@ export function HelpDialogFrame<TGuideId extends string>({
               descriptionId={descriptionId}
             />
 
-            <div className="grid gap-6 px-5 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+            <div className="grid min-h-0 flex-1 gap-6 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
               {renderDemoCardAction({
                 activeGuideId,
                 demoUpdatedAt,
