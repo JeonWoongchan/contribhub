@@ -11,7 +11,10 @@ vi.mock('next/cache', () => ({ unstable_cache: (fn: () => unknown) => fn }))
 vi.mock('@/lib/github/issues/search', () => ({ fetchCandidateIssues: vi.fn() }))
 vi.mock('@/lib/github/issues/health', () => ({ getRepoHealthMap: vi.fn() }))
 vi.mock('@/lib/github/issues/ranking', () => ({ rankIssues: vi.fn() }))
-vi.mock('@/lib/github/issues/filters', () => ({ applyFilters: vi.fn() }))
+vi.mock('@/lib/github/issues/filters', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/github/issues/filters')>()
+  return { ...actual, applyFilters: vi.fn() }
+})
 vi.mock('@/lib/bookmarks', () => ({ listUserBookmarkKeys: vi.fn() }))
 
 import { fetchCandidateIssues } from '@/lib/github/issues/search'

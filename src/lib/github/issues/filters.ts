@@ -36,6 +36,16 @@ export function parseIssueFilters(searchParams: URLSearchParams): IssueFilters {
     }
 }
 
+export function hasActiveFilters(filters: IssueFilters): boolean {
+    return Boolean(
+        filters.language ||
+        filters.difficultyLevel ||
+        filters.contributionTypes.length > 0 ||
+        filters.minScore !== null ||
+        filters.minStars !== null
+    )
+}
+
 export function applyFilters(issues: ScoredIssue[], filters: IssueFilters): ScoredIssue[] {
     return issues.filter((issue) => {
         if (filters.language && issue.language !== filters.language) return false
@@ -44,7 +54,7 @@ export function applyFilters(issues: ScoredIssue[], filters: IssueFilters): Scor
         if (filters.contributionTypes.length > 0 &&
             (!issue.contributionType || !filters.contributionTypes.includes(issue.contributionType))) return false
         if (filters.minScore !== null && issue.score < filters.minScore) return false
-        if (filters.minStars !== null && issue.stargazerCount < filters.minStars) return false
-        return true
+        return !(filters.minStars !== null && issue.stargazerCount < filters.minStars);
+
     })
 }

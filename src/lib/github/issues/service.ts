@@ -6,7 +6,7 @@ import { GITHUB_API_CACHE_TTL_SECONDS, PAGE_SIZE } from '@/constants/scoring-rul
 import type { IssueFilters } from '@/types/issue'
 import type { IssueListPage } from '@/types/api'
 import type { OnboardingProfile } from '@/lib/user/profile'
-import { applyFilters } from './filters'
+import { applyFilters, hasActiveFilters } from './filters'
 import { getRepoHealthMap } from './health'
 import { rankIssues } from './ranking'
 import { fetchCandidateIssues } from './search'
@@ -24,15 +24,6 @@ type FetchIssueListPageParams = {
     batchParam: string
 }
 
-function hasActiveFilters(filters: IssueFilters): boolean {
-    return Boolean(
-        filters.language ||
-        filters.difficultyLevel ||
-        filters.contributionTypes.length > 0 ||
-        filters.minScore !== null ||
-        filters.minStars !== null
-    )
-}
 
 export async function fetchIssueListPage({
     userId,
@@ -108,7 +99,7 @@ export async function fetchIssueListPage({
         offset,
         batch: batchParam,
         nextBatch: candidateNextBatch,
-        canLoadMoreCandidates: Boolean(candidateNextBatch && !canAutoRequestNextBatch),
+        canLoadMoreCandidates: candidateNextBatch !== null && !canAutoRequestNextBatch,
         availableLanguages,
         partialResults: searchResult.failedQueryCount > 0,
         failedQueryCount: searchResult.failedQueryCount,

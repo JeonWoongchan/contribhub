@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { IssueFilters } from '@/types/issue'
 
 type UseIssueCandidateLoadMoreFeedbackParams = {
@@ -10,8 +10,6 @@ type UseIssueCandidateLoadMoreFeedbackParams = {
   canLoadMoreCandidates: boolean
   fetchMoreCandidatesAction: () => Promise<void>
 }
-
-const CONTRIBUTION_TYPE_KEY_SEPARATOR = ','
 
 export type IssueCandidateLoadMoreFeedback = {
   emptyCandidateFetchCount: number
@@ -28,7 +26,7 @@ export function useIssueCandidateLoadMoreFeedback({
 }: UseIssueCandidateLoadMoreFeedbackParams): IssueCandidateLoadMoreFeedback {
   const [emptyCandidateFetchCount, setEmptyCandidateFetchCount] = useState(0)
   const candidateFetchIssueCountRef = useRef<number | null>(null)
-  const contributionTypesKey = filters.contributionTypes.join(CONTRIBUTION_TYPE_KEY_SEPARATOR)
+  const contributionTypesKey = filters.contributionTypes.join(',')
 
   useEffect(() => {
     setEmptyCandidateFetchCount(0)
@@ -51,14 +49,11 @@ export function useIssueCandidateLoadMoreFeedback({
     setEmptyCandidateFetchCount((count) => issueCount > previousIssueCount ? 0 : count + 1)
   }, [isFetchingNextPage, issueCount])
 
-  const loadMoreCandidatesAction = () => {
-    if (!canLoadMoreCandidates || isFetchingNextPage) {
-      return
-    }
-
+  const loadMoreCandidatesAction = useCallback(() => {
+    if (!canLoadMoreCandidates || isFetchingNextPage) return
     candidateFetchIssueCountRef.current = issueCount
     void fetchMoreCandidatesAction()
-  }
+  }, [canLoadMoreCandidates, isFetchingNextPage, issueCount, fetchMoreCandidatesAction])
 
   return {
     emptyCandidateFetchCount,

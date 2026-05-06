@@ -57,18 +57,18 @@ export function IssueCandidateLoadMoreNotice({
           <p className="font-medium text-interactive-action-hover">{copy.title}</p>
           <p className="text-muted-foreground">{copy.description}</p>
         </div>
-        {canLoadMore ? (
+        {copy.buttonLabel ? (
           <Button
             type="button"
             variant="interactive"
             size="sm"
             className="w-fit"
             disabled={isLoading}
-          onClick={onLoadMoreAction}
-        >
-          <Search className="size-3.5" aria-hidden="true" />
-          {isLoading ? LOADING_BUTTON_LABEL : copy.buttonLabel}
-        </Button>
+            onClick={onLoadMoreAction}
+          >
+            <Search className="size-3.5" aria-hidden="true" />
+            {isLoading ? LOADING_BUTTON_LABEL : copy.buttonLabel}
+          </Button>
         ) : null}
       </CardContent>
     </Card>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { PAGE_SIZE } from '@/constants/scoring-rules'
 import { INITIAL_BATCH } from '@/lib/github/batch'
@@ -100,16 +100,23 @@ export function useIssueList(filters: IssueFilters = EMPTY_ISSUE_FILTERS): UseIs
   const hasAutoNextPage = Boolean(lastPage?.hasMore && query.hasNextPage)
   const canLoadMoreCandidates = Boolean(lastPage?.canLoadMoreCandidates && query.hasNextPage)
 
+  // sentinel이 화면에 있는 동안 리렌더 시 중복 호출을 방지하기 위해 useCallback으로 안정화.
+  // TanStack Query v5는 fetchNextPage 참조를 안정적으로 유지하므로 의존성으로 안전하다.
+  const { fetchNextPage } = query
+  const fetchNextPageAction = useCallback(() => {
+    if (hasAutoNextPage) void fetchNextPage()
+  }, [hasAutoNextPage, fetchNextPage])
+
+  const fetchMoreCandidatesAction = useCallback(async () => {
+    if (canLoadMoreCandidates) await fetchNextPage()
+  }, [canLoadMoreCandidates, fetchNextPage])
+
   return {
     ...toBaseResult(query, DEFAULT_ERROR_MESSAGE),
     issues,
     hasNextPage: hasAutoNextPage,
-    fetchNextPageAction: () => {
-      if (hasAutoNextPage) void query.fetchNextPage()
-    },
-    fetchMoreCandidatesAction: async () => {
-      if (canLoadMoreCandidates) await query.fetchNextPage()
-    },
+    fetchNextPageAction,
+    fetchMoreCandidatesAction,
     isFetchingNextPage: query.isFetchingNextPage,
     canLoadMoreCandidates,
     partial: lastPage?.partialResults ?? false,
