@@ -13,7 +13,7 @@ type SearchBarProps = {
 export function SearchBar({
   value,
   onChangeAction,
-  placeholder = '목록 내에서 이슈 제목 또는 레포명 검색',
+  placeholder = '목록 내에서 이슈 제목 또는 저장소명 검색',
   resultCount,
   totalCount,
   className,

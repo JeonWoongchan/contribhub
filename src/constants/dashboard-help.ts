@@ -18,7 +18,7 @@ export const DASHBOARD_HELP_GUIDE_ITEMS = [
     id: 'metrics',
     title: '반응과 규모',
     description:
-      '프로젝트 규모와 이슈의 반응량을 같이 보여줘요. 진입 전에 분위기를 가늠할 때 도움이 돼요.',
+      '저장소의 스타 수와 댓글 수를 함께 보여줘요. 진입 전에 프로젝트의 관심도와 논의 흐름을 가늠하는 데 도움이 돼요.',
   },
   {
     id: 'health',
@@ -30,7 +30,7 @@ export const DASHBOARD_HELP_GUIDE_ITEMS = [
     id: 'competition',
     title: '경쟁도',
     description:
-      '이미 다른 사람이 보고 있는지, PR이 열려 있는지 보여줘서 진입 부담을 판단하는 데 도움돼요.',
+      '이미 다른 사람이 진행하고 있는지, PR이 열려 있는지 보여줘서 진입 부담을 판단하는 데 도움이 돼요.',
   },
 ] as const satisfies readonly HelpGuideItem<string>[]
 
