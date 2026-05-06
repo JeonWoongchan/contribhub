@@ -5,7 +5,9 @@ import { LoginPreview } from './LoginPreview'
 
 export default function LoginPage() {
     return (
-        <div className="mx-auto flex min-h-svh max-w-6xl flex-col bg-linear-to-br from-background via-background to-brand-subtle/20 lg:grid lg:h-screen lg:grid-cols-[1fr_460px] lg:overflow-hidden">
+        <div className="mx-auto flex min-h-svh max-w-6xl flex-col lg:grid lg:h-screen lg:grid-cols-[1fr_460px] lg:overflow-hidden">
+            {/* scrollbar-gutter 영역까지 그라디언트를 채우기 위해 fixed로 viewport 전체 커버 */}
+            <div className="fixed inset-0 -z-10 bg-linear-to-br from-background via-background to-brand-subtle/20" aria-hidden="true" />
             {/* 서비스 소개 — 데스크톱에서만 표시 */}
             <div className="items-center overflow-hidden px-6 py-5 lg:px-12 lg:py-10">
                 <LoginPreview />

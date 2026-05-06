@@ -126,21 +126,12 @@ function calculateHealthScore(repository: RepoRepository): number {
   )
 }
 
-// 레포 활성도 조회 — DB 캐시 우선, 없으면 GitHub API 호출 후 캐시 저장
-export async function getRepoHealth(
+// GitHub API 호출 후 DB에 저장하고 점수를 반환 — 캐시 체크 없이 바로 계산
+// getRepoHealthMap이 배치 캐시 체크를 이미 마쳤을 때 중복 DB 조회를 방지하기 위해 분리
+export async function fetchAndCacheRepoHealth(
   repoFullName: string,
   accessToken: string
 ): Promise<number> {
-  // 1. 캐시 확인
-  const cached = await sql`
-    SELECT health_score
-    FROM repo_health_cache
-    WHERE repo_full_name = ${repoFullName}
-      AND cached_at > NOW() - (${REPO_HEALTH_CACHE_TTL_HOURS} * INTERVAL '1 hour')
-  `
-  if (cached.length > 0) return cached[0].health_score
-
-  // 2. GitHub API 호출
   const [owner, name] = repoFullName.split('/')
   const data = await githubGraphQL<RepoHealthData>(
     REPO_HEALTH_QUERY,
@@ -148,12 +139,10 @@ export async function getRepoHealth(
     accessToken
   )
 
-  // repository가 null이면 존재하지 않는 레포 — NotFound 에러
   if (!data.repository) throw new GitHubNotFoundError()
 
   const healthScore = calculateHealthScore(data.repository)
 
-  // 3. 캐시 저장
   await sql`
     INSERT INTO repo_health_cache (repo_full_name, health_score, cached_at)
     VALUES (${repoFullName}, ${healthScore}, NOW())
@@ -164,6 +153,23 @@ export async function getRepoHealth(
   `
 
   return healthScore
+}
+
+// 레포 활성도 조회 — DB 캐시 우선, 없으면 GitHub API 호출 후 캐시 저장
+// 단건 조회(API route 등)에서 사용. 배치 조회는 getRepoHealthMap을 사용한다.
+export async function getRepoHealth(
+  repoFullName: string,
+  accessToken: string
+): Promise<number> {
+  const cached = await sql`
+    SELECT health_score
+    FROM repo_health_cache
+    WHERE repo_full_name = ${repoFullName}
+      AND cached_at > NOW() - (${REPO_HEALTH_CACHE_TTL_HOURS} * INTERVAL '1 hour')
+  `
+  if (cached.length > 0) return cached[0].health_score
+
+  return fetchAndCacheRepoHealth(repoFullName, accessToken)
 }
 
 export { HEALTH_THRESHOLD }

@@ -1,6 +1,6 @@
 import sql from '@/lib/db'
 import { REPO_HEALTH_CACHE_TTL_HOURS } from '@/constants/scoring-rules'
-import { getRepoHealth } from '@/lib/github/repo-health/calculate'
+import { fetchAndCacheRepoHealth } from '@/lib/github/repo-health/calculate'
 
 export async function getRepoHealthMap(
   repoNames: string[],
@@ -22,7 +22,7 @@ export async function getRepoHealthMap(
   const uncachedRepos = repoNames.filter((repoName) => !healthMap.has(repoName))
   const settled = await Promise.allSettled(
     uncachedRepos.map(async (repoName) => {
-      const score = await getRepoHealth(repoName, accessToken)
+      const score = await fetchAndCacheRepoHealth(repoName, accessToken)
       return { repoName, score }
     })
   )

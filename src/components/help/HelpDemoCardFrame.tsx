@@ -19,7 +19,7 @@ export function HelpDemoCardFrame({
       <p className="text-sm font-medium text-muted-foreground">{label}</p>
       <Card
         size="sm"
-        className="border border-border py-4 shadow-[0_0_0_1px_var(--color-interactive-selected-border)]"
+        className="border border-border py-4"
       >
         <CardContent className="flex h-full flex-col gap-4">{children}</CardContent>
       </Card>
