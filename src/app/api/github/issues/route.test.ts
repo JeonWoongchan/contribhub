@@ -114,7 +114,7 @@ describe('GET /api/github/issues', () => {
     mockProfile.mockResolvedValue(profile)
     const issueData = {
       issues: [], total: 0, hasMore: false,
-      offset: 0, batch: 'initial', nextBatch: null,
+      offset: 0, batch: 'initial', nextBatch: null, canLoadMoreCandidates: false,
       availableLanguages: [], partialResults: false, failedQueryCount: 0,
     }
     mockFetch.mockResolvedValue(issueData)

@@ -3,26 +3,36 @@ import { unstable_cache } from 'next/cache'
 import { listUserBookmarkKeys } from '@/lib/bookmarks'
 import { encodeBatch, decodeBatch, INITIAL_BATCH } from '@/lib/github/batch'
 import { GITHUB_API_CACHE_TTL_SECONDS, PAGE_SIZE } from '@/constants/scoring-rules'
-import type { IssueFilters, ScoredIssue } from '@/types/issue'
+import type { IssueFilters } from '@/types/issue'
+import type { IssueListPage } from '@/types/api'
 import type { OnboardingProfile } from '@/lib/user/profile'
 import { applyFilters } from './filters'
 import { getRepoHealthMap } from './health'
 import { rankIssues } from './ranking'
 import { fetchCandidateIssues } from './search'
 
-export type IssuePageData = {
-    issues: ScoredIssue[]
-    total: number
-    hasMore: boolean
-    offset: number
-    batch: string
-    nextBatch: string | null
-    availableLanguages: string[]
-    partialResults: boolean
-    failedQueryCount: number
-}
+export type IssuePageData = IssueListPage
 
 export type IssuePageError = { error: 'rate_limited' } | { error: 'unauthorized' } | { error: 'all_failed' }
+
+type FetchIssueListPageParams = {
+    userId: string
+    accessToken: string
+    profile: OnboardingProfile
+    filters: IssueFilters
+    offset: number
+    batchParam: string
+}
+
+function hasActiveFilters(filters: IssueFilters): boolean {
+    return Boolean(
+        filters.language ||
+        filters.difficultyLevel ||
+        filters.contributionTypes.length > 0 ||
+        filters.minScore !== null ||
+        filters.minStars !== null
+    )
+}
 
 export async function fetchIssueListPage({
     userId,
@@ -31,14 +41,7 @@ export async function fetchIssueListPage({
     filters,
     offset,
     batchParam,
-}: {
-    userId: string
-    accessToken: string
-    profile: OnboardingProfile
-    filters: IssueFilters
-    offset: number
-    batchParam: string
-}): Promise<IssuePageData | IssuePageError> {
+}: FetchIssueListPageParams): Promise<IssuePageData | IssuePageError> {
     const afterCursors = batchParam === INITIAL_BATCH
         ? {}
         : (decodeBatch<Record<string, string | null>>(batchParam) ?? {})
@@ -84,23 +87,28 @@ export async function fetchIssueListPage({
     )]
 
     const allIssues = applyFilters(rankedIssues, filters)
+    const pageIssues = allIssues.slice(offset, offset + PAGE_SIZE)
 
     // 현재 배치 캐시 소진 여부 판단 — offset이 캐시 끝에 도달하면 마지막 페이지
     const isLastPage = offset + PAGE_SIZE >= allIssues.length
 
-    // 마지막 페이지이고 GitHub에 다음 페이지가 있으면 언어별 endCursor를 인코딩해 nextBatch로 전달
-    // 클라이언트는 이 값을 다음 요청의 batch 파라미터로 사용해 새 GitHub 배치를 요청한다
-    const nextBatch = isLastPage && searchResult.hasMoreOnGithub
+    // nextBatch는 자동 무한스크롤과 수동 후보 조회가 함께 쓰는 GitHub 배치 커서다.
+    // 필터 결과가 한 페이지를 못 채우면 자동 요청은 멈추고, 클라이언트가 버튼으로만 이어서 조회한다.
+    const isActiveFilterResultUnderfilled = hasActiveFilters(filters) && pageIssues.length < PAGE_SIZE
+    const canAutoRequestNextBatch = searchResult.hasMoreOnGithub && !isActiveFilterResultUnderfilled
+
+    const candidateNextBatch = isLastPage && searchResult.hasMoreOnGithub
         ? encodeBatch(searchResult.endCursors)
         : null
 
     return {
-        issues: allIssues.slice(offset, offset + PAGE_SIZE),
+        issues: pageIssues,
         total: allIssues.length,
-        hasMore: !isLastPage || searchResult.hasMoreOnGithub,
+        hasMore: !isLastPage || canAutoRequestNextBatch,
         offset,
         batch: batchParam,
-        nextBatch,
+        nextBatch: candidateNextBatch,
+        canLoadMoreCandidates: Boolean(candidateNextBatch && !canAutoRequestNextBatch),
         availableLanguages,
         partialResults: searchResult.failedQueryCount > 0,
         failedQueryCount: searchResult.failedQueryCount,

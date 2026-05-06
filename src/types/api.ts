@@ -14,6 +14,7 @@ export type IssueListPage = {
     offset: number
     batch: string
     nextBatch: string | null
+    canLoadMoreCandidates: boolean
     availableLanguages: string[]
     partialResults: boolean
     failedQueryCount: number

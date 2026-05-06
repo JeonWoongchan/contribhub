@@ -15,11 +15,38 @@ type IssuePageParam = {
   batch: string
 }
 
+function buildIssueListSearchParams({ offset, batch }: IssuePageParam, filters: IssueFilters): URLSearchParams {
+  const params = new URLSearchParams({ offset: String(offset) })
+
+  if (batch !== INITIAL_BATCH) {
+    params.set('batch', batch)
+  }
+  if (filters.language) {
+    params.set('language', filters.language)
+  }
+  if (filters.difficultyLevel) {
+    params.set('difficultyLevel', filters.difficultyLevel)
+  }
+  for (const type of filters.contributionTypes) {
+    params.append('contributionTypes', type)
+  }
+  if (filters.minScore !== null) {
+    params.set('minScore', String(filters.minScore))
+  }
+  if (filters.minStars !== null) {
+    params.set('minStars', String(filters.minStars))
+  }
+
+  return params
+}
+
 export type UseIssueListResult = BaseQueryResult & {
   issues: ScoredIssue[]
   hasNextPage: boolean
   fetchNextPageAction: () => void
+  fetchMoreCandidatesAction: () => Promise<void>
   isFetchingNextPage: boolean
+  canLoadMoreCandidates: boolean
   partial: boolean
   failedCount: number
   availableLanguages: string[]
@@ -31,27 +58,7 @@ export function useIssueList(filters: IssueFilters = EMPTY_ISSUE_FILTERS): UseIs
   const query = useInfiniteQuery({
     queryKey: [...QUERY_KEYS.issues, filters.language, filters.difficultyLevel, filters.contributionTypes, filters.minScore, filters.minStars],
     queryFn: ({ pageParam }) => {
-      const { offset, batch } = pageParam as IssuePageParam
-      const params = new URLSearchParams({ offset: String(offset) })
-
-      if (batch !== INITIAL_BATCH) {
-        params.set('batch', batch)
-      }
-      if (filters.language) {
-        params.set('language', filters.language)
-      }
-      if (filters.difficultyLevel) {
-        params.set('difficultyLevel', filters.difficultyLevel)
-      }
-      for (const type of filters.contributionTypes) {
-        params.append('contributionTypes', type)
-      }
-      if (filters.minScore !== null) {
-        params.set('minScore', String(filters.minScore))
-      }
-      if (filters.minStars !== null) {
-        params.set('minStars', String(filters.minStars))
-      }
+      const params = buildIssueListSearchParams(pageParam as IssuePageParam, filters)
 
       return fetchApi<IssueListPage>(`/api/github/issues?${params}`, DEFAULT_ERROR_MESSAGE)
     },
@@ -90,15 +97,21 @@ export function useIssueList(filters: IssueFilters = EMPTY_ISSUE_FILTERS): UseIs
   }, [query.data])
 
   const lastPage = query.data?.pages.at(-1)
+  const hasAutoNextPage = Boolean(lastPage?.hasMore && query.hasNextPage)
+  const canLoadMoreCandidates = Boolean(lastPage?.canLoadMoreCandidates && query.hasNextPage)
 
   return {
     ...toBaseResult(query, DEFAULT_ERROR_MESSAGE),
     issues,
-    hasNextPage: query.hasNextPage,
+    hasNextPage: hasAutoNextPage,
     fetchNextPageAction: () => {
-      void query.fetchNextPage()
+      if (hasAutoNextPage) void query.fetchNextPage()
+    },
+    fetchMoreCandidatesAction: async () => {
+      if (canLoadMoreCandidates) await query.fetchNextPage()
     },
     isFetchingNextPage: query.isFetchingNextPage,
+    canLoadMoreCandidates,
     partial: lastPage?.partialResults ?? false,
     failedCount: lastPage?.failedQueryCount ?? 0,
     availableLanguages,

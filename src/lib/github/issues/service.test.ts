@@ -167,6 +167,7 @@ describe('fetchIssueListPage — 페이지네이션', () => {
     if ('error' in result) return
     expect(result.nextBatch).toBeNull()
     expect(result.hasMore).toBe(false)
+    expect(result.canLoadMoreCandidates).toBe(false)
   })
 
   it('isLastPage이고 GitHub에 다음 페이지가 있으면 nextBatch를 인코딩해 반환한다', async () => {
@@ -180,6 +181,7 @@ describe('fetchIssueListPage — 페이지네이션', () => {
     if ('error' in result) return
     expect(result.nextBatch).toBe(encodeBatch(endCursors))
     expect(result.hasMore).toBe(true)
+    expect(result.canLoadMoreCandidates).toBe(false)
   })
 
   it('이슈가 PAGE_SIZE 초과면 nextBatch=null이고 hasMore=true이다', async () => {
@@ -192,6 +194,7 @@ describe('fetchIssueListPage — 페이지네이션', () => {
     if ('error' in result) return
     expect(result.nextBatch).toBeNull()
     expect(result.hasMore).toBe(true)
+    expect(result.canLoadMoreCandidates).toBe(false)
     expect(result.issues).toHaveLength(PAGE_SIZE)
   })
 
@@ -258,8 +261,28 @@ describe('fetchIssueListPage — 필터 전달', () => {
     expect(result.issues).toHaveLength(3)
   })
 
-  it('필터 후 이슈가 PAGE_SIZE 미만이고 GitHub에 다음 페이지가 있으면 nextBatch를 반환한다', async () => {
-    // 90+ 필터로 배치 내 이슈가 적더라도 다음 GitHub 배치 커서가 전달되어야 한다
+  it('필터가 없으면 이슈가 PAGE_SIZE 미만이어도 GitHub 다음 배치 커서를 반환한다', async () => {
+    const scored = Array.from({ length: PAGE_SIZE - 1 }, (_, i) => makeScoredIssue({ number: i + 1 }))
+    mockSearch.mockResolvedValue(
+      makeSearchResult({ issues: [makeRawIssue()], hasMoreOnGithub: true, endCursors: { TypeScript: 'cursor-xyz' } })
+    )
+    mockHealthMap.mockResolvedValue(new Map())
+    mockBookmarks.mockResolvedValue([])
+    mockRank.mockReturnValue(scored)
+    mockFilter.mockReturnValue(scored)
+
+    const result = await fetchIssueListPage(baseArgs)
+
+    expect('error' in result).toBe(false)
+    if ('error' in result) return
+    expect(result.total).toBe(PAGE_SIZE - 1)
+    expect(result.nextBatch).not.toBeNull()
+    expect(result.hasMore).toBe(true)
+    expect(result.canLoadMoreCandidates).toBe(false)
+  })
+
+  it('활성 필터 결과가 PAGE_SIZE 미만이면 GitHub 다음 배치를 자동 요청하지 않는다', async () => {
+    // 90+ 점수나 5000+ 스타처럼 엄격한 조건에서 빈 배치를 계속 넘기지 않도록 끊는다.
     const allScored = Array.from({ length: 20 }, (_, i) => makeScoredIssue({ number: i + 1 }))
     mockSearch.mockResolvedValue(
       makeSearchResult({ issues: [makeRawIssue()], hasMoreOnGithub: true, endCursors: { TypeScript: 'cursor-xyz' } })
@@ -269,12 +292,41 @@ describe('fetchIssueListPage — 필터 전달', () => {
     mockRank.mockReturnValue(allScored)
     mockFilter.mockReturnValue(allScored.slice(0, PAGE_SIZE - 1))
 
-    const result = await fetchIssueListPage(baseArgs)
+    const result = await fetchIssueListPage({
+      ...baseArgs,
+      filters: { ...EMPTY_ISSUE_FILTERS, minScore: 90 },
+    })
 
     expect('error' in result).toBe(false)
     if ('error' in result) return
     expect(result.total).toBe(PAGE_SIZE - 1)
     expect(result.nextBatch).not.toBeNull()
+    expect(result.hasMore).toBe(false)
+    expect(result.canLoadMoreCandidates).toBe(true)
+  })
+
+  it('활성 필터의 마지막 로컬 페이지가 PAGE_SIZE 미만이면 다음 GitHub 배치를 요청하지 않는다', async () => {
+    const allScored = Array.from({ length: PAGE_SIZE + 5 }, (_, i) => makeScoredIssue({ number: i + 1 }))
+    mockSearch.mockResolvedValue(
+      makeSearchResult({ issues: [makeRawIssue()], hasMoreOnGithub: true, endCursors: { TypeScript: 'cursor-xyz' } })
+    )
+    mockHealthMap.mockResolvedValue(new Map())
+    mockBookmarks.mockResolvedValue([])
+    mockRank.mockReturnValue(allScored)
+    mockFilter.mockReturnValue(allScored)
+
+    const result = await fetchIssueListPage({
+      ...baseArgs,
+      offset: PAGE_SIZE,
+      filters: { ...EMPTY_ISSUE_FILTERS, minStars: 5000 },
+    })
+
+    expect('error' in result).toBe(false)
+    if ('error' in result) return
+    expect(result.issues).toHaveLength(5)
+    expect(result.nextBatch).not.toBeNull()
+    expect(result.hasMore).toBe(false)
+    expect(result.canLoadMoreCandidates).toBe(true)
   })
 
   it('availableLanguages는 필터 적용 전 rankedIssues 기준으로 수집된다', async () => {

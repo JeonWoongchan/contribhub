@@ -74,7 +74,7 @@ export function IssueListFilter({ filters, availableLanguages, onChangeAction }:
     return (
         <div className="flex flex-col gap-2 rounded-xl border border-border/70 bg-background/70 p-3">
             <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">필터</span>
+                <span className="text-xs font-bold text-interactive-action">필터</span>
                 {isAnyFilterActive ? (
                     <button
                         type="button"

@@ -7,11 +7,13 @@ import { SearchDataListState } from '@/components/shared/SearchDataListState'
 import { InfiniteScrollTrigger } from '@/components/shared/InfiniteScrollTrigger'
 import { DashboardHelpDialog } from '@/components/dashboard/dashboard-help/DashboardHelpDialog'
 import { useIssueBookmarks } from '@/hooks/useIssueBookmarks'
+import { useIssueCandidateLoadMoreFeedback } from '@/hooks/useIssueCandidateLoadMoreFeedback'
 import { useIssueList } from '@/hooks/useIssueList'
 import { useSearchFilter } from '@/hooks/useSearchFilter'
 import { useInfiniteScrollDisplay } from '@/hooks/useScrollSentinel'
 import { EMPTY_ISSUE_FILTERS } from '@/types/issue'
 import type { IssueFilters } from '@/types/issue'
+import { IssueCandidateLoadMoreNotice } from './IssueCandidateLoadMoreNotice'
 import { IssueListContent } from './IssueListContent'
 import { IssueListFilter } from './IssueListFilter'
 
@@ -22,7 +24,9 @@ export function IssueList() {
         issues,
         hasNextPage,
         fetchNextPageAction,
+        fetchMoreCandidatesAction,
         isFetchingNextPage,
+        canLoadMoreCandidates,
         isPending,
         isError,
         errorMessage,
@@ -56,6 +60,18 @@ export function IssueList() {
         fetchNextPageAction,
         isFetchingNextPage,
         isSearchActive: !!query,
+    })
+
+    const {
+        emptyCandidateFetchCount,
+        shouldShowCandidateLoadMoreNotice,
+        loadMoreCandidatesAction,
+    } = useIssueCandidateLoadMoreFeedback({
+        filters,
+        issueCount: issues.length,
+        isFetchingNextPage,
+        canLoadMoreCandidates,
+        fetchMoreCandidatesAction,
     })
 
     return (
@@ -105,6 +121,15 @@ export function IssueList() {
                 isFetchingNextPage={isFetchingNextPage}
                 sentinelRefAction={sentinelRef}
             />
+
+            {shouldShowCandidateLoadMoreNotice ? (
+                <IssueCandidateLoadMoreNotice
+                    isLoading={isFetchingNextPage}
+                    canLoadMore={canLoadMoreCandidates}
+                    emptyFetchCount={emptyCandidateFetchCount}
+                    onLoadMoreAction={loadMoreCandidatesAction}
+                />
+            ) : null}
         </div>
     )
 }
