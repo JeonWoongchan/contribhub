@@ -4,6 +4,7 @@ import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/toaster";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -42,6 +43,8 @@ export default function RootLayout({
       >
         {children}
         <Toaster />
+        {/* Vercel Web Analytics: 방문자 수 및 페이지뷰 수집 */}
+        <Analytics />
       </body>
     </html>
   );
