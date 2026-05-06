@@ -17,7 +17,7 @@ export function IssueMockCard({ issue }: IssueMockCardProps) {
         >
             <CardHeaderLayout
                 topLeft={
-                    <span className="truncate text-xs text-muted-foreground transition-colors hover:text-interactive-action-hover">
+                    <span className="block truncate text-xs text-muted-foreground transition-colors hover:text-interactive-action-hover">
                         {issue.repoFullName}
                     </span>
                 }

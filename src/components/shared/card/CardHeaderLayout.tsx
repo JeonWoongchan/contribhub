@@ -10,7 +10,7 @@ export function CardHeaderLayout({ topLeft, topRight, title }: CardHeaderLayoutP
   return (
     <>
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">{topLeft}</div>
+        <div className="min-w-0 flex-1 overflow-hidden">{topLeft}</div>
         {topRight ? <div className="shrink-0">{topRight}</div> : null}
       </div>
       {title}

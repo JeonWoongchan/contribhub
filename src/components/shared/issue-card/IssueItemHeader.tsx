@@ -22,7 +22,7 @@ export function IssueItemHeader({
           href={issue.repoUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="truncate text-xs text-muted-foreground transition-colors hover:text-interactive-action-hover"
+          className="block truncate text-xs text-muted-foreground transition-colors hover:text-interactive-action-hover"
         >
           {issue.repoFullName}
         </a>

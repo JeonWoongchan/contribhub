@@ -52,7 +52,7 @@ export function PRHistoryList() {
                     onChangeAction={setQuery}
                     resultCount={query ? filteredItems.length : undefined}
                     totalCount={query ? items.length : undefined}
-                    placeholder="PR 제목 또는 저장소명 검색"
+                    placeholder="PR 제목/저장소명 검색"
                     helpSlot={<PRHistoryHelpDialog />}
                 />
                 <PRStateFilter current={stateFilter} onChangeAction={setStateFilter} />

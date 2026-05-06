@@ -31,7 +31,7 @@ export function LoginPreview() {
                     ))}
                 </ul>
             </div>
-            <div className="relative">
+            <div className="relative hidden lg:block">
                 <div className="flex flex-col gap-3">
                     {demoIssues.map((issue) => (
                         <IssueMockCard key={issue.number} issue={issue} />
