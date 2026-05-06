@@ -75,19 +75,23 @@ export function HelpDialogFrame<TGuideId extends string>({
               descriptionId={descriptionId}
             />
 
-            <div className="grid min-h-0 flex-1 gap-6 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-              {renderDemoCardAction({
-                activeGuideId,
-                demoUpdatedAt,
-                onActivateGuide: activateGuide,
-                onClearGuide: clearActiveGuide,
-              })}
-              <HelpGuideList
-                items={guideItems}
-                activeGuideId={activeGuideId}
-                onActivateGuide={activateGuide}
-                onClearGuide={clearActiveGuide}
-              />
+            <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden px-5 py-5 sm:px-6 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+              <div className="shrink-0 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain">
+                {renderDemoCardAction({
+                  activeGuideId,
+                  demoUpdatedAt,
+                  onActivateGuide: activateGuide,
+                  onClearGuide: clearActiveGuide,
+                })}
+              </div>
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+                <HelpGuideList
+                  items={guideItems}
+                  activeGuideId={activeGuideId}
+                  onActivateGuide={activateGuide}
+                  onClearGuide={clearActiveGuide}
+                />
+              </div>
             </div>
             {footer ? (
               <div className="border-t border-border/70 bg-muted/20 px-5 py-4 text-sm leading-6 text-muted-foreground sm:px-6">

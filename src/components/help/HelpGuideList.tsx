@@ -30,7 +30,7 @@ export function HelpGuideList<TGuideId extends string>({
               'block w-full rounded-xl border bg-card/60 p-4 text-left outline-none transition-all',
               'focus-visible:ring-2 focus-visible:ring-interactive-selected-ring/60',
               isActive
-                ? 'scale-[1.01] border-border bg-interactive-selected/45 shadow-lg'
+                ? 'border-border bg-interactive-selected/45 shadow-lg'
                 : 'border-border hover:border-interactive-selected-border/70 hover:bg-card'
             )}
           >
