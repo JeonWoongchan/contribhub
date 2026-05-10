@@ -1,5 +1,6 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { useSession } from 'next-auth/react'
 import { isStepComplete, ONBOARDING_STEPS, POPULAR_LANGUAGES } from '@/constants/contribution-levels'
 import { isUnauthorizedApiResponse, redirectToLogin } from '@/lib/client-auth'
 import type { FormState } from '@/types/onboarding'
@@ -10,6 +11,7 @@ const DEFAULT_ERROR_MESSAGE = '온보딩 저장에 실패했습니다. 잠시 �
 
 export function useOnboardingWizard(initialLanguages: string[] = []) {
   const router = useRouter()
+  const { update } = useSession()
   const [step, setStep] = useState(0)
   const [form, setForm] = useState<FormState>({
     experienceLevel: null,
@@ -39,6 +41,8 @@ export function useOnboardingWizard(initialLanguages: string[] = []) {
         setErrorMessage(DEFAULT_ERROR_MESSAGE)
         return
       }
+      // 온보딩 완료를 JWT에 반영 — 이후 미들웨어·레이아웃이 DB 조회 없이 통과
+      await update({ isOnboarded: true })
       router.push('/dashboard')
     } catch {
       setErrorMessage(DEFAULT_ERROR_MESSAGE)
