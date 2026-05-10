@@ -2,7 +2,7 @@
 
 > GitHub 프로필과 온보딩 설문을 기반으로, 지금 기여하기 좋은 오픈소스 이슈를 추천하고 관심 이슈와 PR 활동을 한 화면에서 관리하는 서비스입니다.
 
-**서비스 바로가기:** [https://open-issue-map.com](https://open-issue-map.vercel.app)
+**서비스 바로가기:** [https://openissuemap.com](https://openissuemap.com)
 
 ---
 
