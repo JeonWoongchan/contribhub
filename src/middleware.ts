@@ -1,16 +1,25 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
+import { getToken } from 'next-auth/jwt'
 
-// Edge Runtime에서 실행 — DB·Node.js 모듈 없이 쿠키 존재 여부만 확인한다.
-// JWT 복호화와 세션 유효성 검증은 (main)/layout.tsx의 auth()가 담당한다.
-export function middleware(req: NextRequest) {
-    const hasSession =
-        req.cookies.has('authjs.session-token') ||
-        req.cookies.has('__Secure-authjs.session-token')
+// Edge Runtime에서 실행 — JWT를 직접 복호화해 인증·온보딩 상태를 확인한다.
+// DB·Node.js 모듈 없이 처리하므로 Vercel cold start 없이 수십ms로 동작한다.
+export async function middleware(req: NextRequest) {
+    const token = await getToken({
+        req,
+        secret: process.env.AUTH_SECRET,
+        secureCookie: process.env.NODE_ENV === 'production',
+    })
 
-    return NextResponse.redirect(
-        new URL(hasSession ? '/dashboard' : '/login', req.url),
-    )
+    if (!token) {
+        return NextResponse.redirect(new URL('/login', req.url))
+    }
+
+    if (!token.isOnboarded) {
+        return NextResponse.redirect(new URL('/onboarding', req.url))
+    }
+
+    return NextResponse.redirect(new URL('/dashboard', req.url))
 }
 
 export const config = {

@@ -6,18 +6,16 @@ declare module 'next-auth' {
     user: {
       id: string
       login: string
+      isOnboarded: boolean
     } & DefaultSession['user']
-  }
-
-  interface JWT {
-    accessToken?: string
-    githubLogin?: string
   }
 }
 
 declare module 'next-auth/jwt' {
   interface JWT {
     accessToken?: string
+    githubId?: string
     githubLogin?: string
+    isOnboarded?: boolean
   }
 }

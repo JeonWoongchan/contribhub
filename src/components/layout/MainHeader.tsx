@@ -22,7 +22,7 @@ export function MainHeader({ image, name }: MainHeaderProps) {
             <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
                 <Link
                     href="/dashboard"
-                    className="text-sm font-semibold tracking-tight text-interactive-action transition-colors hover:text-foreground"
+                    className="text-sm font-semibold tracking-tight text-interactive-action transition-colors hover:text-bookmark-action"
                 >
                     Open Issue Map
                 </Link>
