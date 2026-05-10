@@ -1,24 +1,13 @@
-import { HEALTH_THRESHOLD, TIME_FILTER } from '@/constants/scoring-rules'
+import { HEALTH_THRESHOLD } from '@/constants/scoring-rules'
 import { scoreIssue } from '@/lib/github/issues/scorer'
 import type { RawIssue, ScoredIssue } from '@/types/issue'
-import type { ContributionType } from '@/types/user'
 import type { OnboardingProfile } from '@/lib/user/profile'
 
-// 온보딩 주간 작업 시간 기준 허용 기여 유형 목록 반환
-function getAllowedContributionTypes(profile: OnboardingProfile): ContributionType[] {
-  if (!profile.weeklyHours) return TIME_FILTER[10]
-  return TIME_FILTER[profile.weeklyHours] ?? TIME_FILTER[10]
-}
-
-// 저장소 health 기준 미달 및 허용되지 않는 기여 유형 이슈 제거
-function filterScoredIssues(
-  issues: ScoredIssue[],
-  allowedTypes: ContributionType[]
-): ScoredIssue[] {
-  return issues.filter((issue) => {
-    if (issue.healthScore !== null && issue.healthScore < HEALTH_THRESHOLD) return false
-    return !(issue.contributionType && !allowedTypes.includes(issue.contributionType))
-  })
+// 저장소 health 기준 미달 이슈 제거 — 기여 방식 필터는 점수로만 반영한다
+function filterScoredIssues(issues: ScoredIssue[]): ScoredIssue[] {
+  return issues.filter(
+    (issue) => issue.healthScore === null || issue.healthScore >= HEALTH_THRESHOLD
+  )
 }
 
 // FNV-1a 32비트 해시 — 배치 내 이슈 순서 고정용
@@ -38,14 +27,11 @@ export function rankIssues(
   healthMap: Map<string, number>,
   randomSeed: string
 ): ScoredIssue[] {
-  const allowedTypes = getAllowedContributionTypes(profile)
-
   return filterScoredIssues(
     rawIssues.map((rawIssue) => {
       const healthScore = healthMap.get(rawIssue.repository.nameWithOwner) ?? null
       return scoreIssue(rawIssue, profile, healthScore)
-    }),
-    allowedTypes
+    })
   )
     // 해시를 sort 호출 전에 미리 계산해 중복 연산을 피한다
     .map((issue) => ({ issue, hash: hashString(`${randomSeed}:${issue.url}`) }))

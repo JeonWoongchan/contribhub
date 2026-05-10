@@ -99,7 +99,7 @@ describe('scoreIssue', () => {
     describe('점수 최솟값', () => {
         it('모든 조건이 미스매치여도 score는 MATCH_SCORE_MINIMUM 이상이다', () => {
             const worstCaseIssue = makeRawIssue({
-                labels: { nodes: [{ name: 'needs-investigation' }] }, // senior 난이도 → beginner 사용자와 최대 불일치
+                labels: { nodes: [{ name: 'hard' }] }, // senior 난이도 → beginner 사용자와 최대 불일치
                 comments: { totalCount: 15 },                          // 매우 높은 경쟁도
                 timelineItems: { nodes: [{ __typename: 'CrossReferencedEvent' }] }, // PR 연결됨
                 repository: {
@@ -140,7 +140,7 @@ describe('scoreIssue', () => {
     })
 
     // ── 난이도 감지 ────────────────────────────────────────────────────────
-    // scoreIssue는 라벨·제목·본문으로 이슈 난이도를 추정해 difficultyLevel에 담는다.
+    // scoreIssue는 이슈 라벨로 난이도를 추정해 difficultyLevel에 담는다.
     // 이 테스트가 실패하면 DIFFICULTY_LABELS 상수와 detectDifficulty 로직이 단절된 것이다.
     describe('난이도 감지', () => {
         it('"good first issue" 라벨이 있으면 difficultyLevel이 "beginner"다', () => {
@@ -148,13 +148,18 @@ describe('scoreIssue', () => {
             expect(scoreIssue(issue, makeProfile()).difficultyLevel).toBe('beginner')
         })
 
-        it('"help wanted" 라벨이 있으면 difficultyLevel이 "junior"다', () => {
-            const issue = makeRawIssue({ labels: { nodes: [{ name: 'help wanted' }] } })
+        it('"good second issue" 라벨이 있으면 difficultyLevel이 "junior"다', () => {
+            const issue = makeRawIssue({ labels: { nodes: [{ name: 'good second issue' }] } })
             expect(scoreIssue(issue, makeProfile()).difficultyLevel).toBe('junior')
         })
 
-        it('난이도 신호(라벨·제목)가 없으면 difficultyLevel이 null이다', () => {
-            // 기본 제목 'Improve performance'와 빈 라벨은 어떤 난이도 키워드도 포함하지 않는다
+        it('"help wanted" 라벨만 있으면 difficultyLevel이 null이다 (기여 요청 레이블이므로 난이도 신호 아님)', () => {
+            const issue = makeRawIssue({ labels: { nodes: [{ name: 'help wanted' }] } })
+            expect(scoreIssue(issue, makeProfile()).difficultyLevel).toBeNull()
+        })
+
+        it('난이도 신호(라벨)가 없으면 difficultyLevel이 null이다', () => {
+            // 빈 라벨은 어떤 난이도 키워드도 포함하지 않는다
             const issue = makeRawIssue({ labels: { nodes: [] } })
             expect(scoreIssue(issue, makeProfile()).difficultyLevel).toBeNull()
         })

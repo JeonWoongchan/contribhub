@@ -13,45 +13,63 @@ export const GITHUB_API_CACHE_TTL_SECONDS = 60
 export const GITHUB_API_TIMEOUT_MS = 8_000
 
 // 온보딩의 선호 언어와 GitHub 저장소 primaryLanguage를 비교한다.
-// 정확히 같은 언어는 가장 높은 점수를 주고, 같은 계열 언어는 부분 점수를 준다.
+// 선택한 언어이면 순위 무관하게 동일 점수를 주고, 같은 계열 언어는 부분 점수를 준다.
 export const LANGUAGE_SCORE = {
-  EXACT_PRIMARY: 20,
-  EXACT_SECONDARY: 18,
-  EXACT_OTHER_SELECTED: 16,
-  RELATED_PRIMARY: 11,
-  RELATED_SECONDARY: 9,
-  RELATED_OTHER_SELECTED: 7,
+  EXACT: 20,
+  RELATED: 11,
   NO_MATCH: 0,
 } as const
 
 // GitHub의 primaryLanguage는 하나만 오기 때문에, 사용자가 선택한 언어와 같은 생태계면 related match로 본다.
 export const LANGUAGE_GROUPS: string[][] = [
-  ['TypeScript', 'JavaScript'],
-  ['Python', 'Jupyter Notebook'],
-  ['C', 'C++', 'C#'],
-  ['Java', 'Kotlin', 'Scala'],
+  ['TypeScript', 'JavaScript'],                  // 웹/Node.js 생태계
+  ['C', 'C++'],                                  // 시스템·임베디드 (C#은 .NET으로 별도)
+  ['Java', 'Kotlin', 'Scala', 'Groovy'],         // JVM 생태계
+  ['Swift', 'Objective-C'],                      // Apple 플랫폼 (iOS/macOS)
 ]
 
 // 온보딩의 오픈소스 기여 경험과 이슈 난이도 추정값을 비교한다.
 // 사용자 수준과 같은 난이도가 가장 좋고, 한 단계 높은 이슈는 도전 가능한 이슈로 일부 가산한다.
 export const DIFFICULTY_SCORE = {
-  PERFECT: 16,
-  ONE_ABOVE: 14,
-  TWO_ABOVE: 6,
+  PERFECT: 15,
+  ONE_ABOVE: 8,
+  TWO_ABOVE: 4,
   THREE_ABOVE: 0,
-  ONE_BELOW: 9,
-  TWO_BELOW: 5,
-  THREE_BELOW: 2,
+  ONE_BELOW: 6,
+  TWO_BELOW: 3,
+  THREE_BELOW: 0,
 } as const
 
 export const EXPERIENCE_ORDER: ExperienceLevel[] = ['beginner', 'junior', 'mid', 'senior']
 
-// GitHub가 난이도를 공식 필드로 주지 않기 때문에 라벨, 제목, 본문 키워드로 난이도를 추정한다.
+// GitHub가 난이도를 공식 필드로 주지 않기 때문에 이슈 라벨 키워드로 난이도를 추정한다.
+// 'help wanted'는 기여 요청 레이블이므로 난이도 신호로 사용하지 않는다.
+// 'needs-investigation'은 상태 레이블이므로 난이도 신호로 사용하지 않는다.
 export const DIFFICULTY_LABELS: Record<ExperienceLevel, string[]> = {
-  beginner: ['good first issues', 'good-first-issues', 'good first issue', 'beginner', 'starter'],
-  junior: ['help wanted', 'help-wanted', 'easy'],
-  mid: ['medium', 'moderate', 'intermediate'],
-  senior: ['hard', 'complex', 'advanced', 'needs-investigation'],
+  beginner: [
+    'good first issue', 'good-first-issue',
+    'good first issues', 'good-first-issues',
+    'first-timers-only', 'first timers only',
+    'mentored',
+    'beginner', 'starter', 'easy',
+    'difficulty:easy', 'difficulty: easy', 'difficulty:beginner',
+  ],
+  junior: [
+    'good second issue', 'good-second-issue',
+    'junior',
+    'e-mentored',
+  ],
+  mid: [
+    'medium', 'moderate', 'intermediate',
+    'difficulty:medium', 'difficulty: medium',
+    'e-medium',
+  ],
+  senior: [
+    'hard', 'complex', 'advanced',
+    'difficulty:hard', 'difficulty: hard',
+    'difficulty:expert',
+    'e-hard',
+  ],
 }
 
 // 온보딩의 기여 방식 답변과 이슈의 작업 성격을 매칭하기 위한 키워드다.
@@ -65,21 +83,11 @@ export const CONTRIBUTION_TYPE_LABELS: Record<ContributionType, string[]> = {
 }
 
 // 사용자가 선택한 기여 방식과 추정된 이슈 작업 성격이 같으면 가산한다.
+// 선택한 방식 일치 여부만 판단하며, 그 외는 0점이다.
 export const CONTRIBUTION_TYPE_SCORE = {
-  PRIMARY_MATCH: 14,
-  SECONDARY_MATCH: 12,
-  OTHER_SELECTED_MATCH: 10,
-  RELATED_MATCH: 5,
+  MATCH: 15,
   NO_MATCH: 0,
 } as const
-
-export const CONTRIBUTION_TYPE_RELATED: Record<ContributionType, ContributionType[]> = {
-  doc: ['test', 'review'],
-  bug: ['test', 'feat'],
-  feat: ['bug', 'test'],
-  test: ['bug', 'feat'],
-  review: ['doc', 'test'],
-}
 
 // 댓글 수와 PR 연결 여부로 진입 경쟁도를 추정한다.
 // 이미 PR이 있거나 토론이 많은 이슈는 초보자가 들어가기 어려울 수 있어 기본 감점한다.
@@ -115,14 +123,6 @@ export const REPO_STAR_SCORE_TIERS = [
   { stars: 100, score: 1 },
 ] as const
 
-// 작업 시간은 먼저 허용 가능한 작업 성격을 좁히는 데 사용된다.
-// 예를 들어 주 2시간 사용자는 문서/작은 버그처럼 짧은 작업 위주로 남긴다.
-export const TIME_FILTER: Record<WeeklyHours, ContributionType[]> = {
-  2: ['doc', 'bug'],
-  5: ['doc', 'bug', 'test'],
-  10: ['doc', 'bug', 'test', 'feat', 'review'],
-}
-
 // 경험 수준은 난이도뿐 아니라 경쟁도와도 연결된다.
 // 입문자는 OPEN 이슈를 더 선호하고, 경험이 높을수록 ACTIVE 이슈도 감당 가능하다고 본다.
 export const EXPERIENCE_COMPETITION_BONUS: Record<
@@ -141,71 +141,52 @@ export const EXPERIENCE_COMPETITION_BONUS: Record<
   },
   mid: {
     OPEN: 4,
-    ACTIVE: 14,
+    ACTIVE: 10,
     HAS_PR: -2,
   },
   senior: {
     OPEN: 4,
-    ACTIVE: 14,
+    ACTIVE: 10,
     HAS_PR: 0,
   },
 }
 
 // 온보딩의 작업 시간 답변을 이슈 메타데이터에 반영하는 규칙이다.
-// preferredTypes: 시간에 맞는 작업 성격
-// preferredDifficulties: 시간에 맞는 난이도 범위
-// preferredMaxComments: 토론량이 이 값 이하이면 부담이 낮다고 본다
-// linkedPrPenalty: 이미 PR이 연결된 이슈는 새로 들어가기 어려워 시간 여유가 적을수록 더 감점한다
+// 일치 시 가산만 하고 불일치 감점은 없다.
 export const TIME_BUDGET_RULES: Record<
   WeeklyHours,
   {
     preferredTypes: ContributionType[]
     preferredDifficulties: ExperienceLevel[]
     preferredMaxComments: number
-    commentPenaltyStep: number
     typeMatchBonus: number
-    typeMismatchPenalty: number
     difficultyMatchBonus: number
-    difficultyMismatchPenalty: number
     lowCommentBonus: number
-    linkedPrPenalty: number
   }
 > = {
   2: {
     preferredTypes: ['doc', 'bug'],
     preferredDifficulties: ['beginner', 'junior'],
     preferredMaxComments: 2,
-    commentPenaltyStep: 3,
     typeMatchBonus: 5,
-    typeMismatchPenalty: -6,
     difficultyMatchBonus: 5,
-    difficultyMismatchPenalty: -5,
     lowCommentBonus: 4,
-    linkedPrPenalty: -8,
   },
   5: {
     preferredTypes: ['doc', 'bug', 'test'],
     preferredDifficulties: ['beginner', 'junior', 'mid'],
     preferredMaxComments: 5,
-    commentPenaltyStep: 4,
     typeMatchBonus: 5,
-    typeMismatchPenalty: -4,
     difficultyMatchBonus: 5,
-    difficultyMismatchPenalty: -3,
     lowCommentBonus: 4,
-    linkedPrPenalty: -4,
   },
   10: {
     preferredTypes: ['doc', 'bug', 'test', 'feat', 'review'],
     preferredDifficulties: ['beginner', 'junior', 'mid', 'senior'],
     preferredMaxComments: 8,
-    commentPenaltyStep: 6,
     typeMatchBonus: 4,
-    typeMismatchPenalty: -2,
     difficultyMatchBonus: 4,
-    difficultyMismatchPenalty: -1,
     lowCommentBonus: 3,
-    linkedPrPenalty: -1,
   },
 }
 
@@ -220,7 +201,6 @@ export const PURPOSE_SCORE_RULES: Record<
     mediumHealthBonus: number
     openCompetitionBonus: number
     activeCompetitionBonus: number
-    linkedPrPenalty: number
     recognizedRepoStars: number
     recognizedRepoBonus: number
     preferredTypes: ContributionType[]
@@ -234,7 +214,6 @@ export const PURPOSE_SCORE_RULES: Record<
     mediumHealthBonus: 2,
     openCompetitionBonus: 3,
     activeCompetitionBonus: 1,
-    linkedPrPenalty: -6,
     recognizedRepoStars: 300,
     recognizedRepoBonus: 2,
     preferredTypes: ['doc', 'bug', 'feat'],
@@ -247,7 +226,6 @@ export const PURPOSE_SCORE_RULES: Record<
     mediumHealthBonus: 2,
     openCompetitionBonus: 1,
     activeCompetitionBonus: 3,
-    linkedPrPenalty: -2,
     recognizedRepoStars: 0,
     recognizedRepoBonus: 0,
     preferredTypes: ['feat', 'test', 'bug'],
@@ -260,7 +238,6 @@ export const PURPOSE_SCORE_RULES: Record<
     mediumHealthBonus: 2,
     openCompetitionBonus: 3,
     activeCompetitionBonus: 2,
-    linkedPrPenalty: -4,
     recognizedRepoStars: 0,
     recognizedRepoBonus: 0,
     preferredTypes: ['doc', 'bug', 'test'],

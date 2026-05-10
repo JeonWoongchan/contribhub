@@ -133,8 +133,9 @@ describe('rankIssues — health 필터', () => {
     })
 })
 
-describe('rankIssues — contributionType 필터', () => {
-    it('weeklyHours=2이면 doc·bug만 허용하고 feat은 제외된다', () => {
+describe('rankIssues — contributionType 점수 반영', () => {
+    it('weeklyHours=2여도 feat 이슈가 제외되지 않고 결과에 포함된다', () => {
+        // 기여 방식 필터는 제거됨 — 시간에 맞지 않는 방식도 점수로만 반영
         const rawBug  = makeRawIssue({ number: 1 })
         const rawFeat = makeRawIssue({ number: 2 })
         mockScore
@@ -143,11 +144,10 @@ describe('rankIssues — contributionType 필터', () => {
 
         const result = rankIssues([rawBug, rawFeat], { ...profile, weeklyHours: 2 }, new Map(), 'seed')
 
-        expect(result).toHaveLength(1)
-        expect(result[0].number).toBe(1)
+        expect(result).toHaveLength(2)
     })
 
-    it('contributionType이 null인 이슈는 허용 유형 필터를 통과한다', () => {
+    it('contributionType이 null인 이슈도 결과에 포함된다', () => {
         // 기여 방식이 감지되지 않은 이슈는 어떤 weeklyHours에서도 제외하지 않는다
         mockScore.mockReturnValue(makeScoredIssue({ contributionType: null }))
 

@@ -41,9 +41,9 @@ export const DASHBOARD_HELP_DEMO_UPDATED_OFFSET_MS = 86_400_000
 export const DASHBOARD_HELP_DEMO_ISSUE: Omit<ScoredIssue, 'createdAt' | 'updatedAt'> = {
   number: 12345,
   title: 'docs: clarify missing explanation in starter example',
-  url: 'https://github.com/vercel/next.js/issues',
-  repoFullName: 'vercel/next.js',
-  repoUrl: 'https://github.com/vercel/next.js',
+  url: 'https://github.com/example/docs/issues',
+  repoFullName: 'example/docs',
+  repoUrl: 'https://github.com/example/docs',
   language: 'TypeScript',
   stargazerCount: 129000,
   labels: ['documentation', 'good first issue'],

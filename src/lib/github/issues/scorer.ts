@@ -3,7 +3,6 @@ import type { ContributionType, ExperienceLevel, UserProfile } from '@/types/use
 import {
   COMPETITION_PENALTY,
   CONTRIBUTION_TYPE_LABELS,
-  CONTRIBUTION_TYPE_RELATED,
   CONTRIBUTION_TYPE_SCORE,
   DIFFICULTY_LABELS,
   DIFFICULTY_SCORE,
@@ -52,60 +51,28 @@ function floorScore(score: number): number {
 
 // 온보딩의 선호 언어와 GitHub repository.primaryLanguage를 비교한다.
 // 후보 조회 자체도 language qualifier로 좁히지만, 최종 랭킹에서 정확/관련 언어를 다시 가산한다.
+// 선택한 언어라면 순위 무관하게 동일 점수를 부여한다.
 function scoreLanguage(issueLanguage: string | null, userLanguages: string[]): number {
-  if (!issueLanguage) {
-    return 0
-  }
+  if (!issueLanguage) return LANGUAGE_SCORE.NO_MATCH
 
-  const exactIndex = userLanguages.indexOf(issueLanguage)
-
-  if (exactIndex === 0) {
-    return LANGUAGE_SCORE.EXACT_PRIMARY
-  }
-
-  if (exactIndex === 1) {
-    return LANGUAGE_SCORE.EXACT_SECONDARY
-  }
-
-  if (exactIndex > 1) {
-    return LANGUAGE_SCORE.EXACT_OTHER_SELECTED
-  }
+  if (userLanguages.includes(issueLanguage)) return LANGUAGE_SCORE.EXACT
 
   const group = LANGUAGE_GROUPS.find((languages) => languages.includes(issueLanguage))
-  const relatedIndex = group
-    ? userLanguages.findIndex((language) => group.includes(language))
-    : -1
+  const hasRelated = group ? group.some((language) => userLanguages.includes(language)) : false
 
-  if (relatedIndex === 0) {
-    return LANGUAGE_SCORE.RELATED_PRIMARY
-  }
-
-  if (relatedIndex === 1) {
-    return LANGUAGE_SCORE.RELATED_SECONDARY
-  }
-
-  if (relatedIndex > 1) {
-    return LANGUAGE_SCORE.RELATED_OTHER_SELECTED
-  }
-
-  return LANGUAGE_SCORE.NO_MATCH
+  return hasRelated ? LANGUAGE_SCORE.RELATED : LANGUAGE_SCORE.NO_MATCH
 }
 
 // GitHub Issue에는 공식 난이도 필드가 없다.
-// 그래서 label, title, body에 포함된 good first issue/easy/medium 같은 신호로 난이도를 추정한다.
-function detectDifficulty(labelNames: string[], searchableText: string): ExperienceLevel | null {
+// 오탐 방지를 위해 이슈 라벨만 검사한다. 제목·본문은 "easy fix가 아니다" 같은 부정 문맥으로 오탐이 많다.
+function detectDifficulty(labelNames: string[]): ExperienceLevel | null {
   const normalizedLabels = normalizeLabels(labelNames)
 
   for (const [level, keywords] of Object.entries(DIFFICULTY_LABELS) as [
     ExperienceLevel,
     string[],
   ][]) {
-    if (
-      keywords.some(
-        (keyword) =>
-          normalizedLabels.some((label) => label.includes(keyword)) || searchableText.includes(keyword)
-      )
-    ) {
+    if (keywords.some((keyword) => normalizedLabels.some((label) => label.includes(keyword)))) {
       return level
     }
   }
@@ -190,33 +157,13 @@ function detectContributionType(
 }
 
 // 사용자가 선택한 기여 방식과 이슈 작업 성격이 맞으면 매칭 점수에 반영한다.
+// 선택한 방식이면 순위 무관하게 동일 점수를 부여하고, 그 외는 0점이다.
 function scoreContributionType(
   issueType: ContributionType | null,
   userTypes: ContributionType[]
 ): number {
-  if (!issueType) {
-    return 0
-  }
-
-  const matchIndex = userTypes.indexOf(issueType)
-
-  if (matchIndex === 0) {
-    return CONTRIBUTION_TYPE_SCORE.PRIMARY_MATCH
-  }
-
-  if (matchIndex === 1) {
-    return CONTRIBUTION_TYPE_SCORE.SECONDARY_MATCH
-  }
-
-  if (matchIndex > 1) {
-    return CONTRIBUTION_TYPE_SCORE.OTHER_SELECTED_MATCH
-  }
-
-  const isRelated = userTypes.some((userType) =>
-    CONTRIBUTION_TYPE_RELATED[userType].includes(issueType)
-  )
-
-  return isRelated ? CONTRIBUTION_TYPE_SCORE.RELATED_MATCH : CONTRIBUTION_TYPE_SCORE.NO_MATCH
+  if (!issueType) return CONTRIBUTION_TYPE_SCORE.NO_MATCH
+  return userTypes.includes(issueType) ? CONTRIBUTION_TYPE_SCORE.MATCH : CONTRIBUTION_TYPE_SCORE.NO_MATCH
 }
 
 // 댓글 수와 PR 연결 여부로 경쟁도를 추정한다.
@@ -295,42 +242,29 @@ function scoreExperienceCompetitionFit(
   return EXPERIENCE_COMPETITION_BONUS[userLevel][competitionLevel]
 }
 
-// 온보딩의 작업 시간 답변을 이슈의 작업 성격, 난이도, 댓글 수, PR 연결 여부와 비교한다.
-// 시간이 적을수록 작은 작업/낮은 난이도/적은 댓글/PR 없음에 더 맞고, 시간이 많을수록 긴 호흡 작업도 허용한다.
+// 온보딩의 작업 시간 답변을 이슈의 작업 성격, 난이도, 댓글 수와 비교한다.
+// 일치 시 가산만 하며, 불일치 감점은 없다.
 function scoreTimeBudgetFit(
   weeklyHours: UserProfile['weeklyHours'],
   issueType: ContributionType | null,
   issueDifficulty: ExperienceLevel | null,
-  commentCount: number,
-  hasPR: boolean
+  commentCount: number
 ): number {
-  if (!weeklyHours) {
-    return 0
-  }
+  if (!weeklyHours) return 0
 
   const rule = TIME_BUDGET_RULES[weeklyHours]
   let score = 0
 
-  if (issueType) {
-    score += rule.preferredTypes.includes(issueType)
-      ? rule.typeMatchBonus
-      : rule.typeMismatchPenalty
+  if (issueType && rule.preferredTypes.includes(issueType)) {
+    score += rule.typeMatchBonus
   }
 
-  if (issueDifficulty) {
-    score += rule.preferredDifficulties.includes(issueDifficulty)
-      ? rule.difficultyMatchBonus
-      : rule.difficultyMismatchPenalty
+  if (issueDifficulty && rule.preferredDifficulties.includes(issueDifficulty)) {
+    score += rule.difficultyMatchBonus
   }
 
   if (commentCount <= rule.preferredMaxComments) {
-    score += Math.max(1, rule.lowCommentBonus - commentCount)
-  } else {
-    score -= Math.ceil((commentCount - rule.preferredMaxComments) / rule.commentPenaltyStep)
-  }
-
-  if (hasPR) {
-    score += rule.linkedPrPenalty
+    score += Math.max(0, rule.lowCommentBonus - commentCount)
   }
 
   return score
@@ -344,8 +278,7 @@ function scorePurposeFit(
   issueDifficulty: ExperienceLevel | null,
   competitionLevel: CompetitionLevel,
   stargazerCount: number,
-  healthScore: number | null,
-  hasPR: boolean
+  healthScore: number | null
 ): number {
   if (!purpose) {
     return 0
@@ -366,10 +299,6 @@ function scorePurposeFit(
     score += rule.openCompetitionBonus
   } else if (competitionLevel === 'ACTIVE') {
     score += rule.activeCompetitionBonus
-  }
-
-  if (hasPR) {
-    score += rule.linkedPrPenalty
   }
 
   const recognizedRepoScore = scoreRecognizedRepository(stargazerCount, rule.recognizedRepoStars)
@@ -416,12 +345,12 @@ const SCORING_DIMENSIONS: Array<{ key: string; score: (ctx: ScoringContext) => n
   {
     key: 'timeBudget',
     score: (ctx) =>
-      scoreTimeBudgetFit(ctx.weeklyHours, ctx.contributionType, ctx.difficultyLevel, ctx.commentCount, ctx.hasPR),
+      scoreTimeBudgetFit(ctx.weeklyHours, ctx.contributionType, ctx.difficultyLevel, ctx.commentCount),
   },
   {
     key: 'purpose',
     score: (ctx) =>
-      scorePurposeFit(ctx.purpose, ctx.contributionType, ctx.difficultyLevel, ctx.competitionLevel, ctx.stargazerCount, ctx.healthScore, ctx.hasPR),
+      scorePurposeFit(ctx.purpose, ctx.contributionType, ctx.difficultyLevel, ctx.competitionLevel, ctx.stargazerCount, ctx.healthScore),
   },
   {
     key: 'health',
@@ -447,7 +376,7 @@ export function scoreIssue(
     (node) => (node as { __typename: string }).__typename === 'CrossReferencedEvent'
   )
 
-  const difficultyLevel = detectDifficulty(labelNames, searchableText)
+  const difficultyLevel = detectDifficulty(labelNames)
   const contributionType = detectContributionType(labelNames, searchableText, commentCount, hasPR)
   const { level: competitionLevel, penalty: competitionPenalty } = detectCompetition(commentCount, hasPR)
 
