@@ -78,7 +78,7 @@ function scoreDifficulty(
   userLevel: ExperienceLevel | null
 ): number {
   if (!issueDifficulty || !userLevel) {
-    return 0
+    return DIFFICULTY_SCORE.UNKNOWN
   }
 
   const issueIndex = EXPERIENCE_ORDER.indexOf(issueDifficulty)
@@ -144,7 +144,7 @@ function scoreContributionType(
   issueType: ContributionType | null,
   userTypes: ContributionType[]
 ): number {
-  if (!issueType) return CONTRIBUTION_TYPE_SCORE.NO_MATCH
+  if (!issueType) return CONTRIBUTION_TYPE_SCORE.UNKNOWN
   return userTypes.includes(issueType) ? CONTRIBUTION_TYPE_SCORE.MATCH : CONTRIBUTION_TYPE_SCORE.NO_MATCH
 }
 
@@ -229,7 +229,8 @@ function scorePurposeFit(
   purpose: UserProfile['purpose'],
   issueType: ContributionType | null,
   issueDifficulty: ExperienceLevel | null,
-  competitionLevel: CompetitionLevel
+  competitionLevel: CompetitionLevel,
+  stargazerCount: number
 ): number {
   if (!purpose) {
     return 0
@@ -250,6 +251,11 @@ function scorePurposeFit(
 
   if (issueDifficulty && rule.preferredDifficulties.includes(issueDifficulty)) {
     score += rule.preferredDifficultyBonus
+  }
+
+  // 포트폴리오 목적에서 인지도 있는 저장소 가산 — recognizedRepoStars가 0이면 미적용
+  if (rule.recognizedRepoStars > 0 && stargazerCount >= rule.recognizedRepoStars) {
+    score += rule.recognizedRepoBonus
   }
 
   return score
@@ -287,7 +293,7 @@ const SCORING_DIMENSIONS: Array<{ key: string; score: (ctx: ScoringContext) => n
   {
     key: 'purpose',
     score: (ctx) =>
-      scorePurposeFit(ctx.purpose, ctx.contributionType, ctx.difficultyLevel, ctx.competitionLevel),
+      scorePurposeFit(ctx.purpose, ctx.contributionType, ctx.difficultyLevel, ctx.competitionLevel, ctx.stargazerCount),
   },
   {
     key: 'stars',

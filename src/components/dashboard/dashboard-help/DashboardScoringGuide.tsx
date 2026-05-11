@@ -53,14 +53,15 @@ function formatPreferredTypes(types: readonly string[]): string {
 }
 
 
-// 기여 목적 이론적 최대 가산점: 경쟁도·유형·난이도 보너스 합산
+// 기여 목적 이론적 최대 가산점: 경쟁도·유형·난이도·저장소 인지도 보너스 합산
 const MAX_PURPOSE_SCORE = Math.max(
     ...(['portfolio', 'growth', 'community'] as const).map((p) => {
         const r = PURPOSE_SCORE_RULES[p]
         return (
             Math.max(r.openCompetitionBonus, r.activeCompetitionBonus) +
             r.preferredTypeBonus +
-            r.preferredDifficultyBonus
+            r.preferredDifficultyBonus +
+            r.recognizedRepoBonus
         )
     }),
 )
@@ -203,12 +204,13 @@ export function DashboardScoringGuide() {
                         { label: '한 단계 아래', score: fmt(DIFFICULTY_SCORE.ONE_BELOW), positive: true },
                         { label: '두 단계 아래', score: fmt(DIFFICULTY_SCORE.TWO_BELOW), positive: true },
                         { label: '세 단계 아래', score: fmt(DIFFICULTY_SCORE.THREE_BELOW) },
+                        { label: '난이도 라벨 없음', score: fmt(DIFFICULTY_SCORE.UNKNOWN), positive: true },
                     ]}
                 />
                 <p className="text-xs leading-5 text-muted-foreground">
-                    내 수준보다 쉬운 이슈도 기여 자체로 의미가 있으므로 한·두 단계 아래는 낮은 가산점을 부여합니다. 세 단계 이상 차이나면 0점입니다.
+                    내 수준보다 쉬운 이슈도 기여 자체로 의미가 있으므로 한·두 단계 아래는 낮은 가산점을 부여합니다. 세 단계 이상 차이나면 0점이며, 난이도 라벨이 없는 이슈는 어떤 수준에도 해당할 수 있어 부분 점수를 드립니다.
                 </p>
-                <NoteBox title="난이도 추정 레이블 (이슈 라벨 기준)">
+                <NoteBox title="주요 난이도 추정 레이블 (이슈 라벨 기준)">
                     <div className="space-y-0.5 text-xs text-muted-foreground">
                         <p><span className="font-medium text-foreground">입문</span> — good first issue, first-timers-only, mentored, easy, difficulty:easy</p>
                         <p><span className="font-medium text-foreground">초급</span> — good second issue, junior, e-mentored</p>
@@ -230,6 +232,7 @@ export function DashboardScoringGuide() {
                 <ScoreTable
                     rows={[
                         { label: '선택한 방식 일치', score: fmt(CONTRIBUTION_TYPE_SCORE.MATCH), positive: true },
+                        { label: '감지 불가 (라벨·키워드 없음)', score: fmt(CONTRIBUTION_TYPE_SCORE.UNKNOWN), positive: true },
                         { label: '불일치', score: fmt(CONTRIBUTION_TYPE_SCORE.NO_MATCH) },
                     ]}
                 />
@@ -237,7 +240,7 @@ export function DashboardScoringGuide() {
                     <div className="space-y-0.5 text-xs text-muted-foreground">
                         <p><span className="font-medium text-foreground">문서(doc)</span> — documentation, docs, readme, translation, i18n</p>
                         <p><span className="font-medium text-foreground">버그(bug)</span> — bug, fix, regression, defect, error</p>
-                        <p><span className="font-medium text-foreground">기능(feat)</span> — feature, enhancement, proposal</p>
+                        <p><span className="font-medium text-foreground">기능(feat)</span> — feature, enhancement, feature-request, proposal</p>
                         <p><span className="font-medium text-foreground">테스트(test)</span> — test, testing, coverage, qa</p>
                         <p><span className="font-medium text-foreground">리뷰(review)</span> — review, feedback</p>
                     </div>
@@ -381,7 +384,7 @@ export function DashboardScoringGuide() {
                         {
                             label: '포트폴리오',
                             preferred: '문서 · 버그 · 기능',
-                            desc: '결과물을 설명하기 쉬운 이슈 선호. 인지도 있는 저장소(★300 이상)에 보너스.',
+                            desc: `결과물을 설명하기 쉬운 이슈 선호. OPEN 이슈 및 ★${PURPOSE_SCORE_RULES.portfolio.recognizedRepoStars} 이상 저장소에 추가 가산점.`,
                         },
                         {
                             label: '성장',

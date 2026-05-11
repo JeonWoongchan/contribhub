@@ -1,3 +1,4 @@
+import { RANK_SCORE_THRESHOLD } from '@/constants/scoring-rules'
 import { scoreIssue } from '@/lib/github/issues/scorer'
 import type { RawIssue, ScoredIssue } from '@/types/issue'
 import type { OnboardingProfile } from '@/lib/user/profile'
@@ -24,6 +25,7 @@ export function rankIssues(
       const issue = scoreIssue(rawIssue, profile)
       return { issue, hash: hashString(`${randomSeed}:${issue.url}`) }
     })
+    .filter(({ issue }) => issue.score >= RANK_SCORE_THRESHOLD)
     // 점수 우선, 동점 시 배치 내 hash로 순서를 고정해 offset 기반 페이지네이션 안정성을 보장한다
     .sort((a, b) => {
       if (b.issue.score !== a.issue.score) return b.issue.score - a.issue.score

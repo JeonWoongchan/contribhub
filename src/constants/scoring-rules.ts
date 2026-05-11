@@ -6,6 +6,8 @@ import type { ContributionType, ExperienceLevel, Purpose, WeeklyHours } from '@/
 // 최종 score는 카드 우측 상단의 매칭 점수로 노출되며, 높은 점수일수록 사용자 설정에 더 잘 맞는 이슈로 본다.
 export const PAGE_SIZE = 10
 export const MATCH_SCORE_MINIMUM = 0
+// 추천 목록에 노출할 최소 점수 — 미달 이슈는 랭킹 단계에서 제거
+export const RANK_SCORE_THRESHOLD = 50
 // GitHub API 권장 캐시 TTL (Cache-Control: max-age=60 기준)
 export const GITHUB_API_CACHE_TTL_SECONDS = 60
 // GitHub API 응답 대기 상한 — 초과 시 AbortError로 함수 조기 종료
@@ -31,6 +33,7 @@ export const LANGUAGE_GROUPS: string[][] = [
 
 // 온보딩의 오픈소스 기여 경험과 이슈 난이도 추정값을 비교한다.
 // 사용자 수준과 같은 난이도가 가장 좋고, 한 단계 높은 이슈는 도전 가능한 이슈로 일부 가산한다.
+// UNKNOWN: 난이도 라벨 없음 — 모든 수준에 해당할 가능성이 있어 중간 점수를 부여한다.
 export const DIFFICULTY_SCORE = {
   PERFECT: 25,
   ONE_ABOVE: 12,
@@ -39,6 +42,7 @@ export const DIFFICULTY_SCORE = {
   ONE_BELOW: 8,
   TWO_BELOW: 4,
   THREE_BELOW: 0,
+  UNKNOWN: 12,
 } as const
 
 export const EXPERIENCE_ORDER: ExperienceLevel[] = ['beginner', 'junior', 'mid', 'senior']
@@ -84,10 +88,12 @@ export const CONTRIBUTION_TYPE_LABELS: Record<ContributionType, string[]> = {
 }
 
 // 사용자가 선택한 기여 방식과 추정된 이슈 작업 성격이 같으면 가산한다.
-// 선택한 방식 일치 여부만 판단하며, 그 외는 0점이다.
+// UNKNOWN: 라벨·텍스트로 기여 방식을 감지할 수 없음 — 선택한 방식에 해당할 가능성이 있어 부분 점수를 부여한다.
+// NO_MATCH: 기여 방식이 감지됐지만 선택한 방식과 다름 — 점수 없음.
 export const CONTRIBUTION_TYPE_SCORE = {
-  MATCH: 20,
+  MATCH: 16,
   NO_MATCH: 0,
+  UNKNOWN: 5,
 } as const
 
 // 댓글 수와 PR 연결 여부로 진입 경쟁도를 추정한다.
@@ -189,6 +195,9 @@ export const PURPOSE_SCORE_RULES: Record<
     preferredDifficulties: ExperienceLevel[]
     preferredTypeBonus: number
     preferredDifficultyBonus: number
+    // 포트폴리오 목적에서 인지도 있는 저장소에 추가 가산 — 0이면 미적용
+    recognizedRepoStars: number
+    recognizedRepoBonus: number
   }
 > = {
   portfolio: {
@@ -198,6 +207,8 @@ export const PURPOSE_SCORE_RULES: Record<
     preferredDifficulties: ['beginner', 'junior'],
     preferredTypeBonus: 2,
     preferredDifficultyBonus: 2,
+    recognizedRepoStars: 300,
+    recognizedRepoBonus: 4,
   },
   growth: {
     openCompetitionBonus: 1,
@@ -206,6 +217,8 @@ export const PURPOSE_SCORE_RULES: Record<
     preferredDifficulties: ['junior', 'mid', 'senior'],
     preferredTypeBonus: 2,
     preferredDifficultyBonus: 2,
+    recognizedRepoStars: 0,
+    recognizedRepoBonus: 0,
   },
   community: {
     openCompetitionBonus: 2,
@@ -214,10 +227,12 @@ export const PURPOSE_SCORE_RULES: Record<
     preferredDifficulties: ['beginner', 'junior', 'mid'],
     preferredTypeBonus: 2,
     preferredDifficultyBonus: 2,
+    recognizedRepoStars: 0,
+    recognizedRepoBonus: 0,
   },
 }
 
-export const SCORE_FILTER_THRESHOLDS = [10, 20, 30, 40, 50, 60, 70, 80, 90] as const
+export const SCORE_FILTER_THRESHOLDS = [50, 60, 70, 80, 90] as const
 export type ScoreThreshold = typeof SCORE_FILTER_THRESHOLDS[number]
 
 export const STAR_FILTER_THRESHOLDS = [100, 300, 1000, 3000] as const

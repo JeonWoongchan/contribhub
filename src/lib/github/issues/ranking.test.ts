@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { rankIssues } from '@/lib/github/issues/ranking'
+import { RANK_SCORE_THRESHOLD } from '@/constants/scoring-rules'
 import type { RawIssue, ScoredIssue } from '@/types/issue'
 import type { OnboardingProfile } from '@/lib/user/profile'
 
@@ -101,6 +102,35 @@ describe('rankIssues — 기본 동작', () => {
 
         // 동일 seed → 동일 순서(페이지네이션 안정성)
         expect(first).toEqual(second)
+    })
+})
+
+describe('rankIssues — 최소 점수 필터', () => {
+    it('RANK_SCORE_THRESHOLD 미만인 이슈는 결과에서 제외된다', () => {
+        mockScore
+            .mockReturnValueOnce(makeScoredIssue({ number: 1, url: 'https://url/1', score: RANK_SCORE_THRESHOLD - 1 }))
+            .mockReturnValueOnce(makeScoredIssue({ number: 2, url: 'https://url/2', score: RANK_SCORE_THRESHOLD }))
+
+        const result = rankIssues([makeRawIssue({ number: 1 }), makeRawIssue({ number: 2 })], profile, 'seed')
+
+        expect(result).toHaveLength(1)
+        expect(result[0].number).toBe(2)
+    })
+
+    it('RANK_SCORE_THRESHOLD와 정확히 같은 점수는 통과한다', () => {
+        mockScore.mockReturnValue(makeScoredIssue({ score: RANK_SCORE_THRESHOLD }))
+
+        const result = rankIssues([makeRawIssue()], profile, 'seed')
+
+        expect(result).toHaveLength(1)
+    })
+
+    it('모든 이슈가 임계값 미만이면 빈 배열을 반환한다', () => {
+        mockScore.mockReturnValue(makeScoredIssue({ score: RANK_SCORE_THRESHOLD - 1 }))
+
+        const result = rankIssues([makeRawIssue(), makeRawIssue({ number: 2 })], profile, 'seed')
+
+        expect(result).toHaveLength(0)
     })
 })
 
