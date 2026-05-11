@@ -119,6 +119,15 @@ describe('fetchCandidateIssues', () => {
     expect('Go' in result.endCursors).toBe(false)
   })
 
+  it('GitHub 검색 쿼리에 sort:updated-desc가 포함된다', async () => {
+    mockGraphQL.mockResolvedValue(makeSearchPage([]))
+
+    await fetchCandidateIssues(['TypeScript'], 'token')
+
+    const [, variables] = mockGraphQL.mock.calls[0] as unknown as [string, { query: string }]
+    expect(variables.query).toContain('sort:updated-desc')
+  })
+
   it('stargazerCount가 MIN_CANDIDATE_REPO_STARS 미만인 이슈는 응답에서 제거된다', async () => {
     // GitHub 검색 인덱스와 실제 API 응답 간 시차로 stars 조건 미달 레포가 섞여 올 수 있음
     mockGraphQL.mockResolvedValueOnce({

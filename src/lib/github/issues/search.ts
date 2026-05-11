@@ -66,10 +66,10 @@ export type IssueSearchResult = {
     unauthorized: boolean
 }
 
-// 언어별 GitHub 이슈 검색 쿼리 문자열 생성 — star 수 미달 저장소는 GitHub 단계에서 제외
+// 언어별 GitHub 이슈 검색 쿼리 문자열 생성(최근 업데이트순 정렬)
 function buildIssueQueries(languages: string[]): string[] {
     return languages.map(
-        (lang) => `is:open is:issue label:"help wanted" language:${lang} stars:>=${MIN_CANDIDATE_REPO_STARS}`
+        (lang) => `is:open is:issue label:"help wanted" language:${lang} sort:updated-desc`
     )
 }
 
