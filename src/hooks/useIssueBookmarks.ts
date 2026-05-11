@@ -37,14 +37,10 @@ export function useIssueBookmarks({
   // 추천 이슈 목록을 복사하고 북마크 여부를 추가 관리해서 사용
   const [optimisticIssues, setOptimisticIssues] = useState<IssueCardItem[]>([])
 
-  // 북마크 저장 및 삭제 요청 진행 중인 카드 키 목록 상태 선언부.
-  const [pendingBookmarkKeys, setPendingBookmarkKeys] = useState<string[]>([])
-
-  // pendingBookmarkKeys의 최신값을 effect 재실행 없이 참조하기 위한 ref 선언부.
+  // 진행 중인 북마크 요청 키 목록 — ref로만 관리해 불필요한 리렌더 방지.
   // useEffect 의존성에서 제외함으로써 pending 해제 시점에 stale한 sourceIssues로
   // 낙관적 상태가 덮어씌워지는 타이밍 레이스를 방지한다.
-  const pendingBookmarkKeysRef = useRef(pendingBookmarkKeys)
-  pendingBookmarkKeysRef.current = pendingBookmarkKeys
+  const pendingBookmarkKeysRef = useRef<string[]>([])
 
   useEffect(() => {
     if (!isSourceIssuesReady) {
@@ -89,10 +85,9 @@ export function useIssueBookmarks({
     const bookmarkKey = getBookmarkKey(issue)
     const wasBookmarked = issue.isBookmarked ?? false
 
-    // 중복 클릭 방지를 위한 요청 중 상태 등록부.
-    setPendingBookmarkKeys((current) =>
-      current.includes(bookmarkKey) ? current : [...current, bookmarkKey]
-    )
+    // 중복 클릭 방지 — 이미 진행 중인 요청은 무시
+    if (pendingBookmarkKeysRef.current.includes(bookmarkKey)) return
+    pendingBookmarkKeysRef.current = [...pendingBookmarkKeysRef.current, bookmarkKey]
 
     // 응답 대기 전 UI를 즉시 반영하기 위한 낙관적 업데이트 처리부.
     // removeOnUnbookmark 모드에서 북마크 해제 시 목록에서 즉시 제거하고,
@@ -173,8 +168,7 @@ export function useIssueBookmarks({
       // 네트워크 예외 발생 시 낙관적 업데이트 롤백 실행부.
       undoOptimisticUpdate()
     } finally {
-      // 요청 완료 후 pending 상태 해제 처리부.
-      setPendingBookmarkKeys((current) => current.filter((key) => key !== bookmarkKey))
+      pendingBookmarkKeysRef.current = pendingBookmarkKeysRef.current.filter((key) => key !== bookmarkKey)
     }
   }
 

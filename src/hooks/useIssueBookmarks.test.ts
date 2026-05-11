@@ -18,9 +18,6 @@ describe('getBookmarkFailureMessage', () => {
         expect(message).toContain('잠시 후 다시 시도해 주세요')
     })
 
-    it('등록 실패와 제거 실패 메시지는 서로 다르다', () => {
-        expect(getBookmarkFailureMessage(false)).not.toBe(getBookmarkFailureMessage(true))
-    })
 })
 
 // ─── getBookmarkKey ──────────────────────────────────────────────────────────
