@@ -1,4 +1,5 @@
 import { githubGraphQL, GitHubRateLimitError, GitHubUnauthorizedError } from '@/lib/github/client'
+import { MIN_CANDIDATE_REPO_STARS } from '@/constants/scoring-rules'
 import type { RawIssue } from '@/types/issue'
 
 const SEARCH_ISSUES_QUERY = `
@@ -65,9 +66,11 @@ export type IssueSearchResult = {
     unauthorized: boolean
 }
 
-// 언어별 GitHub 이슈 검색 쿼리 문자열 생성
+// 언어별 GitHub 이슈 검색 쿼리 문자열 생성(최근 업데이트순 정렬)
 function buildIssueQueries(languages: string[]): string[] {
-    return languages.map((lang) => `is:open is:issue label:"help wanted" language:${lang}`)
+    return languages.map(
+        (lang) => `is:open is:issue label:"help wanted" language:${lang} sort:updated-desc`
+    )
 }
 
 // URL 기준 중복 이슈 제거
@@ -121,11 +124,13 @@ export async function fetchCandidateIssues(
         if (pageInfo.hasNextPage) hasMoreOnGithub = true
     })
 
+    // GitHub 검색 인덱스와 실제 API 응답 간 시차로 인해 stars 조건을 통과한 것처럼
+    // 보이지만 stargazerCount가 기준 미달인 레포가 포함될 수 있어 응답 단에서 한 번 더 필터링
     const issues = dedupeIssues(
         settled
             .filter((result): result is PromiseFulfilledResult<SearchResult> => result.status === 'fulfilled')
             .flatMap((result) => result.value.search.nodes ?? [])
-    )
+    ).filter((issue) => issue.repository.stargazerCount >= MIN_CANDIDATE_REPO_STARS)
 
     const failedResults = settled.filter(
         (result): result is PromiseRejectedResult => result.status === 'rejected'

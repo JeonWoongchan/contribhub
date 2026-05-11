@@ -2,12 +2,11 @@ import { unstable_cache } from 'next/cache'
 
 import { listUserBookmarkKeys } from '@/lib/bookmarks'
 import { encodeBatch, decodeBatch, INITIAL_BATCH } from '@/lib/github/batch'
-import { GITHUB_API_CACHE_TTL_SECONDS, PAGE_SIZE } from '@/constants/scoring-rules'
+import { GITHUB_API_CACHE_TTL_SECONDS, MIN_CANDIDATE_REPO_STARS, PAGE_SIZE } from '@/constants/scoring-rules'
 import type { IssueFilters } from '@/types/issue'
 import type { IssueListPage } from '@/types/api'
 import type { OnboardingProfile } from '@/lib/user/profile'
 import { applyFilters, hasActiveFilters } from './filters'
-import { getRepoHealthMap } from './health'
 import { rankIssues } from './ranking'
 import { fetchCandidateIssues } from './search'
 
@@ -38,9 +37,10 @@ export async function fetchIssueListPage({
         : (decodeBatch<Record<string, string | null>>(batchParam) ?? {})
 
     // 배치별로 캐시 분리 — 같은 언어 조합이라도 batch가 다르면 별도 GitHub 호출
+    // MIN_CANDIDATE_REPO_STARS를 키에 포함 — 값이 바뀌면 기존 캐시를 무효화
     const getCachedIssues = unstable_cache(
         () => fetchCandidateIssues(profile.topLanguages, accessToken, afterCursors),
-        ['github-issues', ...profile.topLanguages.slice().sort(), batchParam],
+        ['github-issues', String(MIN_CANDIDATE_REPO_STARS), ...profile.topLanguages.slice().sort(), batchParam],
         { revalidate: GITHUB_API_CACHE_TTL_SECONDS }
     )
 
@@ -60,21 +60,17 @@ export async function fetchIssueListPage({
         return { error: 'all_failed' }
     }
 
-    // 이슈에 포함된 레포 health 점수 조회 — 채점 시 저활성 레포 필터링 기준으로 사용
-    const repoNames = [...new Set(searchResult.issues.map((issue) => issue.repository.nameWithOwner))]
-    const healthMap = await getRepoHealthMap(repoNames, accessToken)
-
     // 이슈 채점·정렬 후 북마크 여부 병합
     const bookmarkKeys = new Set(bookmarkKeyList)
     const randomSeed = `${userId}:${batchParam}`
-    const rankedIssues = rankIssues(searchResult.issues, profile, healthMap, randomSeed).map((issue) => ({
+    const rankedIssues = rankIssues(searchResult.issues, profile, randomSeed).map((issue) => ({
         ...issue,
         isBookmarked: bookmarkKeys.has(`${issue.repoFullName}#${issue.number}`),
     }))
 
     // 필터 적용 전 언어 목록 수집 — 필터 적용 여부와 무관하게 사용 가능한 언어 전달
     const availableLanguages = [...new Set(
-        rankedIssues.map((i) => i.language).filter((l): l is string => l !== null)
+        rankedIssues.flatMap((i) => i.language !== null ? [i.language] : [])
     )]
 
     const allIssues = applyFilters(rankedIssues, filters)

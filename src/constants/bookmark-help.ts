@@ -36,5 +36,4 @@ export const BOOKMARK_HELP_DEMO_ISSUE: Omit<IssueCardItem, 'createdAt' | 'update
   competitionLevel: null,
   hasPR: false,
   isBookmarked: true,
-  healthScore: null,
 }

@@ -32,15 +32,4 @@ CREATE TABLE bookmarks (
   UNIQUE(user_id, repo_full_name, issue_number)
 );
 
-CREATE TABLE repo_health_cache (
-  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  repo_full_name        TEXT NOT NULL UNIQUE,
-  health_score          INT NOT NULL,
-  avg_pr_response_days  FLOAT,
-  merge_rate            FLOAT,
-  last_commit_at        TIMESTAMPTZ,
-  cached_at             TIMESTAMPTZ DEFAULT NOW()
-);
-
 CREATE INDEX idx_bookmarks_user_id ON bookmarks(user_id);
-CREATE INDEX idx_repo_health_cache_cached_at ON repo_health_cache(cached_at);

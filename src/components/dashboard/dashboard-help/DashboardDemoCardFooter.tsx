@@ -1,6 +1,5 @@
 import { HelpHotspot } from '@/components/help/HelpHotspot'
 import { IssueMetricsRow } from '@/components/shared/issue-card/IssueMetricsRow'
-import { RepoHealthBadge } from '@/components/shared/issue-card/RepoHealthBadge'
 import { IssueTagList } from '@/components/shared/issue-card/IssueTagList'
 import { Badge } from '@/components/ui/badge'
 import { DASHBOARD_HELP_DEMO_ISSUE } from '@/constants/dashboard-help'
@@ -52,16 +51,6 @@ export function DashboardDemoCardFooter({
       </HelpHotspot>
 
       <div className="flex flex-wrap items-center gap-2">
-        <HelpHotspot
-          guideId="health"
-          activeGuideId={activeGuideId}
-          onActivateGuide={onActivateGuide}
-          onClearGuide={onClearGuide}
-          className="rounded-xl"
-        >
-          <RepoHealthBadge score={DASHBOARD_HELP_DEMO_ISSUE.healthScore} />
-        </HelpHotspot>
-
         <HelpHotspot
           guideId="competition"
           activeGuideId={activeGuideId}

@@ -5,18 +5,21 @@ import type { ContributionType, ExperienceLevel, Purpose, WeeklyHours } from '@/
 // GitHub Search API로 후보 이슈를 가져온 뒤, 아래 규칙으로 사용자 온보딩 답변과 이슈 메타데이터를 비교한다.
 // 최종 score는 카드 우측 상단의 매칭 점수로 노출되며, 높은 점수일수록 사용자 설정에 더 잘 맞는 이슈로 본다.
 export const PAGE_SIZE = 10
-export const REPO_HEALTH_CACHE_TTL_HOURS = 1
 export const MATCH_SCORE_MINIMUM = 0
+// 추천 목록에 노출할 최소 점수 — 미달 이슈는 랭킹 단계에서 제거
+export const RANK_SCORE_THRESHOLD = 50
 // GitHub API 권장 캐시 TTL (Cache-Control: max-age=60 기준)
 export const GITHUB_API_CACHE_TTL_SECONDS = 60
 // GitHub API 응답 대기 상한 — 초과 시 AbortError로 함수 조기 종료
 export const GITHUB_API_TIMEOUT_MS = 8_000
+// GitHub 검색 쿼리의 최소 star 수 — 완전히 방치된 저장소를 후보에서 제외
+export const MIN_CANDIDATE_REPO_STARS = 50
 
 // 온보딩의 선호 언어와 GitHub 저장소 primaryLanguage를 비교한다.
 // 선택한 언어이면 순위 무관하게 동일 점수를 주고, 같은 계열 언어는 부분 점수를 준다.
 export const LANGUAGE_SCORE = {
-  EXACT: 20,
-  RELATED: 11,
+  EXACT: 30,
+  RELATED: 15,
   NO_MATCH: 0,
 } as const
 
@@ -30,14 +33,16 @@ export const LANGUAGE_GROUPS: string[][] = [
 
 // 온보딩의 오픈소스 기여 경험과 이슈 난이도 추정값을 비교한다.
 // 사용자 수준과 같은 난이도가 가장 좋고, 한 단계 높은 이슈는 도전 가능한 이슈로 일부 가산한다.
+// UNKNOWN: 난이도 라벨 없음 — 모든 수준에 해당할 가능성이 있어 중간 점수를 부여한다.
 export const DIFFICULTY_SCORE = {
-  PERFECT: 15,
-  ONE_ABOVE: 8,
-  TWO_ABOVE: 4,
+  PERFECT: 25,
+  ONE_ABOVE: 12,
+  TWO_ABOVE: 6,
   THREE_ABOVE: 0,
-  ONE_BELOW: 6,
-  TWO_BELOW: 3,
+  ONE_BELOW: 8,
+  TWO_BELOW: 4,
   THREE_BELOW: 0,
+  UNKNOWN: 12,
 } as const
 
 export const EXPERIENCE_ORDER: ExperienceLevel[] = ['beginner', 'junior', 'mid', 'senior']
@@ -83,39 +88,26 @@ export const CONTRIBUTION_TYPE_LABELS: Record<ContributionType, string[]> = {
 }
 
 // 사용자가 선택한 기여 방식과 추정된 이슈 작업 성격이 같으면 가산한다.
-// 선택한 방식 일치 여부만 판단하며, 그 외는 0점이다.
+// UNKNOWN: 라벨·텍스트로 기여 방식을 감지할 수 없음 — 선택한 방식에 해당할 가능성이 있어 부분 점수를 부여한다.
+// NO_MATCH: 기여 방식이 감지됐지만 선택한 방식과 다름 — 점수 없음.
 export const CONTRIBUTION_TYPE_SCORE = {
-  MATCH: 15,
+  MATCH: 16,
   NO_MATCH: 0,
+  UNKNOWN: 5,
 } as const
 
 // 댓글 수와 PR 연결 여부로 진입 경쟁도를 추정한다.
 // 이미 PR이 있거나 토론이 많은 이슈는 초보자가 들어가기 어려울 수 있어 기본 감점한다.
 export const COMPETITION_PENALTY = {
   PR_EXISTS: -10,
-  NO_COMMENT: 6,
-  ONE_COMMENT: 4,
+  NO_COMMENT: 4,
+  ONE_COMMENT: 3,
   MEDIUM_ACTIVITY: -2,
   HIGH_ACTIVITY: -6,
   VERY_HIGH_ACTIVITY: -10,
 } as const
 
-// 저장소 활성도는 추천 안정성에 영향을 준다.
-// 관리가 잘 되는 저장소일수록 답변을 받을 가능성이 높다고 보고 가산한다.
-export const HEALTH_BONUS = {
-  EXCELLENT: 8,
-  HIGH: 6,
-  MID: 4,
-  LOW: 2,
-} as const
-
-export const HEALTH_SCORE_TIERS = {
-  EXCELLENT: 85,
-  HIGH: 70,
-  MID: 55,
-  LOW: 40,
-} as const
-
+// 전역 저장소 인지도 점수 — star 수가 많을수록 커뮤니티 활성도가 높다고 보고 가산 (최대 4점)
 export const REPO_STAR_SCORE_TIERS = [
   { stars: 3000, score: 4 },
   { stars: 1000, score: 3 },
@@ -130,23 +122,23 @@ export const EXPERIENCE_COMPETITION_BONUS: Record<
   Record<CompetitionLevel, number>
 > = {
   beginner: {
-    OPEN: 6,
+    OPEN: 4,
     ACTIVE: -2,
     HAS_PR: -8,
   },
   junior: {
-    OPEN: 6,
-    ACTIVE: 4,
+    OPEN: 4,
+    ACTIVE: 3,
     HAS_PR: -5,
   },
   mid: {
-    OPEN: 4,
-    ACTIVE: 10,
+    OPEN: 3,
+    ACTIVE: 8,
     HAS_PR: -2,
   },
   senior: {
-    OPEN: 4,
-    ACTIVE: 10,
+    OPEN: 3,
+    ACTIVE: 8,
     HAS_PR: 0,
   },
 }
@@ -168,25 +160,25 @@ export const TIME_BUDGET_RULES: Record<
     preferredTypes: ['doc', 'bug'],
     preferredDifficulties: ['beginner', 'junior'],
     preferredMaxComments: 2,
-    typeMatchBonus: 5,
-    difficultyMatchBonus: 5,
-    lowCommentBonus: 4,
+    typeMatchBonus: 3,
+    difficultyMatchBonus: 2,
+    lowCommentBonus: 2,
   },
   5: {
     preferredTypes: ['doc', 'bug', 'test'],
     preferredDifficulties: ['beginner', 'junior', 'mid'],
     preferredMaxComments: 5,
-    typeMatchBonus: 5,
-    difficultyMatchBonus: 5,
-    lowCommentBonus: 4,
+    typeMatchBonus: 3,
+    difficultyMatchBonus: 2,
+    lowCommentBonus: 2,
   },
   10: {
     preferredTypes: ['doc', 'bug', 'test', 'feat', 'review'],
     preferredDifficulties: ['beginner', 'junior', 'mid', 'senior'],
     preferredMaxComments: 8,
-    typeMatchBonus: 4,
-    difficultyMatchBonus: 4,
-    lowCommentBonus: 3,
+    typeMatchBonus: 3,
+    difficultyMatchBonus: 2,
+    lowCommentBonus: 1,
   },
 }
 
@@ -197,100 +189,51 @@ export const TIME_BUDGET_RULES: Record<
 export const PURPOSE_SCORE_RULES: Record<
   Purpose,
   {
-    highHealthBonus: number
-    mediumHealthBonus: number
     openCompetitionBonus: number
     activeCompetitionBonus: number
-    recognizedRepoStars: number
-    recognizedRepoBonus: number
     preferredTypes: ContributionType[]
     preferredDifficulties: ExperienceLevel[]
     preferredTypeBonus: number
     preferredDifficultyBonus: number
+    // 포트폴리오 목적에서 인지도 있는 저장소에 추가 가산 — 0이면 미적용
+    recognizedRepoStars: number
+    recognizedRepoBonus: number
   }
 > = {
   portfolio: {
-    highHealthBonus: 3,
-    mediumHealthBonus: 2,
-    openCompetitionBonus: 3,
+    openCompetitionBonus: 2,
     activeCompetitionBonus: 1,
-    recognizedRepoStars: 300,
-    recognizedRepoBonus: 2,
     preferredTypes: ['doc', 'bug', 'feat'],
     preferredDifficulties: ['beginner', 'junior'],
-    preferredTypeBonus: 4,
+    preferredTypeBonus: 2,
     preferredDifficultyBonus: 2,
+    recognizedRepoStars: 300,
+    recognizedRepoBonus: 4,
   },
   growth: {
-    highHealthBonus: 3,
-    mediumHealthBonus: 2,
     openCompetitionBonus: 1,
-    activeCompetitionBonus: 3,
-    recognizedRepoStars: 0,
-    recognizedRepoBonus: 0,
+    activeCompetitionBonus: 2,
     preferredTypes: ['feat', 'test', 'bug'],
     preferredDifficulties: ['junior', 'mid', 'senior'],
-    preferredTypeBonus: 5,
-    preferredDifficultyBonus: 5,
-  },
-  community: {
-    highHealthBonus: 4,
-    mediumHealthBonus: 2,
-    openCompetitionBonus: 3,
-    activeCompetitionBonus: 2,
+    preferredTypeBonus: 2,
+    preferredDifficultyBonus: 2,
     recognizedRepoStars: 0,
     recognizedRepoBonus: 0,
+  },
+  community: {
+    openCompetitionBonus: 2,
+    activeCompetitionBonus: 1,
     preferredTypes: ['doc', 'bug', 'test'],
     preferredDifficulties: ['beginner', 'junior', 'mid'],
-    preferredTypeBonus: 5,
-    preferredDifficultyBonus: 4,
+    preferredTypeBonus: 2,
+    preferredDifficultyBonus: 2,
+    recognizedRepoStars: 0,
+    recognizedRepoBonus: 0,
   },
 }
 
-// 저장소 활성도 계산 규칙이다.
-// 최근 커밋, PR 응답 속도, merge rate, maintainer response를 합산해 repo health score를 만든다.
-export const REPO_HEALTH_WEIGHTS = {
-  RECENT_COMMIT: {
-    weight: 30,
-    rules: [
-      { days: 30, score: 30 },
-      { days: 90, score: 20 },
-      { days: 180, score: 10 },
-      { days: Infinity, score: 0 },
-    ],
-  },
-  PR_RESPONSE_SPEED: {
-    weight: 30,
-    rules: [
-      { days: 3, score: 30 },
-      { days: 7, score: 20 },
-      { days: 14, score: 10 },
-      { days: Infinity, score: 0 },
-    ],
-  },
-  MERGE_RATE: {
-    weight: 25,
-    rules: [
-      { rate: 0.8, score: 25 },
-      { rate: 0.6, score: 15 },
-      { rate: 0.4, score: 5 },
-      { rate: 0, score: 0 },
-    ],
-  },
-  MAINTAINER_RESPONSE: {
-    weight: 15,
-    rules: [
-      { ratio: 0.7, score: 15 },
-      { ratio: 0.4, score: 8 },
-      { ratio: 0, score: 4 },
-    ],
-  },
-} as const
-
-export const HEALTH_THRESHOLD = 50
-
-export const SCORE_FILTER_THRESHOLDS = [10, 20, 30, 40, 50, 60, 70, 80, 90] as const
+export const SCORE_FILTER_THRESHOLDS = [50, 60, 70, 80, 90] as const
 export type ScoreThreshold = typeof SCORE_FILTER_THRESHOLDS[number]
 
-export const STAR_FILTER_THRESHOLDS = [100, 500, 1000, 5000] as const
+export const STAR_FILTER_THRESHOLDS = [100, 300, 1000, 3000] as const
 export type StarThreshold = typeof STAR_FILTER_THRESHOLDS[number]

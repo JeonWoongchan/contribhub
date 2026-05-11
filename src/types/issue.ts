@@ -8,6 +8,7 @@ export type IssueFilters = {
   language: string | null
   difficultyLevel: DifficultyLevel | null
   contributionTypes: ContributionType[]
+  competitionLevels: CompetitionLevel[]
   minScore: ScoreThreshold | null
   minStars: StarThreshold | null
 }
@@ -16,6 +17,7 @@ export const EMPTY_ISSUE_FILTERS: IssueFilters = {
   language: null,
   difficultyLevel: null,
   contributionTypes: [],
+  competitionLevels: [],
   minScore: null,
   minStars: null,
 }
@@ -62,7 +64,6 @@ export interface ScoredIssue {
   competitionLevel: CompetitionLevel
   hasPR: boolean
   isBookmarked?: boolean
-  healthScore: number | null
 }
 
 export interface IssueCardItem {
@@ -83,5 +84,4 @@ export interface IssueCardItem {
   competitionLevel: CompetitionLevel | null
   hasPR: boolean
   isBookmarked?: boolean
-  healthScore: number | null
 }

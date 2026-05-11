@@ -245,6 +245,41 @@ describe('scoreIssue', () => {
         })
     })
 
+    // ── UNKNOWN 부분 점수 검증 ─────────────────────────────────────────────
+    // 라벨이 없어 감지 불가인 경우 0이 아닌 부분 점수가 나와야 한다.
+    describe('UNKNOWN 부분 점수', () => {
+        it('난이도 라벨이 없는 이슈는 0보다 높은 난이도 점수를 받는다', () => {
+            const noLabelIssue = makeRawIssue({ labels: { nodes: [] } })
+            const labeledIssue = makeRawIssue({ labels: { nodes: [{ name: 'hard' }] } })
+            const profile = makeProfile({ experienceLevel: 'beginner' })
+
+            // 라벨 없음이 최악의 불일치(THREE_ABOVE)보다 높아야 한다
+            expect(scoreIssue(noLabelIssue, profile).score).toBeGreaterThan(
+                scoreIssue(labeledIssue, profile).score
+            )
+        })
+
+        it('기여 방식을 감지할 수 없는 이슈가 불일치 이슈보다 높은 점수를 받는다', () => {
+            // 라벨·키워드 없음 → UNKNOWN(부분 점수) vs 감지됐지만 불일치 → NO_MATCH(0점)
+            const unknownTypeIssue = makeRawIssue({ labels: { nodes: [] } })
+            const mismatchIssue = makeRawIssue({
+                labels: { nodes: [{ name: 'documentation' }] }, // doc 타입 → bug 선택 프로필과 불일치
+            })
+            const bugProfile = makeProfile({ contributionTypes: ['bug'] })
+
+            expect(scoreIssue(unknownTypeIssue, bugProfile).score).toBeGreaterThan(
+                scoreIssue(mismatchIssue, bugProfile).score
+            )
+        })
+
+        it('난이도·기여방식 라벨이 모두 없어도 점수가 MATCH_SCORE_MINIMUM보다 의미 있게 높다', () => {
+            const noLabelIssue = makeRawIssue({ labels: { nodes: [] } })
+            const result = scoreIssue(noLabelIssue, makeProfile())
+            // UNKNOWN 부분 점수 2개(12+10=22)가 합산되어 기본 언어 점수와 함께 충분한 점수 확보
+            expect(result.score).toBeGreaterThan(MATCH_SCORE_MINIMUM + 20)
+        })
+    })
+
     // ── 채점 방향 검증 ──────────────────────────────────────────────────────
     // 두 이슈를 동일한 프로필로 채점했을 때 점수 순서가 기획 의도와 맞는지 확인한다.
     describe('채점 방향', () => {

@@ -5,7 +5,6 @@ import { getCompetitionMeta } from '@/lib/github/issues/badge-meta'
 import { cn } from '@/lib/utils'
 import { IssueMetricsRow } from './IssueMetricsRow'
 import { IssueTagList } from './IssueTagList'
-import { RepoHealthBadge } from './RepoHealthBadge'
 import type { IssueCardItem } from '@/types/issue'
 
 type IssueItemFooterProps = {
@@ -28,7 +27,6 @@ export function IssueItemFooter({ issue }: IssueItemFooterProps) {
       </CardMetricsRow>
 
       <CardMetricsRow className="gap-2">
-        <RepoHealthBadge score={issue.healthScore} />
         {competition ? (
           <Badge variant="outline" className={cn('rounded-md', competition.className)}>
             {competition.label}

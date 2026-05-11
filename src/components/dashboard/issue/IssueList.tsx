@@ -1,16 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { SearchBarRow } from '@/components/shared/SearchBarRow'
 import { SearchDataListState } from '@/components/shared/SearchDataListState'
 import { InfiniteScrollTrigger } from '@/components/shared/InfiniteScrollTrigger'
 import { DashboardHelpDialog } from '@/components/dashboard/dashboard-help/DashboardHelpDialog'
-import { useIssueBookmarks } from '@/hooks/useIssueBookmarks'
-import { useIssueCandidateLoadMoreFeedback } from '@/hooks/useIssueCandidateLoadMoreFeedback'
-import { useIssueList } from '@/hooks/useIssueList'
-import { useSearchFilter } from '@/hooks/useSearchFilter'
-import { useInfiniteScrollDisplay } from '@/hooks/useScrollSentinel'
+import { useIssueListView } from '@/hooks/useIssueListView'
 import { EMPTY_ISSUE_FILTERS } from '@/types/issue'
 import type { IssueFilters } from '@/types/issue'
 import { IssueCandidateLoadMoreNotice } from './IssueCandidateLoadMoreNotice'
@@ -19,60 +15,29 @@ import { IssueListFilter } from './IssueListFilter'
 
 export function IssueList() {
     const [filters, setFilters] = useState<IssueFilters>(EMPTY_ISSUE_FILTERS)
+    const [query, setQuery] = useState('')
 
     const {
-        issues,
-        hasNextPage,
-        fetchNextPageAction,
-        fetchMoreCandidatesAction,
-        isFetchingNextPage,
-        canLoadMoreCandidates,
+        filterAvailableLanguages,
+        filteredItems,
+        totalCount,
         isPending,
         isError,
         errorMessage,
         refetch,
+        displayItems,
         partial,
         failedCount,
-        availableLanguages,
-    } = useIssueList(filters)
-
-    const [lastAvailableLanguages, setLastAvailableLanguages] = useState<string[]>([])
-
-    useEffect(() => {
-        if (!isPending && !isError) {
-            setLastAvailableLanguages(availableLanguages)
-        }
-    }, [availableLanguages, isError, isPending])
-
-    const filterAvailableLanguages =
-        isPending && lastAvailableLanguages.length > 0 ? lastAvailableLanguages : availableLanguages
-
-    const { optimisticIssues, pendingBookmarkKeys, toggleBookmark } = useIssueBookmarks({
-        sourceIssues: issues,
-        isSourceIssuesReady: !isPending && !isError,
-    })
-
-    const [query, setQuery] = useState('')
-    const filteredItems = useSearchFilter(optimisticIssues, query)
-    const { displayItems, effectiveHasNextPage, sentinelRef } = useInfiniteScrollDisplay({
-        items: filteredItems,
-        hasNextPage,
-        fetchNextPageAction,
+        toggleBookmark,
+        pendingBookmarkKeys,
+        effectiveHasNextPage,
         isFetchingNextPage,
-        isSearchActive: !!query,
-    })
-
-    const {
-        emptyCandidateFetchCount,
+        sentinelRef,
         shouldShowCandidateLoadMoreNotice,
-        loadMoreCandidatesAction,
-    } = useIssueCandidateLoadMoreFeedback({
-        filters,
-        issueCount: issues.length,
-        isFetchingNextPage,
+        emptyCandidateFetchCount,
         canLoadMoreCandidates,
-        fetchMoreCandidatesAction,
-    })
+        loadMoreCandidatesAction,
+    } = useIssueListView(filters, query)
 
     return (
         <div className="flex flex-col gap-4">
@@ -80,7 +45,7 @@ export function IssueList() {
                 value={query}
                 onChangeAction={setQuery}
                 resultCount={query ? filteredItems.length : undefined}
-                totalCount={query ? optimisticIssues.length : undefined}
+                totalCount={query ? totalCount : undefined}
                 helpSlot={<DashboardHelpDialog />}
             />
 

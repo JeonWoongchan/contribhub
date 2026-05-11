@@ -21,12 +21,6 @@ export const DASHBOARD_HELP_GUIDE_ITEMS = [
       '저장소의 스타 수와 댓글 수를 함께 보여줘요. 진입 전에 프로젝트의 관심도와 논의 흐름을 가늠하는 데 도움이 돼요.',
   },
   {
-    id: 'health',
-    title: '저장소 상태',
-    description:
-      '저장소가 꾸준히 관리되고 있는지 참고할 수 있게 상태 배지로 보여줘요.',
-  },
-  {
     id: 'competition',
     title: '경쟁도',
     description:
@@ -53,5 +47,4 @@ export const DASHBOARD_HELP_DEMO_ISSUE: Omit<ScoredIssue, 'createdAt' | 'updated
   contributionType: 'doc',
   competitionLevel: 'ACTIVE',
   hasPR: false,
-  healthScore: 78,
 }

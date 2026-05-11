@@ -1,27 +1,28 @@
 # Scoring Rules
 
-이 문서는 현재 `src/constants/scoring-rules.ts`와 `src/lib/github/issues/scorer.ts`, `ranking.ts`, `repo-health/calculate.ts` 기준의 추천 규칙을 설명한다.
+이 문서는 현재 `src/constants/scoring-rules.ts`와 `src/lib/github/issues/scorer.ts`, `ranking.ts` 기준의 추천 규칙을 설명한다.
 
 ## 기본 설정
 
 | 항목 | 값 | 설명 |
 | --- | --- | --- |
 | `PAGE_SIZE` | `10` | API page 크기 |
+| `MATCH_SCORE_MINIMUM` | `0` | 최종 점수 하한 — 패널티 합산으로 음수가 되어도 0으로 바닥 처리 |
 | `GITHUB_API_CACHE_TTL_SECONDS` | `60` | GitHub API server cache TTL |
 | `GITHUB_API_TIMEOUT_MS` | `8000` | GitHub API timeout |
-| `REPO_HEALTH_CACHE_TTL_HOURS` | `1` | repo health DB cache TTL |
-| `HEALTH_THRESHOLD` | `50` | ranking에서 낮은 health 저장소 필터 기준 |
-| `SCORE_FILTER_THRESHOLDS` | `10, 20, 30, 40, 50, 60, 70, 80, 90` | UI 최소 점수 필터 |
-| `STAR_FILTER_THRESHOLDS` | `100, 500, 1000, 5000` | UI 최소 스타 수 필터 |
+| `MIN_CANDIDATE_REPO_STARS` | `50` | 응답 단 post-filter 최소 star 수 |
+| `RANK_SCORE_THRESHOLD` | `50` | ranking에서 낮은 점수 이슈 제거 기준 |
+| `SCORE_FILTER_THRESHOLDS` | `50, 60, 70, 80, 90` | UI 최소 점수 필터 |
+| `STAR_FILTER_THRESHOLDS` | `100, 300, 1000, 3000` | UI 최소 스타 수 필터 |
 
 ## 추천 데이터 흐름
 
 1. 온보딩 프로필을 로드한다.
-2. GitHub issue search로 언어별 후보 이슈를 가져온다.
+2. GitHub issue search로 언어별 후보 이슈를 가져온다 (`sort:updated-desc` 정렬 포함).
 3. 중복 이슈를 URL 기준으로 제거한다.
-4. 저장소 health score를 조회한다.
+4. `stargazerCount < MIN_CANDIDATE_REPO_STARS`인 이슈를 응답 단에서 제거한다 (GitHub 검색 인덱스 시차 보정).
 5. `scoreIssue()`로 각 이슈를 점수화한다.
-6. `rankIssues()` 내부에서 health 임계값 미달 저장소를 필터링한다.
+6. `RANK_SCORE_THRESHOLD` 미만 이슈를 제거한다.
 7. score 우선, 동점이면 deterministic hash 기준으로 정렬한다.
 8. `applyFilters()`가 사용자 선택 API query filter(언어, 난이도, 기여 유형, 최소 점수, 최소 스타 수)를 적용하고 page를 잘라 반환한다.
 9. 활성 필터가 있고 반환 결과가 PAGE_SIZE에 미달하면 `canLoadMoreCandidates: true`를 설정해 자동 batch 교체를 중단한다.
@@ -30,7 +31,7 @@
 
 `IssueFilters.minStars`는 저장소의 `stargazerCount`를 기준으로 이슈를 걸러낸다.
 
-허용 값: `100 | 500 | 1000 | 5000`
+허용 값: `100 | 300 | 1000 | 3000`
 
 `hasActiveFilters()` (`src/lib/github/issues/filters.ts`)가 language, difficultyLevel, contributionTypes, minScore, minStars 중 하나라도 활성화되어 있는지 판단한다. 이 함수는 서비스 레이어에서 `canLoadMoreCandidates` 계산에도 사용한다.
 
@@ -41,8 +42,8 @@
 
 | Match | Score |
 | --- | --- |
-| exact (선택한 언어 일치) | `20` |
-| related (계열 언어 일치) | `11` |
+| exact (선택한 언어 일치) | `30` |
+| related (계열 언어 일치) | `15` |
 | no match | `0` |
 
 관련 언어 그룹:
@@ -73,7 +74,18 @@ beginner -> junior -> mid -> senior
 - `mid`: `medium`, `moderate`, `intermediate`, `difficulty:medium`, `e-medium`
 - `senior`: `hard`, `complex`, `advanced`, `difficulty:hard`, `difficulty:expert`, `e-hard`
 
-사용자 경험과 이슈 난이도가 가까울수록 높은 점수를 준다.
+사용자 경험과 이슈 난이도가 가까울수록 높은 점수를 준다. 난이도 라벨이 없으면 모든 수준에 해당할 가능성이 있어 UNKNOWN 부분 점수를 부여한다.
+
+| 조건 | Score |
+| --- | --- |
+| 내 수준과 일치 | `25` |
+| 한 단계 위 (도전) | `12` |
+| 두 단계 위 | `6` |
+| 세 단계 이상 위 | `0` |
+| 한 단계 아래 | `8` |
+| 두 단계 아래 | `4` |
+| 세 단계 이상 아래 | `0` |
+| 난이도 라벨 없음 (UNKNOWN) | `12` |
 
 ## 기여 유형 점수
 
@@ -83,14 +95,17 @@ beginner -> junior -> mid -> senior
 | --- | --- |
 | `doc` | documentation, docs, readme, translation, i18n |
 | `bug` | bug, fix, regression, defect, error |
-| `feat` | feature, enhancement, proposal |
+| `feat` | feature, enhancement, feature-request, proposal |
 | `test` | test, testing, coverage, qa |
 | `review` | review, feedback |
 
-점수 (선택한 방식 일치 여부만 판단):
+| 조건 | Score |
+| --- | --- |
+| 선택한 방식 일치 (MATCH) | `20` |
+| 감지 불가 — 라벨·키워드 없음 (UNKNOWN) | `5` |
+| 감지됐지만 불일치 (NO_MATCH) | `0` |
 
-- match (선택한 방식 일치): `15`
-- no match: `0`
+UNKNOWN은 기여 방식을 특정할 수 없어 선택한 방식에 해당할 가능성이 남아 있을 때 부여한다. NO_MATCH는 타입이 명확히 감지됐지만 선택한 방식과 다를 때 부여한다.
 
 ## 경쟁도 점수
 
@@ -109,8 +124,8 @@ Competition level 판단 기준:
 | 조건 | Score |
 | --- | --- |
 | PR 연결됨 | `-10` |
-| 댓글 0개 | `+6` |
-| 댓글 1개 | `+4` |
+| 댓글 0개 | `+4` |
+| 댓글 1개 | `+3` |
 | 댓글 2~4개 (보통 활동) | `-2` |
 | 댓글 5~9개 (높은 활동) | `-6` |
 | 댓글 10개 이상 (매우 높은 활동) | `-10` |
@@ -119,10 +134,10 @@ Competition level 판단 기준:
 
 | 경험 | OPEN | ACTIVE | HAS_PR |
 | --- | --- | --- | --- |
-| beginner | `+6` | `-2` | `-8` |
-| junior | `+6` | `+4` | `-5` |
-| mid | `+4` | `+10` | `-2` |
-| senior | `+4` | `+10` | `0` |
+| beginner | `+4` | `-2` | `-8` |
+| junior | `+4` | `+3` | `-5` |
+| mid | `+3` | `+8` | `-2` |
+| senior | `+3` | `+8` | `0` |
 
 PR이 연결된 이슈는 두 항목 모두에서 감점된다.
 
@@ -142,57 +157,60 @@ PR이 연결된 이슈는 두 항목 모두에서 감점된다.
 
 | Weekly hours | 최대 가산 |
 | --- | --- |
-| `2` | `+14` |
-| `5` | `+14` |
-| `10` | `+11` |
+| `2` | `+7` (typeBonus 3 + difficultyBonus 2 + lowCommentBonus 2) |
+| `5` | `+7` |
+| `10` | `+6` (typeBonus 3 + difficultyBonus 2 + lowCommentBonus 1) |
 
 ## 목적 점수
 
-온보딩 목적에 따라 다른 이슈를 선호한다.
+온보딩 목적에 따라 다른 이슈를 선호한다. 경쟁도·유형·난이도 일치 시 최대 6점을 가산한다.
 
 ### `portfolio`
 
 - 결과물을 설명하기 쉬운 이슈 선호
-- 인지도 있는 저장소에 bonus
-- 선호 유형: `doc`, `bug`, `feat`
+- 선호 유형: `doc`, `bug`, `feat` (+2)
+- 선호 난이도: `beginner`, `junior` (+2)
+- OPEN 경쟁도 가산: `+2`
+- ★300 이상 저장소 추가 가산: `+2` (`recognizedRepoBonus`)
 
 ### `growth`
 
 - 학습 효과가 큰 기능/테스트/버그 이슈 선호
 - 약간 도전적인 난이도 허용
-- 선호 유형: `feat`, `test`, `bug`
+- 선호 유형: `feat`, `test`, `bug` (+2)
+- 선호 난이도: `junior`, `mid`, `senior` (+2)
+- ACTIVE 경쟁도 가산: `+2`
 
 ### `community`
 
 - 유지보수가 활발하고 꾸준히 참여하기 좋은 저장소 선호
-- 선호 유형: `doc`, `bug`, `test`
+- 선호 유형: `doc`, `bug`, `test` (+2)
+- 선호 난이도: `beginner`, `junior`, `mid` (+2)
+- OPEN 경쟁도 가산: `+2`
 
-## Repo Health
+## 저장소 인지도 점수
 
-저장소 health score는 0~100 범위다.
+star 수 기반 전역 가산점. GitHub 검색 결과 데이터를 그대로 사용하며 추가 API 호출 없음.
 
-| 요소 | 최대 점수 |
+| star 수 | score |
 | --- | --- |
-| 최근 commit | `30` |
-| PR 응답 속도 | `30` |
-| PR merge rate | `25` |
-| maintainer response | `15` |
+| 3000 이상 | `4` |
+| 1000 이상 | `3` |
+| 300 이상 | `2` |
+| 100 이상 | `1` |
 
-계산 위치:
+## 이론적 최대 점수
 
-- `src/lib/github/repo-health/calculate.ts`
-
-캐시:
-
-- `repo_health_cache`
-- TTL: `REPO_HEALTH_CACHE_TTL_HOURS`
-
-추천 bonus:
-
-- excellent: `85+`
-- high: `70+`
-- mid: `55+`
-- low: `40+`
+| 차원 | 최대 점수 |
+| --- | --- |
+| 언어 일치 | `30` |
+| 난이도 적합 | `25` |
+| 기여 방식 일치 | `20` |
+| 경쟁도 (fit + penalty) | `8` |
+| 투입 시간 | `7` |
+| 기여 목적 | `6` |
+| 저장소 인지도 | `4` |
+| **합계** | **100** |
 
 ## 정렬 안정성
 
@@ -209,6 +227,7 @@ PR이 연결된 이슈는 두 항목 모두에서 감점된다.
 5. `src/components/dashboard/dashboard-help/DashboardScoringGuide.tsx` (사용자 노출 설명)
 6. 관련 테스트:
    - `scorer.test.ts`
+   - `ranking.test.ts`
    - `service.test.ts`
    - `filters.test.ts`
 7. 이 문서

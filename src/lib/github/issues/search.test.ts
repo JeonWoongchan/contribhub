@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { fetchCandidateIssues } from '@/lib/github/issues/search'
 import { GitHubRateLimitError, GitHubUnauthorizedError } from '@/lib/github/client'
+import { MIN_CANDIDATE_REPO_STARS } from '@/constants/scoring-rules'
 
 vi.mock('@/lib/github/client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/github/client')>()
@@ -20,9 +21,13 @@ function makeSearchPage(
   return {
     search: {
       pageInfo: { hasNextPage, endCursor },
-      nodes: urls.map((url) => ({ url } as never)),
+      nodes: urls.map((url) => ({ url, repository: { stargazerCount: MIN_CANDIDATE_REPO_STARS } } as never)),
     },
   }
+}
+
+function makeIssueNode(url: string, stargazerCount: number) {
+  return { url, repository: { stargazerCount } } as never
 }
 
 describe('fetchCandidateIssues', () => {
@@ -112,6 +117,35 @@ describe('fetchCandidateIssues', () => {
 
     expect(result.endCursors['TypeScript']).toBe('ts-cursor')
     expect('Go' in result.endCursors).toBe(false)
+  })
+
+  it('GitHub 검색 쿼리에 sort:updated-desc가 포함된다', async () => {
+    mockGraphQL.mockResolvedValue(makeSearchPage([]))
+
+    await fetchCandidateIssues(['TypeScript'], 'token')
+
+    const [, variables] = mockGraphQL.mock.calls[0] as unknown as [string, { query: string }]
+    expect(variables.query).toContain('sort:updated-desc')
+  })
+
+  it('stargazerCount가 MIN_CANDIDATE_REPO_STARS 미만인 이슈는 응답에서 제거된다', async () => {
+    // GitHub 검색 인덱스와 실제 API 응답 간 시차로 stars 조건 미달 레포가 섞여 올 수 있음
+    mockGraphQL.mockResolvedValueOnce({
+      search: {
+        pageInfo: { hasNextPage: false, endCursor: null },
+        nodes: [
+          makeIssueNode('https://github.com/a/b/issues/1', 0),
+          makeIssueNode('https://github.com/c/d/issues/2', MIN_CANDIDATE_REPO_STARS - 1),
+          makeIssueNode('https://github.com/e/f/issues/3', MIN_CANDIDATE_REPO_STARS),
+          makeIssueNode('https://github.com/g/h/issues/4', MIN_CANDIDATE_REPO_STARS + 100),
+        ],
+      },
+    })
+
+    const result = await fetchCandidateIssues(['TypeScript'], 'token')
+
+    expect(result.issues).toHaveLength(2)
+    expect(result.issues.every((i) => i.repository.stargazerCount >= MIN_CANDIDATE_REPO_STARS)).toBe(true)
   })
 
   it('afterCursors를 각 언어에 맞게 전달한다', async () => {

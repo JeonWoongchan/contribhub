@@ -31,7 +31,6 @@ function makeScoredIssue(overrides: Partial<ScoredIssue> = {}): ScoredIssue {
         contributionType: 'bug',
         competitionLevel: 'OPEN',
         hasPR: false,
-        healthScore: null,
         ...overrides,
     }
 }
@@ -41,7 +40,7 @@ function makeScoredIssue(overrides: Partial<ScoredIssue> = {}): ScoredIssue {
 // new URLSearchParams('language=TypeScript') → language 파라미터를 'TypeScript'로 갖는 객체
 describe('parseIssueFilters', () => {
 
-    it('파라미터가 없으면 language·difficultyLevel·minScore·minStars는 null, contributionTypes는 빈 배열이다', () => {
+    it('파라미터가 없으면 language·difficultyLevel·minScore·minStars는 null, contributionTypes·competitionLevels는 빈 배열이다', () => {
         const params = new URLSearchParams()
         const filters = parseIssueFilters(params)
 
@@ -49,8 +48,22 @@ describe('parseIssueFilters', () => {
         expect(filters.language).toBeNull()
         expect(filters.difficultyLevel).toBeNull()
         expect(filters.contributionTypes).toEqual([])
+        expect(filters.competitionLevels).toEqual([])
         expect(filters.minScore).toBeNull()
         expect(filters.minStars).toBeNull()
+    })
+
+    it('허용된 competitionLevels 값들은 배열로 반환된다', () => {
+        const params = new URLSearchParams()
+        params.append('competitionLevels', 'OPEN')
+        params.append('competitionLevels', 'HAS_PR')
+        const filters = parseIssueFilters(params)
+        expect(filters.competitionLevels).toEqual(['OPEN', 'HAS_PR'])
+    })
+
+    it('허용되지 않은 competitionLevels 값은 제거된다', () => {
+        const params = new URLSearchParams('competitionLevels=INVALID')
+        expect(parseIssueFilters(params).competitionLevels).toEqual([])
     })
 
     it('허용된 contributionTypes 값들은 배열로 반환된다', () => {
@@ -126,6 +139,7 @@ describe('applyFilters', () => {
         language: null,
         difficultyLevel: null,
         contributionTypes: [],
+        competitionLevels: [],
         minScore: null,
         minStars: null,
     }
@@ -269,8 +283,8 @@ describe('applyFilters', () => {
     })
 
     it('minStars 기준값과 정확히 같은 스타 수의 이슈는 통과한다', () => {
-        const issue = makeScoredIssue({ stargazerCount: 500 })
-        expect(applyFilters([issue], { ...noFilters, minStars: 500 })).toHaveLength(1)
+        const issue = makeScoredIssue({ stargazerCount: 300 })
+        expect(applyFilters([issue], { ...noFilters, minStars: 300 })).toHaveLength(1)
     })
 
     it('minStars 기준값보다 1 낮은 이슈는 통과하지 못한다', () => {
@@ -288,4 +302,23 @@ describe('applyFilters', () => {
             expect(result[0].number).toBe(1)
         }
     )
+
+    it('competitionLevels 필터는 선택된 레벨 중 하나라도 일치하는 이슈만 통과시킨다', () => {
+        const issues = [
+            makeScoredIssue({ number: 1, competitionLevel: 'OPEN' }),
+            makeScoredIssue({ number: 2, competitionLevel: 'ACTIVE' }),
+            makeScoredIssue({ number: 3, competitionLevel: 'HAS_PR' }),
+        ]
+        const result = applyFilters(issues, { ...noFilters, competitionLevels: ['OPEN', 'ACTIVE'] })
+        expect(result).toHaveLength(2)
+        expect(result.map((i) => i.number)).toEqual([1, 2])
+    })
+
+    it('competitionLevels가 빈 배열이면 모든 이슈를 통과시킨다', () => {
+        const issues = [
+            makeScoredIssue({ number: 1, competitionLevel: 'OPEN' }),
+            makeScoredIssue({ number: 2, competitionLevel: 'HAS_PR' }),
+        ]
+        expect(applyFilters(issues, noFilters)).toHaveLength(2)
+    })
 })
