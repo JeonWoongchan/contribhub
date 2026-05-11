@@ -239,8 +239,8 @@ export function DashboardScoringGuide() {
                 <NoteBox title="기여 방식 추정 키워드">
                     <div className="space-y-0.5 text-xs text-muted-foreground">
                         <p><span className="font-medium text-foreground">문서(doc)</span> — documentation, docs, readme, translation, i18n</p>
-                        <p><span className="font-medium text-foreground">버그(bug)</span> — bug, fix, regression, defect, error</p>
-                        <p><span className="font-medium text-foreground">기능(feat)</span> — feature, enhancement, feature-request, proposal</p>
+                        <p><span className="font-medium text-foreground">버그(bug)</span> — bug, fix, regression, defect, error, crash, [bug], bug:</p>
+                        <p><span className="font-medium text-foreground">기능(feat)</span> — feature, enhancement, feature-request, proposal, feat:, [feature], feature:</p>
                         <p><span className="font-medium text-foreground">테스트(test)</span> — test, testing, coverage, qa</p>
                         <p><span className="font-medium text-foreground">리뷰(review)</span> — review, feedback</p>
                     </div>

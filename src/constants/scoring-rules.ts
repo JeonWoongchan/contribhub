@@ -29,7 +29,7 @@ export const REPO_ACTIVITY_THRESHOLDS = {
 // 온보딩의 선호 언어와 GitHub 저장소 primaryLanguage를 비교한다.
 // 선택한 언어이면 순위 무관하게 동일 점수를 주고, 같은 계열 언어는 부분 점수를 준다.
 export const LANGUAGE_SCORE = {
-  EXACT: 30,
+  EXACT: 28,
   RELATED: 15,
   NO_MATCH: 0,
 } as const
@@ -46,7 +46,7 @@ export const LANGUAGE_GROUPS: string[][] = [
 // 사용자 수준과 같은 난이도가 가장 좋고, 한 단계 높은 이슈는 도전 가능한 이슈로 일부 가산한다.
 // UNKNOWN: 난이도 라벨 없음 — 모든 수준에 해당할 가능성이 있어 중간 점수를 부여한다.
 export const DIFFICULTY_SCORE = {
-  PERFECT: 25,
+  PERFECT: 23,
   ONE_ABOVE: 12,
   TWO_ABOVE: 6,
   THREE_ABOVE: 0,
@@ -92,19 +92,22 @@ export const DIFFICULTY_LABELS: Record<ExperienceLevel, string[]> = {
 // GitHub issue type이 항상 설정되어 있지 않으므로 라벨, 제목, 본문을 함께 탐색한다.
 export const CONTRIBUTION_TYPE_LABELS: Record<ContributionType, string[]> = {
   doc: ['documentation', 'docs', 'readme', 'translation', 'i18n'],
-  bug: ['bug', 'fix', 'regression', 'defect', 'error'],
-  feat: ['feature', 'enhancement', 'feature-request', 'proposal'],
+  // crash·[bug]·bug: 는 제목에서 오탐이 적은 명시적 버그 신호
+  bug: ['bug', 'fix', 'regression', 'defect', 'error', 'crash', '[bug]', 'bug:'],
+  // feat:·[feature]·feature: 는 conventional commit 및 명시적 기능 요청 신호
+  feat: ['feature', 'enhancement', 'feature-request', 'proposal', 'feat:', '[feature]', 'feature:'],
   test: ['test', 'testing', 'coverage', 'qa'],
   review: ['review', 'feedback'],
 }
 
 // 사용자가 선택한 기여 방식과 추정된 이슈 작업 성격이 같으면 가산한다.
 // UNKNOWN: 라벨·텍스트로 기여 방식을 감지할 수 없음 — 선택한 방식에 해당할 가능성이 있어 부분 점수를 부여한다.
+//   10으로 설정한 이유: 라벨 없음은 불일치가 아니라 정보 부재이므로 MATCH(16)와의 격차를 6점으로 줄여 패널티 완화.
 // NO_MATCH: 기여 방식이 감지됐지만 선택한 방식과 다름 — 점수 없음.
 export const CONTRIBUTION_TYPE_SCORE = {
   MATCH: 16,
   NO_MATCH: 0,
-  UNKNOWN: 5,
+  UNKNOWN: 10,
 } as const
 
 // 댓글 수와 PR 연결 여부로 진입 경쟁도를 추정한다.
@@ -212,32 +215,33 @@ export const PURPOSE_SCORE_RULES: Record<
   }
 > = {
   portfolio: {
-    openCompetitionBonus: 2,
-    activeCompetitionBonus: 1,
+    openCompetitionBonus: 3,
+    activeCompetitionBonus: 2,
     preferredTypes: ['doc', 'bug', 'feat'],
     preferredDifficulties: ['beginner', 'junior'],
-    preferredTypeBonus: 2,
-    preferredDifficultyBonus: 2,
+    preferredTypeBonus: 3,
+    preferredDifficultyBonus: 3,
     recognizedRepoStars: 300,
-    recognizedRepoBonus: 4,
+    recognizedRepoBonus: 5,
   },
   growth: {
-    openCompetitionBonus: 1,
-    activeCompetitionBonus: 2,
+    openCompetitionBonus: 2,
+    // 학습·도전 목적이므로 토론이 진행 중인 ACTIVE 이슈에 더 높은 가산
+    activeCompetitionBonus: 4,
     preferredTypes: ['feat', 'test', 'bug'],
     preferredDifficulties: ['junior', 'mid', 'senior'],
-    preferredTypeBonus: 2,
-    preferredDifficultyBonus: 2,
+    preferredTypeBonus: 3,
+    preferredDifficultyBonus: 3,
     recognizedRepoStars: 0,
     recognizedRepoBonus: 0,
   },
   community: {
-    openCompetitionBonus: 2,
-    activeCompetitionBonus: 1,
+    openCompetitionBonus: 3,
+    activeCompetitionBonus: 2,
     preferredTypes: ['doc', 'bug', 'test'],
     preferredDifficulties: ['beginner', 'junior', 'mid'],
-    preferredTypeBonus: 2,
-    preferredDifficultyBonus: 2,
+    preferredTypeBonus: 3,
+    preferredDifficultyBonus: 3,
     recognizedRepoStars: 0,
     recognizedRepoBonus: 0,
   },
