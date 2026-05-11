@@ -12,6 +12,8 @@ export const RANK_SCORE_THRESHOLD = 50
 export const GITHUB_API_CACHE_TTL_SECONDS = 60
 // GitHub API 응답 대기 상한 — 초과 시 AbortError로 함수 조기 종료
 export const GITHUB_API_TIMEOUT_MS = 8_000
+// 이슈 목록 클라이언트 stale 시간 — 서버 캐시 TTL과 맞춰 재방문 시 즉시 표시
+export const ISSUE_LIST_STALE_TIME_MS = GITHUB_API_CACHE_TTL_SECONDS * 1000
 // GitHub 검색 쿼리의 최소 star 수 — 완전히 방치된 저장소를 후보에서 제외
 export const MIN_CANDIDATE_REPO_STARS = 50
 

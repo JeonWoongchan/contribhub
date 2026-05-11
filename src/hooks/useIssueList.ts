@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo } from 'react'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { PAGE_SIZE } from '@/constants/scoring-rules'
+import { ISSUE_LIST_STALE_TIME_MS, PAGE_SIZE } from '@/constants/scoring-rules'
 import { INITIAL_BATCH } from '@/lib/github/batch'
 import { fetchApi } from '@/lib/fetch-api'
 import type { IssueFilters, ScoredIssue } from '@/types/issue'
@@ -65,6 +65,7 @@ export function useIssueList(filters: IssueFilters = EMPTY_ISSUE_FILTERS): UseIs
 
       return fetchApi<IssueListPage>(`/api/github/issues?${params}`, DEFAULT_ERROR_MESSAGE)
     },
+    staleTime: ISSUE_LIST_STALE_TIME_MS,
     initialPageParam: { offset: 0, batch: INITIAL_BATCH } as IssuePageParam,
     getNextPageParam: (lastPage): IssuePageParam | undefined => {
       const nextOffset = lastPage.offset + PAGE_SIZE
