@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge'
 import { CardMetricsRow } from '@/components/shared/card/CardMetricsRow'
 import { formatTimeAgo } from '@/utils/format/time-ago'
-import { getCompetitionMeta } from '@/lib/github/issues/badge-meta'
+import { getCompetitionMeta, getRepoActivityMeta } from '@/lib/github/issues/badge-meta'
 import { cn } from '@/lib/utils'
 import { IssueMetricsRow } from './IssueMetricsRow'
 import { IssueTagList } from './IssueTagList'
@@ -13,6 +13,7 @@ type IssueItemFooterProps = {
 
 export function IssueItemFooter({ issue }: IssueItemFooterProps) {
   const competition = issue.competitionLevel ? getCompetitionMeta(issue.competitionLevel) : null
+  const activity = issue.repoActivityLevel ? getRepoActivityMeta(issue.repoActivityLevel) : null
 
   return (
     <div className="mt-auto flex flex-col gap-3 text-xs text-muted-foreground">
@@ -27,6 +28,11 @@ export function IssueItemFooter({ issue }: IssueItemFooterProps) {
       </CardMetricsRow>
 
       <CardMetricsRow className="gap-2">
+        {activity ? (
+          <Badge variant="outline" className={cn('rounded-md', activity.className)}>
+            {activity.label}
+          </Badge>
+        ) : null}
         {competition ? (
           <Badge variant="outline" className={cn('rounded-md', competition.className)}>
             {competition.label}

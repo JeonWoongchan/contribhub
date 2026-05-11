@@ -18,6 +18,7 @@ const SEARCH_ISSUES_QUERY = `
           createdAt
           updatedAt
           comments { totalCount }
+          reactions { totalCount }
           labels(first: 10) {
             nodes { name }
           }
@@ -26,6 +27,7 @@ const SEARCH_ISSUES_QUERY = `
             url
             primaryLanguage { name }
             stargazerCount
+            pushedAt
           }
           timelineItems(first: 5, itemTypes: [CROSS_REFERENCED_EVENT]) {
             nodes {

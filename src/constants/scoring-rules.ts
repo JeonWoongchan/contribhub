@@ -17,6 +17,15 @@ export const ISSUE_LIST_STALE_TIME_MS = GITHUB_API_CACHE_TTL_SECONDS * 1000
 // GitHub 검색 쿼리의 최소 star 수 — 완전히 방치된 저장소를 후보에서 제외
 export const MIN_CANDIDATE_REPO_STARS = 50
 
+// 저장소 활성도 판별 기준
+// pushedAt 경과일과 reactions 수를 조합해 3단계 구분
+export const REPO_ACTIVITY_THRESHOLDS = {
+  ACTIVE_PUSH_DAYS: 30,
+  ACTIVE_COMMUNITY_PUSH_DAYS: 90,
+  MODERATE_PUSH_DAYS: 180,
+  COMMUNITY_BOOST_SIGNAL: 5,
+} as const
+
 // 온보딩의 선호 언어와 GitHub 저장소 primaryLanguage를 비교한다.
 // 선택한 언어이면 순위 무관하게 동일 점수를 주고, 같은 계열 언어는 부분 점수를 준다.
 export const LANGUAGE_SCORE = {

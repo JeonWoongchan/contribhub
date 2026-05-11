@@ -31,6 +31,7 @@ function makeScoredIssue(overrides: Partial<ScoredIssue> = {}): ScoredIssue {
         contributionType: 'bug',
         competitionLevel: 'OPEN',
         hasPR: false,
+        repoActivityLevel: 'active',
         ...overrides,
     }
 }

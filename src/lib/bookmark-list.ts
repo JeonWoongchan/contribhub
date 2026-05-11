@@ -1,6 +1,6 @@
 import { unstable_cache } from 'next/cache'
 import { countUserBookmarks, listUserBookmarks } from '@/lib/bookmarks'
-import { scoreIssue } from '@/lib/github/issues/scorer'
+import { detectRepoActivity, scoreIssue } from '@/lib/github/issues/scorer'
 import { fetchBookmarkedIssues } from '@/lib/github/issues/bookmark'
 import { loadOnboardingProfile } from '@/lib/user/profile'
 import { GITHUB_API_CACHE_TTL_SECONDS } from '@/constants/scoring-rules'
@@ -41,6 +41,7 @@ function toFallbackIssueCardItem(bookmark: Bookmark): IssueCardItem {
     contributionType: bookmark.contributionType,
     competitionLevel: null,
     hasPR: false,
+    repoActivityLevel: null,
     isBookmarked: true,
   }
 }
@@ -75,6 +76,7 @@ function toIssueCardItemWithoutProfile(
     contributionType: bookmark.contributionType,
     competitionLevel: null,
     hasPR: githubIssue.timelineItems.nodes.some((node) => node.__typename === 'CrossReferencedEvent'),
+    repoActivityLevel: detectRepoActivity(githubIssue.repository.pushedAt, githubIssue.reactions.totalCount),
     isBookmarked: true,
   }
 }

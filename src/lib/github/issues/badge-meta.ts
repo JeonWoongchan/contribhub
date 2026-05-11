@@ -1,18 +1,13 @@
-import type { CompetitionLevel, DifficultyLevel } from '@/types/issue'
+import type { CompetitionLevel, DifficultyLevel, RepoActivityLevel } from '@/types/issue'
 import type { PullRequestState } from '@/types/pull-request'
 
-export type CompetitionMeta = {
+export type BadgeMeta = {
   label: string
   className: string
 }
 
-export type HealthTierVariant = 'success' | 'warning' | 'danger'
-
-export type HealthTier = {
-  label: string
-  variant: HealthTierVariant
-  isAnimated: boolean
-}
+export type CompetitionMeta = BadgeMeta
+export type RepoActivityMeta = BadgeMeta
 
 const COMPETITION_META: Record<CompetitionLevel, CompetitionMeta> = {
   OPEN: {
@@ -40,7 +35,26 @@ export function getCompetitionMeta(level: CompetitionLevel): CompetitionMeta {
   return COMPETITION_META[level]
 }
 
-export type PRStateMeta = { label: string; className: string }
+const REPO_ACTIVITY_META: Record<RepoActivityLevel, RepoActivityMeta> = {
+  active: {
+    label: '활성도 활발',
+    className: 'border-status-success-border bg-status-success text-status-success-foreground',
+  },
+  moderate: {
+    label: '활성도 보통',
+    className: 'border-status-warning-border bg-status-warning text-status-warning-foreground',
+  },
+  quiet: {
+    label: '활성도 낮음',
+    className: 'border-muted bg-muted text-muted-foreground',
+  },
+}
+
+export function getRepoActivityMeta(level: RepoActivityLevel): RepoActivityMeta {
+  return REPO_ACTIVITY_META[level]
+}
+
+export type PRStateMeta = BadgeMeta
 
 export const PR_STATE_META: Record<PullRequestState, PRStateMeta> = {
   OPEN: { label: '진행중', className: 'border-brand-subtle-border bg-interactive-action text-interactive-action-foreground' },

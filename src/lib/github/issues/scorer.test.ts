@@ -43,12 +43,14 @@ function makeRawIssue(overrides: Partial<RawIssue> = {}): RawIssue {
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z',
         comments: { totalCount: 0 },
+        reactions: { totalCount: 0 },
         labels: { nodes: [] },
         repository: {
             nameWithOwner: 'owner/repo',
             url: 'https://github.com/owner/repo',
             primaryLanguage: { name: 'TypeScript' },
             stargazerCount: 100,
+            pushedAt: new Date().toISOString(),
         },
         timelineItems: { nodes: [] },
         ...overrides,
@@ -107,6 +109,7 @@ describe('scoreIssue', () => {
                     url: 'https://github.com/owner/repo',
                     primaryLanguage: { name: 'Rust' }, // 프로필에 없는 언어
                     stargazerCount: 0,
+                    pushedAt: new Date().toISOString(),
                 },
             })
             const result = scoreIssue(worstCaseIssue, makeProfile({ experienceLevel: 'beginner' }))
@@ -302,6 +305,7 @@ describe('scoreIssue', () => {
                     url: 'https://github.com/owner/repo',
                     primaryLanguage: { name: 'Rust' },
                     stargazerCount: 100,
+                    pushedAt: new Date().toISOString(),
                 },
             })
             const profile = makeProfile({ topLanguages: ['TypeScript'] })

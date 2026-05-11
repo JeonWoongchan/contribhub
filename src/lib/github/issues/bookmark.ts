@@ -36,6 +36,7 @@ function buildBookmarkIssuesQuery(bookmarks: Bookmark[]): string {
               createdAt
               updatedAt
               comments { totalCount }
+              reactions { totalCount }
               labels(first: 10) {
                 nodes { name }
               }
@@ -44,6 +45,7 @@ function buildBookmarkIssuesQuery(bookmarks: Bookmark[]): string {
                 url
                 primaryLanguage { name }
                 stargazerCount
+                pushedAt
               }
               timelineItems(first: 5, itemTypes: [CROSS_REFERENCED_EVENT]) {
                 nodes {

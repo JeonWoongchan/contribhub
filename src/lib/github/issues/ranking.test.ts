@@ -20,12 +20,14 @@ function makeRawIssue(overrides: Partial<RawIssue> = {}): RawIssue {
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z',
         comments: { totalCount: 0 },
+        reactions: { totalCount: 0 },
         labels: { nodes: [] },
         repository: {
             nameWithOwner: 'owner/repo',
             url: 'https://github.com/owner/repo',
             primaryLanguage: { name: 'TypeScript' },
             stargazerCount: 100,
+            pushedAt: new Date().toISOString(),
         },
         timelineItems: { nodes: [] },
         ...overrides,
@@ -50,6 +52,7 @@ function makeScoredIssue(overrides: Partial<ScoredIssue> = {}): ScoredIssue {
         contributionType: null,
         competitionLevel: 'OPEN',
         hasPR: false,
+        repoActivityLevel: 'active',
         ...overrides,
     }
 }

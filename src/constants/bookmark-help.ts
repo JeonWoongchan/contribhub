@@ -35,5 +35,6 @@ export const BOOKMARK_HELP_DEMO_ISSUE: Omit<IssueCardItem, 'createdAt' | 'update
   contributionType: 'doc',
   competitionLevel: null,
   hasPR: false,
+  repoActivityLevel: null,
   isBookmarked: true,
 }

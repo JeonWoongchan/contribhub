@@ -3,6 +3,7 @@ import type { ContributionType, ExperienceLevel } from './user'
 
 export type CompetitionLevel = 'OPEN' | 'ACTIVE' | 'HAS_PR'
 export type DifficultyLevel = ExperienceLevel
+export type RepoActivityLevel = 'active' | 'moderate' | 'quiet'
 
 export type IssueFilters = {
   language: string | null
@@ -30,12 +31,14 @@ export interface RawIssue {
   createdAt: string
   updatedAt: string
   comments: { totalCount: number }
+  reactions: { totalCount: number }
   labels: { nodes: { name: string }[] }
   repository: {
     nameWithOwner: string
     url: string
     primaryLanguage: { name: string } | null
     stargazerCount: number
+    pushedAt: string
   }
   // GraphQL로 연결된 PR 존재 여부
   timelineItems: {
@@ -63,6 +66,7 @@ export interface ScoredIssue {
   contributionType: ContributionType | null
   competitionLevel: CompetitionLevel
   hasPR: boolean
+  repoActivityLevel: RepoActivityLevel
   isBookmarked?: boolean
 }
 
@@ -83,5 +87,6 @@ export interface IssueCardItem {
   contributionType: ContributionType | null
   competitionLevel: CompetitionLevel | null
   hasPR: boolean
+  repoActivityLevel: RepoActivityLevel | null
   isBookmarked?: boolean
 }

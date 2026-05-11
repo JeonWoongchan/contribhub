@@ -21,6 +21,12 @@ export const DASHBOARD_HELP_GUIDE_ITEMS = [
       '저장소의 스타 수와 댓글 수를 함께 보여줘요. 진입 전에 프로젝트의 관심도와 논의 흐름을 가늠하는 데 도움이 돼요.',
   },
   {
+    id: 'activity',
+    title: '저장소 활성도',
+    description:
+      '저장소에 마지막으로 push된 날짜와 커뮤니티 반응을 함께 보고 활성도 활발 · 활성도 보통 · 활성도 낮음 세 단계로 나타내요.',
+  },
+  {
     id: 'competition',
     title: '경쟁도',
     description:
@@ -47,4 +53,5 @@ export const DASHBOARD_HELP_DEMO_ISSUE: Omit<ScoredIssue, 'createdAt' | 'updated
   contributionType: 'doc',
   competitionLevel: 'ACTIVE',
   hasPR: false,
+  repoActivityLevel: 'active',
 }

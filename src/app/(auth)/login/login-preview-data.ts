@@ -35,6 +35,7 @@ export function getDemoIssues(): IssueCardItem[] {
             contributionType: 'feat',
             competitionLevel: 'OPEN',
             hasPR: false,
+            repoActivityLevel: 'active',
             isBookmarked: false,
         },
         {
@@ -54,6 +55,7 @@ export function getDemoIssues(): IssueCardItem[] {
             contributionType: 'doc',
             competitionLevel: 'OPEN',
             hasPR: false,
+            repoActivityLevel: 'active',
             isBookmarked: false,
         },
         {
@@ -73,6 +75,7 @@ export function getDemoIssues(): IssueCardItem[] {
             contributionType: 'doc',
             competitionLevel: 'OPEN',
             hasPR: false,
+            repoActivityLevel: 'active',
             isBookmarked: false,
         },
     ]

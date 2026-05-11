@@ -1,4 +1,4 @@
-import type { CompetitionLevel, RawIssue, ScoredIssue } from '@/types/issue'
+import type { CompetitionLevel, RawIssue, RepoActivityLevel, ScoredIssue } from '@/types/issue'
 import type { ContributionType, ExperienceLevel, UserProfile } from '@/types/user'
 import {
   COMPETITION_PENALTY,
@@ -12,6 +12,7 @@ import {
   LANGUAGE_SCORE,
   MATCH_SCORE_MINIMUM,
   PURPOSE_SCORE_RULES,
+  REPO_ACTIVITY_THRESHOLDS,
   REPO_STAR_SCORE_TIERS,
   TIME_BUDGET_RULES,
 } from '@/constants/scoring-rules'
@@ -182,6 +183,19 @@ function scoreStars(stargazerCount: number): number {
   return REPO_STAR_SCORE_TIERS.find((tier) => stargazerCount >= tier.stars)?.score ?? 0
 }
 
+// pushedAt 경과일을 기준으로 reactions를 보조 신호로 사용해 3단계 활성도 판별
+export function detectRepoActivity(pushedAt: string, reactionCount: number): RepoActivityLevel {
+  const daysSincePush = (Date.now() - new Date(pushedAt).getTime()) / 86_400_000
+
+  if (
+    daysSincePush <= REPO_ACTIVITY_THRESHOLDS.ACTIVE_PUSH_DAYS ||
+    (daysSincePush <= REPO_ACTIVITY_THRESHOLDS.ACTIVE_COMMUNITY_PUSH_DAYS &&
+      reactionCount >= REPO_ACTIVITY_THRESHOLDS.COMMUNITY_BOOST_SIGNAL)
+  ) return 'active'
+  if (daysSincePush <= REPO_ACTIVITY_THRESHOLDS.MODERATE_PUSH_DAYS) return 'moderate'
+  return 'quiet'
+}
+
 // 경험 수준은 난이도뿐 아니라 경쟁도와도 연결한다.
 // 입문자는 경쟁이 적은 OPEN 이슈를 우대하고, 숙련자는 토론이 진행 중인 ACTIVE 이슈도 허용한다.
 function scoreExperienceCompetitionFit(
@@ -322,6 +336,7 @@ export function scoreIssue(
   const difficultyLevel = detectDifficulty(normalizedLabelNames)
   const contributionType = detectContributionType(normalizedLabelNames, searchableText, commentCount, hasPR)
   const { level: competitionLevel, penalty: competitionPenalty } = detectCompetition(commentCount, hasPR)
+  const repoActivityLevel = detectRepoActivity(raw.repository.pushedAt, raw.reactions.totalCount)
 
   const ctx: ScoringContext = {
     language,
@@ -360,5 +375,6 @@ export function scoreIssue(
     contributionType,
     competitionLevel,
     hasPR,
+    repoActivityLevel,
   }
 }
