@@ -2,7 +2,7 @@ import { unstable_cache } from 'next/cache'
 
 import { listUserBookmarkKeys } from '@/lib/bookmarks'
 import { encodeBatch, decodeBatch, INITIAL_BATCH } from '@/lib/github/batch'
-import { GITHUB_API_CACHE_TTL_SECONDS, PAGE_SIZE } from '@/constants/scoring-rules'
+import { GITHUB_API_CACHE_TTL_SECONDS, MIN_CANDIDATE_REPO_STARS, PAGE_SIZE } from '@/constants/scoring-rules'
 import type { IssueFilters } from '@/types/issue'
 import type { IssueListPage } from '@/types/api'
 import type { OnboardingProfile } from '@/lib/user/profile'
@@ -37,9 +37,10 @@ export async function fetchIssueListPage({
         : (decodeBatch<Record<string, string | null>>(batchParam) ?? {})
 
     // 배치별로 캐시 분리 — 같은 언어 조합이라도 batch가 다르면 별도 GitHub 호출
+    // MIN_CANDIDATE_REPO_STARS를 키에 포함 — 값이 바뀌면 기존 캐시를 무효화
     const getCachedIssues = unstable_cache(
         () => fetchCandidateIssues(profile.topLanguages, accessToken, afterCursors),
-        ['github-issues', ...profile.topLanguages.slice().sort(), batchParam],
+        ['github-issues', String(MIN_CANDIDATE_REPO_STARS), ...profile.topLanguages.slice().sort(), batchParam],
         { revalidate: GITHUB_API_CACHE_TTL_SECONDS }
     )
 

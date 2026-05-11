@@ -124,11 +124,13 @@ export async function fetchCandidateIssues(
         if (pageInfo.hasNextPage) hasMoreOnGithub = true
     })
 
+    // GitHub 검색 인덱스와 실제 API 응답 간 시차로 인해 stars 조건을 통과한 것처럼
+    // 보이지만 stargazerCount가 기준 미달인 레포가 포함될 수 있어 응답 단에서 한 번 더 필터링
     const issues = dedupeIssues(
         settled
             .filter((result): result is PromiseFulfilledResult<SearchResult> => result.status === 'fulfilled')
             .flatMap((result) => result.value.search.nodes ?? [])
-    )
+    ).filter((issue) => issue.repository.stargazerCount >= MIN_CANDIDATE_REPO_STARS)
 
     const failedResults = settled.filter(
         (result): result is PromiseRejectedResult => result.status === 'rejected'

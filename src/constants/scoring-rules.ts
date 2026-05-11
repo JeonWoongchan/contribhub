@@ -16,8 +16,8 @@ export const MIN_CANDIDATE_REPO_STARS = 50
 // 온보딩의 선호 언어와 GitHub 저장소 primaryLanguage를 비교한다.
 // 선택한 언어이면 순위 무관하게 동일 점수를 주고, 같은 계열 언어는 부분 점수를 준다.
 export const LANGUAGE_SCORE = {
-  EXACT: 20,
-  RELATED: 11,
+  EXACT: 30,
+  RELATED: 15,
   NO_MATCH: 0,
 } as const
 
@@ -31,11 +31,10 @@ export const LANGUAGE_GROUPS: string[][] = [
 
 // 온보딩의 오픈소스 기여 경험과 이슈 난이도 추정값을 비교한다.
 // 사용자 수준과 같은 난이도가 가장 좋고, 한 단계 높은 이슈는 도전 가능한 이슈로 일부 가산한다.
-// health bonus 제거분(최대 8점)을 난이도 적합도에 재배분 — 이론적 최대 합산 100점 유지
 export const DIFFICULTY_SCORE = {
-  PERFECT: 18,
-  ONE_ABOVE: 10,
-  TWO_ABOVE: 5,
+  PERFECT: 25,
+  ONE_ABOVE: 12,
+  TWO_ABOVE: 6,
   THREE_ABOVE: 0,
   ONE_BELOW: 8,
   TWO_BELOW: 4,
@@ -87,7 +86,7 @@ export const CONTRIBUTION_TYPE_LABELS: Record<ContributionType, string[]> = {
 // 사용자가 선택한 기여 방식과 추정된 이슈 작업 성격이 같으면 가산한다.
 // 선택한 방식 일치 여부만 판단하며, 그 외는 0점이다.
 export const CONTRIBUTION_TYPE_SCORE = {
-  MATCH: 15,
+  MATCH: 20,
   NO_MATCH: 0,
 } as const
 
@@ -95,18 +94,18 @@ export const CONTRIBUTION_TYPE_SCORE = {
 // 이미 PR이 있거나 토론이 많은 이슈는 초보자가 들어가기 어려울 수 있어 기본 감점한다.
 export const COMPETITION_PENALTY = {
   PR_EXISTS: -10,
-  NO_COMMENT: 6,
-  ONE_COMMENT: 4,
+  NO_COMMENT: 4,
+  ONE_COMMENT: 3,
   MEDIUM_ACTIVITY: -2,
   HIGH_ACTIVITY: -6,
   VERY_HIGH_ACTIVITY: -10,
 } as const
 
-// 전역 저장소 인지도 점수 — health bonus 제거 후 독립 채점 차원으로 승격 (최대 8점)
+// 전역 저장소 인지도 점수 — star 수가 많을수록 커뮤니티 활성도가 높다고 보고 가산 (최대 4점)
 export const REPO_STAR_SCORE_TIERS = [
-  { stars: 3000, score: 8 },
-  { stars: 1000, score: 5 },
-  { stars: 300, score: 3 },
+  { stars: 3000, score: 4 },
+  { stars: 1000, score: 3 },
+  { stars: 300, score: 2 },
   { stars: 100, score: 1 },
 ] as const
 
@@ -117,23 +116,23 @@ export const EXPERIENCE_COMPETITION_BONUS: Record<
   Record<CompetitionLevel, number>
 > = {
   beginner: {
-    OPEN: 6,
+    OPEN: 4,
     ACTIVE: -2,
     HAS_PR: -8,
   },
   junior: {
-    OPEN: 6,
-    ACTIVE: 4,
+    OPEN: 4,
+    ACTIVE: 3,
     HAS_PR: -5,
   },
   mid: {
-    OPEN: 4,
-    ACTIVE: 10,
+    OPEN: 3,
+    ACTIVE: 8,
     HAS_PR: -2,
   },
   senior: {
-    OPEN: 4,
-    ACTIVE: 10,
+    OPEN: 3,
+    ACTIVE: 8,
     HAS_PR: 0,
   },
 }
@@ -155,25 +154,25 @@ export const TIME_BUDGET_RULES: Record<
     preferredTypes: ['doc', 'bug'],
     preferredDifficulties: ['beginner', 'junior'],
     preferredMaxComments: 2,
-    typeMatchBonus: 5,
-    difficultyMatchBonus: 5,
-    lowCommentBonus: 4,
+    typeMatchBonus: 3,
+    difficultyMatchBonus: 2,
+    lowCommentBonus: 2,
   },
   5: {
     preferredTypes: ['doc', 'bug', 'test'],
     preferredDifficulties: ['beginner', 'junior', 'mid'],
     preferredMaxComments: 5,
-    typeMatchBonus: 5,
-    difficultyMatchBonus: 5,
-    lowCommentBonus: 4,
+    typeMatchBonus: 3,
+    difficultyMatchBonus: 2,
+    lowCommentBonus: 2,
   },
   10: {
     preferredTypes: ['doc', 'bug', 'test', 'feat', 'review'],
     preferredDifficulties: ['beginner', 'junior', 'mid', 'senior'],
     preferredMaxComments: 8,
-    typeMatchBonus: 4,
-    difficultyMatchBonus: 4,
-    lowCommentBonus: 3,
+    typeMatchBonus: 3,
+    difficultyMatchBonus: 2,
+    lowCommentBonus: 1,
   },
 }
 
@@ -193,33 +192,33 @@ export const PURPOSE_SCORE_RULES: Record<
   }
 > = {
   portfolio: {
-    openCompetitionBonus: 3,
+    openCompetitionBonus: 2,
     activeCompetitionBonus: 1,
     preferredTypes: ['doc', 'bug', 'feat'],
     preferredDifficulties: ['beginner', 'junior'],
-    preferredTypeBonus: 4,
+    preferredTypeBonus: 2,
     preferredDifficultyBonus: 2,
   },
   growth: {
     openCompetitionBonus: 1,
-    activeCompetitionBonus: 3,
+    activeCompetitionBonus: 2,
     preferredTypes: ['feat', 'test', 'bug'],
     preferredDifficulties: ['junior', 'mid', 'senior'],
-    preferredTypeBonus: 5,
-    preferredDifficultyBonus: 5,
+    preferredTypeBonus: 2,
+    preferredDifficultyBonus: 2,
   },
   community: {
-    openCompetitionBonus: 3,
-    activeCompetitionBonus: 2,
+    openCompetitionBonus: 2,
+    activeCompetitionBonus: 1,
     preferredTypes: ['doc', 'bug', 'test'],
     preferredDifficulties: ['beginner', 'junior', 'mid'],
-    preferredTypeBonus: 5,
-    preferredDifficultyBonus: 4,
+    preferredTypeBonus: 2,
+    preferredDifficultyBonus: 2,
   },
 }
 
 export const SCORE_FILTER_THRESHOLDS = [10, 20, 30, 40, 50, 60, 70, 80, 90] as const
 export type ScoreThreshold = typeof SCORE_FILTER_THRESHOLDS[number]
 
-export const STAR_FILTER_THRESHOLDS = [100, 500, 1000, 5000] as const
+export const STAR_FILTER_THRESHOLDS = [100, 300, 1000, 3000] as const
 export type StarThreshold = typeof STAR_FILTER_THRESHOLDS[number]

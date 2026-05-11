@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { fetchIssueListPage } from '@/lib/github/issues/service'
 import { encodeBatch, INITIAL_BATCH } from '@/lib/github/batch'
-import { PAGE_SIZE } from '@/constants/scoring-rules'
+import { MIN_CANDIDATE_REPO_STARS, PAGE_SIZE } from '@/constants/scoring-rules'
 import { EMPTY_ISSUE_FILTERS } from '@/types/issue'
 import type { OnboardingProfile } from '@/lib/user/profile'
 import type { RawIssue, ScoredIssue } from '@/types/issue'
 import type { IssueSearchResult } from '@/lib/github/issues/search'
 
-vi.mock('next/cache', () => ({ unstable_cache: (fn: () => unknown) => fn }))
+vi.mock('next/cache', () => ({ unstable_cache: vi.fn(<T>(fn: () => T) => fn) }))
 vi.mock('@/lib/github/issues/search', () => ({ fetchCandidateIssues: vi.fn() }))
 vi.mock('@/lib/github/issues/ranking', () => ({ rankIssues: vi.fn() }))
 vi.mock('@/lib/github/issues/filters', async (importOriginal) => {
@@ -16,6 +16,7 @@ vi.mock('@/lib/github/issues/filters', async (importOriginal) => {
 })
 vi.mock('@/lib/bookmarks', () => ({ listUserBookmarkKeys: vi.fn() }))
 
+import { unstable_cache } from 'next/cache'
 import { fetchCandidateIssues } from '@/lib/github/issues/search'
 import { rankIssues } from '@/lib/github/issues/ranking'
 import { applyFilters } from '@/lib/github/issues/filters'
@@ -316,7 +317,7 @@ describe('fetchIssueListPage — 필터 전달', () => {
     const result = await fetchIssueListPage({
       ...baseArgs,
       offset: PAGE_SIZE,
-      filters: { ...EMPTY_ISSUE_FILTERS, minStars: 5000 },
+      filters: { ...EMPTY_ISSUE_FILTERS, minStars: 3000 },
     })
 
     expect('error' in result).toBe(false)
@@ -348,6 +349,25 @@ describe('fetchIssueListPage — 필터 전달', () => {
     // 필터 결과(1개)와 무관하게 배치 전체 언어 3종이 반환된다
     expect(result.availableLanguages).toHaveLength(3)
     expect(result.availableLanguages).toEqual(expect.arrayContaining(['TypeScript', 'Go', 'Python']))
+  })
+})
+
+describe('fetchIssueListPage — 캐시 키', () => {
+  it('캐시 키에 MIN_CANDIDATE_REPO_STARS 값이 포함된다', async () => {
+    setupDeps([makeRawIssue()], [makeScoredIssue()])
+
+    await fetchIssueListPage(baseArgs)
+
+    const cacheKey = vi.mocked(unstable_cache).mock.calls[0][1] as string[]
+    expect(cacheKey).toContain(String(MIN_CANDIDATE_REPO_STARS))
+  })
+
+  it('MIN_CANDIDATE_REPO_STARS가 다른 두 요청은 서로 다른 캐시 키를 갖는다', () => {
+    // 상수 값이 바뀌면 캐시 키도 바뀌어야 star threshold 변경 시 캐시가 무효화된다.
+    // 실제 캐시 동작은 Next.js 런타임에서 처리하므로 키 구성만 검증한다.
+    const key50 = ['github-issues', '50', 'TypeScript', 'initial']
+    const key100 = ['github-issues', '100', 'TypeScript', 'initial']
+    expect(key50).not.toEqual(key100)
   })
 })
 

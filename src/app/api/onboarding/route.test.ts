@@ -30,6 +30,7 @@ const session = {
   user: {
     id: 'user-1',
     login: 'testuser',
+    isOnboarded: true,
   },
   expires: '2099-01-01T00:00:00.000Z',
 } satisfies Session

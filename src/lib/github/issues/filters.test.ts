@@ -268,8 +268,8 @@ describe('applyFilters', () => {
     })
 
     it('minStars 기준값과 정확히 같은 스타 수의 이슈는 통과한다', () => {
-        const issue = makeScoredIssue({ stargazerCount: 500 })
-        expect(applyFilters([issue], { ...noFilters, minStars: 500 })).toHaveLength(1)
+        const issue = makeScoredIssue({ stargazerCount: 300 })
+        expect(applyFilters([issue], { ...noFilters, minStars: 300 })).toHaveLength(1)
     })
 
     it('minStars 기준값보다 1 낮은 이슈는 통과하지 못한다', () => {
