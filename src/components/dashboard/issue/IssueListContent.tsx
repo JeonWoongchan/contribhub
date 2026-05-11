@@ -6,7 +6,6 @@ type IssueListContentProps = {
   issues: IssueCardItem[]
   partial: boolean
   failedCount: number
-  pendingBookmarkKeys: string[]
   onToggleBookmark: (issue: IssueCardItem) => Promise<void>
 }
 
@@ -14,7 +13,6 @@ export function IssueListContent({
   issues,
   partial,
   failedCount,
-  pendingBookmarkKeys,
   onToggleBookmark,
 }: IssueListContentProps) {
   return (
@@ -25,7 +23,6 @@ export function IssueListContent({
           <IssueCard
             key={issue.url}
             issue={issue}
-            isBookmarkPending={pendingBookmarkKeys.includes(`${issue.repoFullName}#${issue.number}`)}
             onToggleBookmark={onToggleBookmark}
           />
         ))}

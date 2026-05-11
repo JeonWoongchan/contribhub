@@ -6,13 +6,11 @@ import type { IssueCardItem } from '@/types/issue'
 
 type IssueItemHeaderProps = {
   issue: IssueCardItem
-  isBookmarkPending: boolean
   onToggleBookmark: (issue: IssueCardItem) => Promise<void>
 }
 
 export function IssueItemHeader({
   issue,
-  isBookmarkPending,
   onToggleBookmark,
 }: IssueItemHeaderProps) {
   return (
@@ -31,7 +29,6 @@ export function IssueItemHeader({
         <div className="flex items-center gap-1">
           <BookmarkButton
             issue={issue}
-            isBookmarkPending={isBookmarkPending}
             onToggleBookmarkAction={onToggleBookmark}
           />
           {issue.score !== null ? <IssueScoreBadge score={issue.score} /> : null}

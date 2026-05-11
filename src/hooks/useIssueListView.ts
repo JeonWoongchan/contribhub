@@ -37,7 +37,7 @@ export function useIssueListView(filters: IssueFilters, query: string) {
     const filterAvailableLanguages =
         isPending && lastAvailableLanguages.length > 0 ? lastAvailableLanguages : availableLanguages
 
-    const { optimisticIssues, pendingBookmarkKeys, toggleBookmark } = useIssueBookmarks({
+    const { optimisticIssues, toggleBookmark } = useIssueBookmarks({
         sourceIssues: issues,
         isSourceIssuesReady: !isPending && !isError,
     })
@@ -75,7 +75,6 @@ export function useIssueListView(filters: IssueFilters, query: string) {
         partial,
         failedCount,
         toggleBookmark,
-        pendingBookmarkKeys,
         effectiveHasNextPage,
         isFetchingNextPage,
         sentinelRef,

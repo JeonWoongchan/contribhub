@@ -24,7 +24,7 @@ export function BookmarkList() {
         refetch,
     } = useBookmarkList()
 
-    const { optimisticIssues, pendingBookmarkKeys, toggleBookmark } = useIssueBookmarks({
+    const { optimisticIssues, toggleBookmark } = useIssueBookmarks({
         sourceIssues: issues,
         isSourceIssuesReady: !isPending && !isError,
         removeOnUnbookmark: true,
@@ -71,7 +71,6 @@ export function BookmarkList() {
                 renderContent={() => (
                     <BookmarkListContent
                         issues={displayItems}
-                        pendingBookmarkKeys={pendingBookmarkKeys}
                         onToggleBookmark={toggleBookmark}
                     />
                 )}

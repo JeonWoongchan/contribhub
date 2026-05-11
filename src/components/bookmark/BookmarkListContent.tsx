@@ -3,13 +3,11 @@ import type { IssueCardItem } from '@/types/issue'
 
 type BookmarkListContentProps = {
   issues: IssueCardItem[]
-  pendingBookmarkKeys: string[]
   onToggleBookmark: (issue: IssueCardItem) => Promise<void>
 }
 
 export function BookmarkListContent({
   issues,
-  pendingBookmarkKeys,
   onToggleBookmark,
 }: BookmarkListContentProps) {
   return (
@@ -18,7 +16,6 @@ export function BookmarkListContent({
         <IssueCard
           key={issue.url}
           issue={issue}
-          isBookmarkPending={pendingBookmarkKeys.includes(`${issue.repoFullName}#${issue.number}`)}
           onToggleBookmark={onToggleBookmark}
         />
       ))}

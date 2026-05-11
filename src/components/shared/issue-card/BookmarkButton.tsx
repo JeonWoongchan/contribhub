@@ -9,13 +9,11 @@ import type { IssueCardItem } from '@/types/issue'
 
 type BookmarkButtonProps = {
     issue: IssueCardItem
-    isBookmarkPending: boolean
     onToggleBookmarkAction: (issue: IssueCardItem) => Promise<void>
 }
 
-export function BookmarkButton({ issue, isBookmarkPending, onToggleBookmarkAction }: BookmarkButtonProps) {
+export function BookmarkButton({ issue, onToggleBookmarkAction }: BookmarkButtonProps) {
     const [isConfirmOpen, setIsConfirmOpen] = useState(false)
-
     function handleClick() {
         if (issue.isBookmarked) {
             setIsConfirmOpen(true)
@@ -38,7 +36,6 @@ export function BookmarkButton({ issue, isBookmarkPending, onToggleBookmarkActio
                     type="button"
                     variant="ghost"
                     size="icon-xs"
-                    disabled={isBookmarkPending}
                     aria-label={issue.isBookmarked ? '북마크 제거' : '북마크 추가'}
                     aria-pressed={issue.isBookmarked ?? false}
                     className={cn(

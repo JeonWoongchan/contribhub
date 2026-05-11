@@ -5,20 +5,17 @@ import type { IssueCardItem } from '@/types/issue'
 
 type IssueCardProps = {
   issue: IssueCardItem
-  isBookmarkPending: boolean
   onToggleBookmark: (issue: IssueCardItem) => Promise<void>
 }
 
 export function IssueCard({
   issue,
-  isBookmarkPending,
   onToggleBookmark,
 }: IssueCardProps) {
   return (
     <CardShell className="group transition-all" contentClassName="gap-4">
       <IssueItemHeader
         issue={issue}
-        isBookmarkPending={isBookmarkPending}
         onToggleBookmark={onToggleBookmark}
       />
       <IssueItemFooter issue={issue} />

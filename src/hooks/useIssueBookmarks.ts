@@ -15,13 +15,13 @@ type UseIssueBookmarksOptions = {
   removeOnUnbookmark?: boolean
 }
 
-function getBookmarkFailureMessage(wasBookmarked: boolean): string {
+export function getBookmarkFailureMessage(wasBookmarked: boolean): string {
   const action = wasBookmarked ? '제거' : '저장'
   return `북마크를 ${action}하지 못했습니다. 잠시 후 다시 시도해 주세요.`
 }
 
-// 카드 단위 북마크 식별 키 생성 유틸리티 함수 선언부.
-function getBookmarkKey(issue: Pick<IssueCardItem, 'repoFullName' | 'number'>): string {
+// 카드 단위 북마크 식별 키 생성
+export function getBookmarkKey(issue: Pick<IssueCardItem, 'repoFullName' | 'number'>): string {
   return `${issue.repoFullName}#${issue.number}`
 }
 
@@ -181,7 +181,6 @@ export function useIssueBookmarks({
   // 북마크 상호작용에 필요한 공개 인터페이스 반환부.
   return {
     optimisticIssues,
-    pendingBookmarkKeys,
     toggleBookmark,
   }
 }

@@ -29,7 +29,6 @@ export function IssueList() {
         partial,
         failedCount,
         toggleBookmark,
-        pendingBookmarkKeys,
         effectiveHasNextPage,
         isFetchingNextPage,
         sentinelRef,
@@ -76,7 +75,6 @@ export function IssueList() {
                         partial={partial}
                         failedCount={failedCount}
                         onToggleBookmark={toggleBookmark}
-                        pendingBookmarkKeys={pendingBookmarkKeys}
                     />
                 )}
             />
