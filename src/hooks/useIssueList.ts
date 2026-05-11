@@ -30,6 +30,9 @@ function buildIssueListSearchParams({ offset, batch }: IssuePageParam, filters: 
   for (const type of filters.contributionTypes) {
     params.append('contributionTypes', type)
   }
+  for (const level of filters.competitionLevels) {
+    params.append('competitionLevels', level)
+  }
   if (filters.minScore !== null) {
     params.set('minScore', String(filters.minScore))
   }
@@ -56,7 +59,7 @@ const DEFAULT_ERROR_MESSAGE = '오류가 발생했습니다.'
 
 export function useIssueList(filters: IssueFilters = EMPTY_ISSUE_FILTERS): UseIssueListResult {
   const query = useInfiniteQuery({
-    queryKey: [...QUERY_KEYS.issues, filters.language, filters.difficultyLevel, filters.contributionTypes, filters.minScore, filters.minStars],
+    queryKey: [...QUERY_KEYS.issues, filters.language, filters.difficultyLevel, filters.contributionTypes, filters.competitionLevels, filters.minScore, filters.minStars],
     queryFn: ({ pageParam }) => {
       const params = buildIssueListSearchParams(pageParam as IssuePageParam, filters)
 
