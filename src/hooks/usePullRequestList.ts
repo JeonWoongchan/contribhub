@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { PAGE_SIZE } from '@/constants/scoring-rules'
+import { ISSUE_LIST_STALE_TIME_MS, PAGE_SIZE } from '@/constants/scoring-rules'
 import { fetchApi } from '@/lib/fetch-api'
 import type { PullRequestItem, PullRequestState, PullRequestSummary } from '@/types/pull-request'
 import type { PRListPage } from '@/types/api'
@@ -25,6 +25,7 @@ export function usePullRequestList(): UsePullRequestListResult {
 
   const query = useInfiniteQuery({
     queryKey: [...QUERY_KEYS.pullRequests, stateFilter],
+    staleTime: ISSUE_LIST_STALE_TIME_MS,
     queryFn: ({ pageParam }) => {
       const stateQuery = stateFilter ? `&state=${stateFilter}` : ''
       return fetchApi<PRListPage>(

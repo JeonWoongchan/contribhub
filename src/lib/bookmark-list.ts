@@ -1,7 +1,9 @@
+import { unstable_cache } from 'next/cache'
 import { countUserBookmarks, listUserBookmarks } from '@/lib/bookmarks'
 import { scoreIssue } from '@/lib/github/issues/scorer'
 import { fetchBookmarkedIssues } from '@/lib/github/issues/bookmark'
 import { loadOnboardingProfile } from '@/lib/user/profile'
+import { GITHUB_API_CACHE_TTL_SECONDS } from '@/constants/scoring-rules'
 import type { Bookmark } from '@/types/bookmark'
 import type { IssueCardItem, RawIssue } from '@/types/issue'
 
@@ -109,7 +111,14 @@ export async function getBookmarkList({
     loadOnboardingProfile(userId),
   ])
 
-  const githubIssues = await fetchBookmarkedIssues(bookmarks, accessToken)
+  // 북마크 목록이 같으면 GitHub API 호출 결과를 캐시 — 키에 북마크 식별자 포함으로 변경 시 자동 갱신
+  const bookmarkKeyStr = bookmarks.map(getBookmarkKey).sort().join(',')
+  const getCachedBookmarkIssues = unstable_cache(
+    () => fetchBookmarkedIssues(bookmarks, accessToken),
+    ['github-bookmark-issues', userId, bookmarkKeyStr],
+    { revalidate: GITHUB_API_CACHE_TTL_SECONDS }
+  )
+  const githubIssues = await getCachedBookmarkIssues()
   const githubIssueMap = new Map(githubIssues.map((issue) => [getIssueKey(issue), issue] as const))
 
   const issues = bookmarks.map((bookmark) =>
