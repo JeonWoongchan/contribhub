@@ -36,7 +36,6 @@ export function getDemoIssues(): IssueCardItem[] {
             competitionLevel: 'OPEN',
             hasPR: false,
             isBookmarked: false,
-            healthScore: 88,
         },
         {
             number: 5678,
@@ -56,7 +55,6 @@ export function getDemoIssues(): IssueCardItem[] {
             competitionLevel: 'OPEN',
             hasPR: false,
             isBookmarked: false,
-            healthScore: 92,
         },
         {
             number: 9012,
@@ -76,7 +74,6 @@ export function getDemoIssues(): IssueCardItem[] {
             competitionLevel: 'OPEN',
             hasPR: false,
             isBookmarked: false,
-            healthScore: 76,
         },
     ]
 }

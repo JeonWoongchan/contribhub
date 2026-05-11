@@ -1,5 +1,4 @@
 import { countUserBookmarks, listUserBookmarks } from '@/lib/bookmarks'
-import { getRepoHealthMap } from '@/lib/github/issues/health'
 import { scoreIssue } from '@/lib/github/issues/scorer'
 import { fetchBookmarkedIssues } from '@/lib/github/issues/bookmark'
 import { loadOnboardingProfile } from '@/lib/user/profile'
@@ -41,49 +40,21 @@ function toFallbackIssueCardItem(bookmark: Bookmark): IssueCardItem {
     competitionLevel: null,
     hasPR: false,
     isBookmarked: true,
-    healthScore: null,
   }
 }
 
 // 온보딩 프로필이 있을 때 채점 결과를 카드 아이템 형식으로 변환하는 단계.
 function toIssueCardItemFromScoredIssue(
-  healthMap: Map<string, number>,
   githubIssue: RawIssue,
   profile: NonNullable<Awaited<ReturnType<typeof loadOnboardingProfile>>>
 ): IssueCardItem {
-  const scoredIssue = scoreIssue(
-    githubIssue,
-    profile,
-    healthMap.get(githubIssue.repository.nameWithOwner) ?? null
-  )
-
-  return {
-    number: scoredIssue.number,
-    title: scoredIssue.title,
-    url: scoredIssue.url,
-    repoFullName: scoredIssue.repoFullName,
-    repoUrl: scoredIssue.repoUrl,
-    language: scoredIssue.language,
-    stargazerCount: scoredIssue.stargazerCount,
-    labels: scoredIssue.labels,
-    commentCount: scoredIssue.commentCount,
-    createdAt: scoredIssue.createdAt,
-    updatedAt: scoredIssue.updatedAt,
-    score: scoredIssue.score,
-    difficultyLevel: scoredIssue.difficultyLevel,
-    contributionType: scoredIssue.contributionType,
-    competitionLevel: scoredIssue.competitionLevel,
-    hasPR: scoredIssue.hasPR,
-    isBookmarked: true,
-    healthScore: scoredIssue.healthScore,
-  }
+  return { ...scoreIssue(githubIssue, profile), isBookmarked: true }
 }
 
 // 온보딩 프로필이 없을 때 GitHub 원본 정보 기반 카드 아이템을 구성하는 단계.
 function toIssueCardItemWithoutProfile(
   bookmark: Bookmark,
-  githubIssue: RawIssue,
-  healthMap: Map<string, number>
+  githubIssue: RawIssue
 ): IssueCardItem {
   return {
     number: githubIssue.number,
@@ -103,7 +74,6 @@ function toIssueCardItemWithoutProfile(
     competitionLevel: null,
     hasPR: githubIssue.timelineItems.nodes.some((node) => node.__typename === 'CrossReferencedEvent'),
     isBookmarked: true,
-    healthScore: healthMap.get(githubIssue.repository.nameWithOwner) ?? null,
   }
 }
 
@@ -111,7 +81,6 @@ function toIssueCardItemWithoutProfile(
 function toBookmarkListItem(
   bookmark: Bookmark,
   githubIssue: RawIssue | null,
-  healthMap: Map<string, number>,
   profile: Awaited<ReturnType<typeof loadOnboardingProfile>>
 ): IssueCardItem {
   // GitHub 이슈가 없으면 DB 북마크 정보만으로 fallback 카드 생성 단계.
@@ -121,11 +90,11 @@ function toBookmarkListItem(
 
   // 온보딩 프로필이 없으면 점수 계산 없이 GitHub 원본 기반 카드 생성 단계.
   if (!profile) {
-    return toIssueCardItemWithoutProfile(bookmark, githubIssue, healthMap)
+    return toIssueCardItemWithoutProfile(bookmark, githubIssue)
   }
 
   // 온보딩 프로필이 있으면 채점 결과 기반 카드 생성 단계.
-  return toIssueCardItemFromScoredIssue(healthMap, githubIssue, profile)
+  return toIssueCardItemFromScoredIssue(githubIssue, profile)
 }
 
 export async function getBookmarkList({
@@ -134,31 +103,19 @@ export async function getBookmarkList({
   limit,
   offset,
 }: GetBookmarkListInput) {
-  // 북마크 목록 및 전체 개수 조회 단계.
   const [bookmarks, total, profile] = await Promise.all([
     listUserBookmarks(userId, { limit, offset }),
     countUserBookmarks(userId),
     loadOnboardingProfile(userId),
   ])
 
-  // 북마크 기준 GitHub 이슈 정보 조회 단계.
   const githubIssues = await fetchBookmarkedIssues(bookmarks, accessToken)
-
-  // 북마크 카드 표시용 저장소 health 점수 조회 단계.
-  const healthMap = await getRepoHealthMap(
-    [...new Set(githubIssues.map((issue) => issue.repository.nameWithOwner))],
-    accessToken
-  )
-
-  // GitHub 이슈 조회 결과 맵 구성 단계.
   const githubIssueMap = new Map(githubIssues.map((issue) => [getIssueKey(issue), issue] as const))
 
-  // 북마크 목록을 공통 이슈 카드 형식으로 변환하는 단계.
   const issues = bookmarks.map((bookmark) =>
-    toBookmarkListItem(bookmark, githubIssueMap.get(getBookmarkKey(bookmark)) ?? null, healthMap, profile)
+    toBookmarkListItem(bookmark, githubIssueMap.get(getBookmarkKey(bookmark)) ?? null, profile)
   )
 
-  // 북마크 목록 응답 데이터 반환 단계.
   return {
     issues,
     pageInfo: {

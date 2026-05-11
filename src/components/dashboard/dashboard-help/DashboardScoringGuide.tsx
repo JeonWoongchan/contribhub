@@ -4,11 +4,10 @@ import {
     CONTRIBUTION_TYPE_SCORE,
     DIFFICULTY_SCORE,
     EXPERIENCE_COMPETITION_BONUS,
-    HEALTH_BONUS,
-    HEALTH_SCORE_TIERS,
-    HEALTH_THRESHOLD,
     LANGUAGE_SCORE,
+    MIN_CANDIDATE_REPO_STARS,
     PURPOSE_SCORE_RULES,
+    REPO_STAR_SCORE_TIERS,
     TIME_BUDGET_RULES,
 } from '@/constants/scoring-rules'
 import { Badge } from '@/components/ui/badge'
@@ -54,14 +53,12 @@ function formatPreferredTypes(types: readonly string[]): string {
 }
 
 
-// 기여 목적 이론적 최대 가산점: 건강도·경쟁도·저장소·유형·난이도 보너스 합산
+// 기여 목적 이론적 최대 가산점: 경쟁도·유형·난이도 보너스 합산
 const MAX_PURPOSE_SCORE = Math.max(
     ...(['portfolio', 'growth', 'community'] as const).map((p) => {
         const r = PURPOSE_SCORE_RULES[p]
         return (
-            r.highHealthBonus +
             Math.max(r.openCompetitionBonus, r.activeCompetitionBonus) +
-            r.recognizedRepoBonus +
             r.preferredTypeBonus +
             r.preferredDifficultyBonus
         )
@@ -413,30 +410,19 @@ export function DashboardScoringGuide() {
 
             <Separator />
 
-            {/* 7. 저장소 건강도 보너스 */}
+            {/* 7. 저장소 인지도 */}
             <Section
                 number={7}
-                title="저장소 건강도 보너스"
-                badge={`최대 +${HEALTH_BONUS.EXCELLENT}`}
-                description="저장소가 얼마나 활발히 유지보수되는지를 4가지 항목으로 0~100점으로 평가합니다. 건강도가 낮은 저장소는 추천 목록에서 제외됩니다."
+                title="저장소 인지도"
+                badge={`최대 +${REPO_STAR_SCORE_TIERS[0].score}`}
+                description={`커뮤니티에서 주목받는 저장소일수록 활발한 피드백을 기대할 수 있어 star 수를 기준으로 가산합니다. star ${MIN_CANDIDATE_REPO_STARS}개 미만인 저장소는 추천 후보에서 제외됩니다.`}
             >
                 <ScoreTable
-                    rows={[
-                        { label: '최근 커밋 시점', score: '최대 30점', positive: true },
-                        { label: 'PR 응답 속도', score: '최대 30점', positive: true },
-                        { label: 'PR merge rate', score: '최대 25점', positive: true },
-                        { label: '메인테이너 응답률', score: '최대 15점', positive: true },
-                    ]}
-                />
-                <p className="text-xs font-medium text-foreground">건강도 점수별 추천 보너스</p>
-                <ScoreTable
-                    rows={[
-                        { label: `${HEALTH_SCORE_TIERS.EXCELLENT}점 이상 (excellent)`, score: fmt(HEALTH_BONUS.EXCELLENT), positive: true },
-                        { label: `${HEALTH_SCORE_TIERS.HIGH}점 이상 (high)`, score: fmt(HEALTH_BONUS.HIGH), positive: true },
-                        { label: `${HEALTH_SCORE_TIERS.MID}점 이상 (mid)`, score: fmt(HEALTH_BONUS.MID), positive: true },
-                        { label: `${HEALTH_SCORE_TIERS.LOW}점 이상 (low)`, score: fmt(HEALTH_BONUS.LOW), positive: true },
-                        { label: `${HEALTH_THRESHOLD}점 미만`, score: '추천 제외', negative: true },
-                    ]}
+                    rows={REPO_STAR_SCORE_TIERS.map((tier) => ({
+                        label: `★ ${tier.stars.toLocaleString()} 이상`,
+                        score: fmt(tier.score),
+                        positive: true,
+                    }))}
                 />
             </Section>
         </div>

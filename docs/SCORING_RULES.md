@@ -1,6 +1,6 @@
 # Scoring Rules
 
-이 문서는 현재 `src/constants/scoring-rules.ts`와 `src/lib/github/issues/scorer.ts`, `ranking.ts`, `repo-health/calculate.ts` 기준의 추천 규칙을 설명한다.
+이 문서는 현재 `src/constants/scoring-rules.ts`와 `src/lib/github/issues/scorer.ts`, `ranking.ts` 기준의 추천 규칙을 설명한다.
 
 ## 기본 설정
 
@@ -9,22 +9,19 @@
 | `PAGE_SIZE` | `10` | API page 크기 |
 | `GITHUB_API_CACHE_TTL_SECONDS` | `60` | GitHub API server cache TTL |
 | `GITHUB_API_TIMEOUT_MS` | `8000` | GitHub API timeout |
-| `REPO_HEALTH_CACHE_TTL_HOURS` | `1` | repo health DB cache TTL |
-| `HEALTH_THRESHOLD` | `50` | ranking에서 낮은 health 저장소 필터 기준 |
+| `MIN_CANDIDATE_REPO_STARS` | `50` | GitHub 검색 쿼리의 최소 star 수 — 후보 단계 하드필터 |
 | `SCORE_FILTER_THRESHOLDS` | `10, 20, 30, 40, 50, 60, 70, 80, 90` | UI 최소 점수 필터 |
 | `STAR_FILTER_THRESHOLDS` | `100, 500, 1000, 5000` | UI 최소 스타 수 필터 |
 
 ## 추천 데이터 흐름
 
 1. 온보딩 프로필을 로드한다.
-2. GitHub issue search로 언어별 후보 이슈를 가져온다.
+2. GitHub issue search로 언어별 후보 이슈를 가져온다 (`stars:>=MIN_CANDIDATE_REPO_STARS` 조건 포함).
 3. 중복 이슈를 URL 기준으로 제거한다.
-4. 저장소 health score를 조회한다.
-5. `scoreIssue()`로 각 이슈를 점수화한다.
-6. `rankIssues()` 내부에서 health 임계값 미달 저장소를 필터링한다.
-7. score 우선, 동점이면 deterministic hash 기준으로 정렬한다.
-8. `applyFilters()`가 사용자 선택 API query filter(언어, 난이도, 기여 유형, 최소 점수, 최소 스타 수)를 적용하고 page를 잘라 반환한다.
-9. 활성 필터가 있고 반환 결과가 PAGE_SIZE에 미달하면 `canLoadMoreCandidates: true`를 설정해 자동 batch 교체를 중단한다.
+4. `scoreIssue()`로 각 이슈를 점수화한다.
+5. score 우선, 동점이면 deterministic hash 기준으로 정렬한다.
+6. `applyFilters()`가 사용자 선택 API query filter(언어, 난이도, 기여 유형, 최소 점수, 최소 스타 수)를 적용하고 page를 잘라 반환한다.
+7. 활성 필터가 있고 반환 결과가 PAGE_SIZE에 미달하면 `canLoadMoreCandidates: true`를 설정해 자동 batch 교체를 중단한다.
 
 ## 스타 수 필터
 
@@ -167,32 +164,16 @@ PR이 연결된 이슈는 두 항목 모두에서 감점된다.
 - 유지보수가 활발하고 꾸준히 참여하기 좋은 저장소 선호
 - 선호 유형: `doc`, `bug`, `test`
 
-## Repo Health
+## 저장소 인지도 점수
 
-저장소 health score는 0~100 범위다.
+star 수 기반 전역 가산점. GitHub 검색 결과 데이터를 그대로 사용하며 추가 API 호출 없음.
 
-| 요소 | 최대 점수 |
+| star 수 | score |
 | --- | --- |
-| 최근 commit | `30` |
-| PR 응답 속도 | `30` |
-| PR merge rate | `25` |
-| maintainer response | `15` |
-
-계산 위치:
-
-- `src/lib/github/repo-health/calculate.ts`
-
-캐시:
-
-- `repo_health_cache`
-- TTL: `REPO_HEALTH_CACHE_TTL_HOURS`
-
-추천 bonus:
-
-- excellent: `85+`
-- high: `70+`
-- mid: `55+`
-- low: `40+`
+| 3000 이상 | `8` |
+| 1000 이상 | `5` |
+| 300 이상 | `3` |
+| 100 이상 | `1` |
 
 ## 정렬 안정성
 

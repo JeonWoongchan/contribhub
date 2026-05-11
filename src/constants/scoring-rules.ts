@@ -5,12 +5,13 @@ import type { ContributionType, ExperienceLevel, Purpose, WeeklyHours } from '@/
 // GitHub Search API로 후보 이슈를 가져온 뒤, 아래 규칙으로 사용자 온보딩 답변과 이슈 메타데이터를 비교한다.
 // 최종 score는 카드 우측 상단의 매칭 점수로 노출되며, 높은 점수일수록 사용자 설정에 더 잘 맞는 이슈로 본다.
 export const PAGE_SIZE = 10
-export const REPO_HEALTH_CACHE_TTL_HOURS = 1
 export const MATCH_SCORE_MINIMUM = 0
 // GitHub API 권장 캐시 TTL (Cache-Control: max-age=60 기준)
 export const GITHUB_API_CACHE_TTL_SECONDS = 60
 // GitHub API 응답 대기 상한 — 초과 시 AbortError로 함수 조기 종료
 export const GITHUB_API_TIMEOUT_MS = 8_000
+// GitHub 검색 쿼리의 최소 star 수 — 완전히 방치된 저장소를 후보에서 제외
+export const MIN_CANDIDATE_REPO_STARS = 50
 
 // 온보딩의 선호 언어와 GitHub 저장소 primaryLanguage를 비교한다.
 // 선택한 언어이면 순위 무관하게 동일 점수를 주고, 같은 계열 언어는 부분 점수를 준다.
@@ -30,13 +31,14 @@ export const LANGUAGE_GROUPS: string[][] = [
 
 // 온보딩의 오픈소스 기여 경험과 이슈 난이도 추정값을 비교한다.
 // 사용자 수준과 같은 난이도가 가장 좋고, 한 단계 높은 이슈는 도전 가능한 이슈로 일부 가산한다.
+// health bonus 제거분(최대 8점)을 난이도 적합도에 재배분 — 이론적 최대 합산 100점 유지
 export const DIFFICULTY_SCORE = {
-  PERFECT: 15,
-  ONE_ABOVE: 8,
-  TWO_ABOVE: 4,
+  PERFECT: 18,
+  ONE_ABOVE: 10,
+  TWO_ABOVE: 5,
   THREE_ABOVE: 0,
-  ONE_BELOW: 6,
-  TWO_BELOW: 3,
+  ONE_BELOW: 8,
+  TWO_BELOW: 4,
   THREE_BELOW: 0,
 } as const
 
@@ -100,26 +102,11 @@ export const COMPETITION_PENALTY = {
   VERY_HIGH_ACTIVITY: -10,
 } as const
 
-// 저장소 활성도는 추천 안정성에 영향을 준다.
-// 관리가 잘 되는 저장소일수록 답변을 받을 가능성이 높다고 보고 가산한다.
-export const HEALTH_BONUS = {
-  EXCELLENT: 8,
-  HIGH: 6,
-  MID: 4,
-  LOW: 2,
-} as const
-
-export const HEALTH_SCORE_TIERS = {
-  EXCELLENT: 85,
-  HIGH: 70,
-  MID: 55,
-  LOW: 40,
-} as const
-
+// 전역 저장소 인지도 점수 — health bonus 제거 후 독립 채점 차원으로 승격 (최대 8점)
 export const REPO_STAR_SCORE_TIERS = [
-  { stars: 3000, score: 4 },
-  { stars: 1000, score: 3 },
-  { stars: 300, score: 2 },
+  { stars: 3000, score: 8 },
+  { stars: 1000, score: 5 },
+  { stars: 300, score: 3 },
   { stars: 100, score: 1 },
 ] as const
 
@@ -197,12 +184,8 @@ export const TIME_BUDGET_RULES: Record<
 export const PURPOSE_SCORE_RULES: Record<
   Purpose,
   {
-    highHealthBonus: number
-    mediumHealthBonus: number
     openCompetitionBonus: number
     activeCompetitionBonus: number
-    recognizedRepoStars: number
-    recognizedRepoBonus: number
     preferredTypes: ContributionType[]
     preferredDifficulties: ExperienceLevel[]
     preferredTypeBonus: number
@@ -210,84 +193,30 @@ export const PURPOSE_SCORE_RULES: Record<
   }
 > = {
   portfolio: {
-    highHealthBonus: 3,
-    mediumHealthBonus: 2,
     openCompetitionBonus: 3,
     activeCompetitionBonus: 1,
-    recognizedRepoStars: 300,
-    recognizedRepoBonus: 2,
     preferredTypes: ['doc', 'bug', 'feat'],
     preferredDifficulties: ['beginner', 'junior'],
     preferredTypeBonus: 4,
     preferredDifficultyBonus: 2,
   },
   growth: {
-    highHealthBonus: 3,
-    mediumHealthBonus: 2,
     openCompetitionBonus: 1,
     activeCompetitionBonus: 3,
-    recognizedRepoStars: 0,
-    recognizedRepoBonus: 0,
     preferredTypes: ['feat', 'test', 'bug'],
     preferredDifficulties: ['junior', 'mid', 'senior'],
     preferredTypeBonus: 5,
     preferredDifficultyBonus: 5,
   },
   community: {
-    highHealthBonus: 4,
-    mediumHealthBonus: 2,
     openCompetitionBonus: 3,
     activeCompetitionBonus: 2,
-    recognizedRepoStars: 0,
-    recognizedRepoBonus: 0,
     preferredTypes: ['doc', 'bug', 'test'],
     preferredDifficulties: ['beginner', 'junior', 'mid'],
     preferredTypeBonus: 5,
     preferredDifficultyBonus: 4,
   },
 }
-
-// 저장소 활성도 계산 규칙이다.
-// 최근 커밋, PR 응답 속도, merge rate, maintainer response를 합산해 repo health score를 만든다.
-export const REPO_HEALTH_WEIGHTS = {
-  RECENT_COMMIT: {
-    weight: 30,
-    rules: [
-      { days: 30, score: 30 },
-      { days: 90, score: 20 },
-      { days: 180, score: 10 },
-      { days: Infinity, score: 0 },
-    ],
-  },
-  PR_RESPONSE_SPEED: {
-    weight: 30,
-    rules: [
-      { days: 3, score: 30 },
-      { days: 7, score: 20 },
-      { days: 14, score: 10 },
-      { days: Infinity, score: 0 },
-    ],
-  },
-  MERGE_RATE: {
-    weight: 25,
-    rules: [
-      { rate: 0.8, score: 25 },
-      { rate: 0.6, score: 15 },
-      { rate: 0.4, score: 5 },
-      { rate: 0, score: 0 },
-    ],
-  },
-  MAINTAINER_RESPONSE: {
-    weight: 15,
-    rules: [
-      { ratio: 0.7, score: 15 },
-      { ratio: 0.4, score: 8 },
-      { ratio: 0, score: 4 },
-    ],
-  },
-} as const
-
-export const HEALTH_THRESHOLD = 50
 
 export const SCORE_FILTER_THRESHOLDS = [10, 20, 30, 40, 50, 60, 70, 80, 90] as const
 export type ScoreThreshold = typeof SCORE_FILTER_THRESHOLDS[number]

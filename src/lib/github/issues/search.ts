@@ -1,4 +1,5 @@
 import { githubGraphQL, GitHubRateLimitError, GitHubUnauthorizedError } from '@/lib/github/client'
+import { MIN_CANDIDATE_REPO_STARS } from '@/constants/scoring-rules'
 import type { RawIssue } from '@/types/issue'
 
 const SEARCH_ISSUES_QUERY = `
@@ -65,9 +66,11 @@ export type IssueSearchResult = {
     unauthorized: boolean
 }
 
-// 언어별 GitHub 이슈 검색 쿼리 문자열 생성
+// 언어별 GitHub 이슈 검색 쿼리 문자열 생성 — star 수 미달 저장소는 GitHub 단계에서 제외
 function buildIssueQueries(languages: string[]): string[] {
-    return languages.map((lang) => `is:open is:issue label:"help wanted" language:${lang}`)
+    return languages.map(
+        (lang) => `is:open is:issue label:"help wanted" language:${lang} stars:>=${MIN_CANDIDATE_REPO_STARS}`
+    )
 }
 
 // URL 기준 중복 이슈 제거

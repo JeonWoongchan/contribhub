@@ -62,7 +62,6 @@ export interface ScoredIssue {
   competitionLevel: CompetitionLevel
   hasPR: boolean
   isBookmarked?: boolean
-  healthScore: number | null
 }
 
 export interface IssueCardItem {
@@ -83,5 +82,4 @@ export interface IssueCardItem {
   competitionLevel: CompetitionLevel | null
   hasPR: boolean
   isBookmarked?: boolean
-  healthScore: number | null
 }
