@@ -158,7 +158,10 @@ export function useIssueBookmarks({
       }
 
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.issues, refetchType: 'all' }),
+        // isBookmarked는 optimisticIssues가 이미 관리하므로 즉시 리페치 불필요.
+        // stale 마킹만 하고 다음 자연 페치 시 갱신 — 즉시 리페치 시 pendingKeys 해제와
+        // sourceIssues 갱신 사이 타이밍 차로 낙관적 상태가 덮어써지는 플리커 방지.
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.issues, refetchType: 'none' }),
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.bookmarks }),
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myPageActivity }),
       ])

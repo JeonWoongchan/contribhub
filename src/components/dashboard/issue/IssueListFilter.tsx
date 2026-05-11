@@ -22,6 +22,11 @@ const COMPETITION_LEVEL_OPTIONS: { value: CompetitionLevel; label: string }[] = 
     { value: 'HAS_PR', label: 'PR' },
 ]
 
+// 배열 필터 토글 — 값이 있으면 제거, 없으면 추가
+function toggleInArray<T>(arr: T[], value: T): T[] {
+    return arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value]
+}
+
 function FilterPill({
     label,
     selected,
@@ -63,19 +68,11 @@ export function IssueListFilter({ filters, availableLanguages, onChangeAction }:
         onChangeAction({ ...filters, [key]: filters[key] === value ? null : value })
     }
 
-    const toggleContributionType = (value: ContributionType) => {
-        const next = filters.contributionTypes.includes(value)
-            ? filters.contributionTypes.filter((t) => t !== value)
-            : [...filters.contributionTypes, value]
-        onChangeAction({ ...filters, contributionTypes: next })
-    }
+    const toggleContributionType = (value: ContributionType) =>
+        onChangeAction({ ...filters, contributionTypes: toggleInArray(filters.contributionTypes, value) })
 
-    const toggleCompetitionLevel = (value: CompetitionLevel) => {
-        const next = filters.competitionLevels.includes(value)
-            ? filters.competitionLevels.filter((l) => l !== value)
-            : [...filters.competitionLevels, value]
-        onChangeAction({ ...filters, competitionLevels: next })
-    }
+    const toggleCompetitionLevel = (value: CompetitionLevel) =>
+        onChangeAction({ ...filters, competitionLevels: toggleInArray(filters.competitionLevels, value) })
 
     const activeCount =
         (filters.language ? 1 : 0) +
@@ -92,35 +89,38 @@ export function IssueListFilter({ filters, availableLanguages, onChangeAction }:
     return (
         <Collapsible open={open} onOpenChange={setOpen}>
             <div className="rounded-xl border border-border/70 bg-background/70">
-                <CollapsibleTrigger asChild>
-                    <button
-                        type="button"
-                        className="group flex w-full cursor-pointer items-center gap-2 px-3 py-2.5 text-left"
-                    >
-                        <span className="text-xs font-bold text-interactive-action">필터</span>
-                        {activeCount > 0 && (
-                            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-interactive-selected px-1 text-[10px] font-semibold text-interactive-selected-foreground">
-                                {activeCount}
-                            </span>
-                        )}
-                        {activeCount > 0 && (
-                          <button
+                {/* 트리거와 초기화를 형제 요소로 배치 — button 중첩 방지 */}
+                <div className="flex items-center gap-2 px-3 py-2.5">
+                    <CollapsibleTrigger asChild>
+                        <button
+                            type="button"
+                            className="group flex flex-1 cursor-pointer items-center gap-2 text-left"
+                        >
+                            <span className="text-xs font-bold text-interactive-action">필터</span>
+                            {activeCount > 0 && (
+                                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-interactive-selected px-1 text-[10px] font-semibold text-interactive-selected-foreground">
+                                    {activeCount}
+                                </span>
+                            )}
+                            <ChevronDown
+                                className="ml-auto h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180"
+                            />
+                        </button>
+                    </CollapsibleTrigger>
+                    {activeCount > 0 && (
+                        <button
                             type="button"
                             onClick={() => onChangeAction(EMPTY_ISSUE_FILTERS)}
-                            className="cursor-pointer text-xs text-muted-foreground underline underline-offset-2 transition-colors hover:text-foreground"
-                          >
+                            className="shrink-0 cursor-pointer text-xs text-muted-foreground underline underline-offset-2 transition-colors hover:text-foreground"
+                        >
                             초기화
-                          </button>
-                        )}
-                        <ChevronDown
-                            className="ml-auto h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180"
-                        />
-                    </button>
-                </CollapsibleTrigger>
+                        </button>
+                    )}
+                </div>
 
-                <CollapsibleContent className="relative p-2 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
+                <CollapsibleContent className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
                     <div className="flex flex-col gap-2 border-t border-border/50 p-4">
-                        {availableLanguages.length > 1 ? (
+                        {availableLanguages.length > 1 && (
                             <FilterRow label="언어">
                                 {availableLanguages.map((language) => (
                                     <FilterPill
@@ -131,7 +131,7 @@ export function IssueListFilter({ filters, availableLanguages, onChangeAction }:
                                     />
                                 ))}
                             </FilterRow>
-                        ) : null}
+                        )}
                         <FilterRow label="난이도">
                             {EXPERIENCE_LEVELS.map((level) => (
                                 <FilterPill
