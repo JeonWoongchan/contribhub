@@ -131,6 +131,26 @@ GET API는 기본적으로 `fetchApi<T>()`를 사용한다.
 - Route Handler는 `getGitHubErrorResponse()`로 GitHub 오류를 구조화한다.
 - 일반 내부 오류는 `500 INTERNAL_ERROR`로 반환한다.
 
+## 운영 인프라
+
+### Cold Start 방지
+
+Vercel Hobby 플랜은 일정 시간 요청이 없으면 서버리스 함수가 종료되어 cold start가 발생한다.
+이를 방지하기 위해 **UptimeRobot**으로 `/api/health` 엔드포인트를 주기적으로 호출한다.
+
+| 항목 | 내용 |
+|------|------|
+| 모니터링 도구 | UptimeRobot (무료 플랜) |
+| 대상 URL | `https://<도메인>/api/health` |
+| 호출 주기 | 5분 |
+| 모니터 유형 | HTTP(s) |
+| 기대 응답 | `200 OK` + `{ "status": "ok" }` |
+
+**이전 방식 (제거됨)**: `vercel.json`의 Vercel Cron으로 3분마다 `/api/health`를 호출했으나, Vercel Hobby 플랜에서 Cron이 프로덕션 배포에만 동작하고 별도 플랜 비용이 발생할 수 있어 UptimeRobot으로 전환했다.
+
+`/api/health` 구현은 DB 연결 없이 `{ status: "ok" }`만 반환한다(`src/app/api/health/route.ts`).
+DB 헬스체크가 필요하면 해당 라우트에서 `sql\`SELECT 1\`` 을 추가하면 된다.
+
 ## 테스트
 
 - 단위 테스트: GitHub client, search, scorer, filters, repo health, auth utils
