@@ -60,10 +60,9 @@ export async function fetchIssueListPage({
         return { error: 'all_failed' }
     }
 
-    // 이슈 채점·정렬 후 북마크 여부 병합
+    // 이슈 채점 후 북마크 여부 병합
     const bookmarkKeys = new Set(bookmarkKeyList)
-    const randomSeed = `${userId}:${batchParam}`
-    const rankedIssues = rankIssues(searchResult.issues, profile, randomSeed).map((issue) => ({
+    const rankedIssues = rankIssues(searchResult.issues, profile).map((issue) => ({
         ...issue,
         isBookmarked: bookmarkKeys.has(`${issue.repoFullName}#${issue.number}`),
     }))

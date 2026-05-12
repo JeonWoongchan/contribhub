@@ -278,7 +278,7 @@ describe('scoreIssue', () => {
         it('난이도·기여방식 라벨이 모두 없어도 점수가 MATCH_SCORE_MINIMUM보다 의미 있게 높다', () => {
             const noLabelIssue = makeRawIssue({ labels: { nodes: [] } })
             const result = scoreIssue(noLabelIssue, makeProfile())
-            // UNKNOWN 부분 점수 2개(12+10=22)가 합산되어 기본 언어 점수와 함께 충분한 점수 확보
+            // UNKNOWN 부분 점수 2개(14+13=27)가 합산되어 기본 언어 점수와 함께 충분한 점수 확보
             expect(result.score).toBeGreaterThan(MATCH_SCORE_MINIMUM + 20)
         })
     })

@@ -67,44 +67,9 @@ const profile: OnboardingProfile = {
 
 describe('rankIssues — 기본 동작', () => {
     it('rawIssues가 없으면 빈 배열을 반환한다', () => {
-        const result = rankIssues([], profile, 'seed')
+        const result = rankIssues([], profile)
         expect(result).toHaveLength(0)
         expect(mockScore).not.toHaveBeenCalled()
-    })
-
-    it('점수가 높은 이슈가 앞에 위치한다', () => {
-        const raw1 = makeRawIssue({ number: 1 })
-        const raw2 = makeRawIssue({ number: 2 })
-        mockScore
-            .mockReturnValueOnce(makeScoredIssue({ number: 1, url: 'https://url/1', score: 50 }))
-            .mockReturnValueOnce(makeScoredIssue({ number: 2, url: 'https://url/2', score: 90 }))
-
-        const result = rankIssues([raw1, raw2], profile, 'seed')
-
-        expect(result[0].number).toBe(2)
-        expect(result[1].number).toBe(1)
-    })
-
-    it('동일 seed와 동일 입력은 항상 같은 순서를 반환한다', () => {
-        const raws = [1, 2, 3].map((n) => makeRawIssue({ number: n }))
-        const scored = [1, 2, 3].map((n) =>
-            makeScoredIssue({ number: n, url: `https://url/${n}`, score: 70 })
-        )
-
-        mockScore
-            .mockReturnValueOnce(scored[0])
-            .mockReturnValueOnce(scored[1])
-            .mockReturnValueOnce(scored[2])
-        const first = rankIssues(raws, profile, 'fixed-seed').map((i) => i.number)
-
-        mockScore
-            .mockReturnValueOnce(scored[0])
-            .mockReturnValueOnce(scored[1])
-            .mockReturnValueOnce(scored[2])
-        const second = rankIssues(raws, profile, 'fixed-seed').map((i) => i.number)
-
-        // 동일 seed → 동일 순서(페이지네이션 안정성)
-        expect(first).toEqual(second)
     })
 })
 
@@ -114,7 +79,7 @@ describe('rankIssues — 최소 점수 필터', () => {
             .mockReturnValueOnce(makeScoredIssue({ number: 1, url: 'https://url/1', score: RANK_SCORE_THRESHOLD - 1 }))
             .mockReturnValueOnce(makeScoredIssue({ number: 2, url: 'https://url/2', score: RANK_SCORE_THRESHOLD }))
 
-        const result = rankIssues([makeRawIssue({ number: 1 }), makeRawIssue({ number: 2 })], profile, 'seed')
+        const result = rankIssues([makeRawIssue({ number: 1 }), makeRawIssue({ number: 2 })], profile)
 
         expect(result).toHaveLength(1)
         expect(result[0].number).toBe(2)
@@ -123,7 +88,7 @@ describe('rankIssues — 최소 점수 필터', () => {
     it('RANK_SCORE_THRESHOLD와 정확히 같은 점수는 통과한다', () => {
         mockScore.mockReturnValue(makeScoredIssue({ score: RANK_SCORE_THRESHOLD }))
 
-        const result = rankIssues([makeRawIssue()], profile, 'seed')
+        const result = rankIssues([makeRawIssue()], profile)
 
         expect(result).toHaveLength(1)
     })
@@ -131,7 +96,7 @@ describe('rankIssues — 최소 점수 필터', () => {
     it('모든 이슈가 임계값 미만이면 빈 배열을 반환한다', () => {
         mockScore.mockReturnValue(makeScoredIssue({ score: RANK_SCORE_THRESHOLD - 1 }))
 
-        const result = rankIssues([makeRawIssue(), makeRawIssue({ number: 2 })], profile, 'seed')
+        const result = rankIssues([makeRawIssue(), makeRawIssue({ number: 2 })], profile)
 
         expect(result).toHaveLength(0)
     })
@@ -146,7 +111,7 @@ describe('rankIssues — contributionType 점수 반영', () => {
             .mockReturnValueOnce(makeScoredIssue({ number: 1, url: 'https://url/1', contributionType: 'bug' }))
             .mockReturnValueOnce(makeScoredIssue({ number: 2, url: 'https://url/2', contributionType: 'feat' }))
 
-        const result = rankIssues([rawBug, rawFeat], { ...profile, weeklyHours: 2 }, 'seed')
+        const result = rankIssues([rawBug, rawFeat], { ...profile, weeklyHours: 2 })
 
         expect(result).toHaveLength(2)
     })
@@ -155,7 +120,7 @@ describe('rankIssues — contributionType 점수 반영', () => {
         // 기여 방식이 감지되지 않은 이슈는 어떤 weeklyHours에서도 제외하지 않는다
         mockScore.mockReturnValue(makeScoredIssue({ contributionType: null }))
 
-        const result = rankIssues([makeRawIssue()], { ...profile, weeklyHours: 2 }, 'seed')
+        const result = rankIssues([makeRawIssue()], { ...profile, weeklyHours: 2 })
 
         expect(result).toHaveLength(1)
     })

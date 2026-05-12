@@ -6,6 +6,7 @@ import {
   CONTRIBUTION_TYPE_SCORE,
   DIFFICULTY_LABELS,
   DIFFICULTY_SCORE,
+  DIFFICULTY_UNKNOWN_BY_LEVEL,
   EXPERIENCE_COMPETITION_BONUS,
   EXPERIENCE_ORDER,
   LANGUAGE_GROUPS,
@@ -78,9 +79,10 @@ function scoreDifficulty(
   issueDifficulty: ExperienceLevel | null,
   userLevel: ExperienceLevel | null
 ): number {
-  if (!issueDifficulty || !userLevel) {
-    return DIFFICULTY_SCORE.UNKNOWN
-  }
+  // 경험 수준 미설정 — 수준별 분기 불가, junior 중립값 사용
+  if (!userLevel) return DIFFICULTY_UNKNOWN_BY_LEVEL['junior']
+  // 난이도 라벨 없음 — 경험 수준이 높을수록 긍정 신호
+  if (!issueDifficulty) return DIFFICULTY_UNKNOWN_BY_LEVEL[userLevel]
 
   const issueIndex = EXPERIENCE_ORDER.indexOf(issueDifficulty)
   const userIndex = EXPERIENCE_ORDER.indexOf(userLevel)

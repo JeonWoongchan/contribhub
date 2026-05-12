@@ -3,6 +3,7 @@ import {
     COMPETITION_PENALTY,
     CONTRIBUTION_TYPE_SCORE,
     DIFFICULTY_SCORE,
+    DIFFICULTY_UNKNOWN_BY_LEVEL,
     EXPERIENCE_COMPETITION_BONUS,
     LANGUAGE_SCORE,
     MIN_CANDIDATE_REPO_STARS,
@@ -204,11 +205,14 @@ export function DashboardScoringGuide() {
                         { label: '한 단계 아래', score: fmt(DIFFICULTY_SCORE.ONE_BELOW), positive: true },
                         { label: '두 단계 아래', score: fmt(DIFFICULTY_SCORE.TWO_BELOW), positive: true },
                         { label: '세 단계 아래', score: fmt(DIFFICULTY_SCORE.THREE_BELOW) },
-                        { label: '난이도 라벨 없음', score: fmt(DIFFICULTY_SCORE.UNKNOWN), positive: true },
+                        { label: '라벨 없음 · 입문', score: fmt(DIFFICULTY_UNKNOWN_BY_LEVEL.beginner), positive: true },
+                        { label: '라벨 없음 · 초급', score: fmt(DIFFICULTY_UNKNOWN_BY_LEVEL.junior), positive: true },
+                        { label: '라벨 없음 · 중급', score: fmt(DIFFICULTY_UNKNOWN_BY_LEVEL.mid), positive: true },
+                        { label: '라벨 없음 · 고급', score: fmt(DIFFICULTY_UNKNOWN_BY_LEVEL.senior), positive: true },
                     ]}
                 />
                 <p className="text-xs leading-5 text-muted-foreground">
-                    내 수준보다 쉬운 이슈도 기여 자체로 의미가 있으므로 한·두 단계 아래는 낮은 가산점을 부여합니다. 세 단계 이상 차이나면 0점이며, 난이도 라벨이 없는 이슈는 어떤 수준에도 해당할 수 있어 부분 점수를 드립니다.
+                    내 수준보다 쉬운 이슈도 기여 자체로 의미가 있으므로 한·두 단계 아래는 낮은 가산점을 부여합니다. 세 단계 이상 차이나면 0점입니다. 난이도 라벨이 없는 이슈는 good first issue 같은 명시적인 쉬운 신호가 없다는 뜻이므로, 경험 수준이 높을수록 더 높은 점수를 부여합니다.
                 </p>
                 <NoteBox title="주요 난이도 추정 레이블 (이슈 라벨 기준)">
                     <div className="space-y-0.5 text-xs text-muted-foreground">

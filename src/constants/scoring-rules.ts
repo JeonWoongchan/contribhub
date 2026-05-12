@@ -44,7 +44,6 @@ export const LANGUAGE_GROUPS: string[][] = [
 
 // 온보딩의 오픈소스 기여 경험과 이슈 난이도 추정값을 비교한다.
 // 사용자 수준과 같은 난이도가 가장 좋고, 한 단계 높은 이슈는 도전 가능한 이슈로 일부 가산한다.
-// UNKNOWN: 난이도 라벨 없음 — 모든 수준에 해당할 가능성이 있어 중간 점수를 부여한다.
 export const DIFFICULTY_SCORE = {
   PERFECT: 23,
   ONE_ABOVE: 12,
@@ -53,7 +52,17 @@ export const DIFFICULTY_SCORE = {
   ONE_BELOW: 8,
   TWO_BELOW: 4,
   THREE_BELOW: 0,
-  UNKNOWN: 12,
+} as const
+
+// 난이도 라벨 없음(UNKNOWN) 점수 — 경험 수준별로 다르게 해석한다.
+// good first issue 라벨은 "쉽다"는 명시적 신호이므로 라벨 부재는 쉬운 이슈가 아닐 가능성이 높다.
+// 수준이 높을수록 라벨 없음은 오히려 적합 신호에 가까우므로 점수를 높게 부여한다.
+// 경험 수준 미설정(null) 시에는 junior 값을 중립 기본값으로 사용한다.
+export const DIFFICULTY_UNKNOWN_BY_LEVEL: Record<ExperienceLevel, number> = {
+  beginner: 10,
+  junior: 14,
+  mid: 19,
+  senior: 19,
 } as const
 
 export const EXPERIENCE_ORDER: ExperienceLevel[] = ['beginner', 'junior', 'mid', 'senior']
@@ -102,12 +111,12 @@ export const CONTRIBUTION_TYPE_LABELS: Record<ContributionType, string[]> = {
 
 // 사용자가 선택한 기여 방식과 추정된 이슈 작업 성격이 같으면 가산한다.
 // UNKNOWN: 라벨·텍스트로 기여 방식을 감지할 수 없음 — 선택한 방식에 해당할 가능성이 있어 부분 점수를 부여한다.
-//   10으로 설정한 이유: 라벨 없음은 불일치가 아니라 정보 부재이므로 MATCH(16)와의 격차를 6점으로 줄여 패널티 완화.
+//   MATCH(16)와 격차를 3점으로 유지 — 정보 부재는 불일치가 아니므로 NO_MATCH(0)와 명확히 구분한다.
 // NO_MATCH: 기여 방식이 감지됐지만 선택한 방식과 다름 — 점수 없음.
 export const CONTRIBUTION_TYPE_SCORE = {
   MATCH: 16,
   NO_MATCH: 0,
-  UNKNOWN: 10,
+  UNKNOWN: 13,
 } as const
 
 // 댓글 수와 PR 연결 여부로 진입 경쟁도를 추정한다.
