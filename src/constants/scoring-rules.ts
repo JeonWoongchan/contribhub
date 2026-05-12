@@ -8,8 +8,8 @@ export const PAGE_SIZE = 10
 export const MATCH_SCORE_MINIMUM = 0
 // 추천 목록에 노출할 최소 점수 — 미달 이슈는 랭킹 단계에서 제거
 export const RANK_SCORE_THRESHOLD = 50
-// GitHub API 권장 캐시 TTL (Cache-Control: max-age=60 기준)
-export const GITHUB_API_CACHE_TTL_SECONDS = 60
+// 이슈 데이터 캐시 TTL — GitHub 권장(60s)보다 길게 설정해 무한스크롤 중단 후 재개 시 재호출 방지
+export const GITHUB_API_CACHE_TTL_SECONDS = 300
 // GitHub API 응답 대기 상한 — 초과 시 AbortError로 함수 조기 종료
 export const GITHUB_API_TIMEOUT_MS = 8_000
 // 이슈 목록 클라이언트 stale 시간 — 서버 캐시 TTL과 맞춰 재방문 시 즉시 표시
