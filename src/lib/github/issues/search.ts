@@ -105,8 +105,6 @@ export async function fetchCandidateIssues(
         }
     }
 
-    // TODO: 타이밍 분석 후 제거
-    const tGitHub = Date.now()
     const settled = await Promise.allSettled(
         queries.map((query, i) =>
             githubGraphQL<SearchResult>(
@@ -116,7 +114,6 @@ export async function fetchCandidateIssues(
             )
         )
     )
-    console.log(`[TIMING] search.github | langs=${languages.join('+')} elapsed=${Date.now() - tGitHub}ms`)
 
     // settled 원본 인덱스 기준으로 cursor 수집 — filter 후 인덱스를 쓰면 실패한 쿼리 제외로 언어 매핑이 어긋남
     const endCursors: Record<string, string | null> = {}
