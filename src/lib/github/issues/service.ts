@@ -45,10 +45,14 @@ export async function fetchIssueListPage({
     )
 
     // GitHub 이슈 검색(캐시)과 북마크 키 목록 조회를 병렬 실행 — 서로 의존성 없음
+    const tParallelStart = Date.now()
     const [searchResult, bookmarkKeyList] = await Promise.all([
         getCachedIssues(),
         listUserBookmarkKeys(userId),
     ])
+    const tParallelEnd = Date.now()
+    // TODO: 타이밍 분석 후 제거
+    console.log(`[TIMING] service.parallel | issues=${searchResult.issues.length} elapsed=${tParallelEnd - tParallelStart}ms | batch=${batchParam.slice(0, 12)} offset=${offset}`)
 
     if (searchResult.rateLimited && searchResult.issues.length === 0) {
         return { error: 'rate_limited' }
@@ -61,6 +65,7 @@ export async function fetchIssueListPage({
     }
 
     // 이슈 채점 후 북마크 여부 병합
+    const tRankStart = Date.now()
     const bookmarkKeys = new Set(bookmarkKeyList)
     const rankedIssues = rankIssues(searchResult.issues, profile).map((issue) => ({
         ...issue,
@@ -73,6 +78,8 @@ export async function fetchIssueListPage({
     )]
 
     const allIssues = applyFilters(rankedIssues, filters)
+    // TODO: 타이밍 분석 후 제거
+    console.log(`[TIMING] service.rank+filter | ranked=${rankedIssues.length} filtered=${allIssues.length} elapsed=${Date.now() - tRankStart}ms`)
     const pageIssues = allIssues.slice(offset, offset + PAGE_SIZE)
 
     // 현재 배치 캐시 소진 여부 판단 — offset이 캐시 끝에 도달하면 마지막 페이지

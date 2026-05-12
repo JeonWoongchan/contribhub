@@ -10,12 +10,15 @@ import { loadOnboardingProfile } from '@/lib/user/profile'
 import { offsetSchema } from '@/lib/validators/pagination'
 
 export async function GET(req: NextRequest) {
+    const t0 = Date.now()
     const auth = await requireGithubToken(req)
     if (!auth.ok) return err(auth.error, auth.status, auth.code)
+    const t1 = Date.now()
 
     try {
         const profile = await loadOnboardingProfile(auth.userId)
         if (!profile) return err('Onboarding not complete', 400, ErrorCode.ONBOARDING_REQUIRED)
+        const t2 = Date.now()
 
         const { searchParams } = new URL(req.url)
         const offset = offsetSchema.parse(searchParams.get('offset'))
@@ -30,6 +33,9 @@ export async function GET(req: NextRequest) {
             offset,
             batchParam,
         })
+        const t3 = Date.now()
+        // TODO: 타이밍 분석 후 제거
+        console.log(`[TIMING] route | session=${t1 - t0}ms profile=${t2 - t1}ms service=${t3 - t2}ms total=${t3 - t0}ms | batch=${batchParam.slice(0, 12)} offset=${offset}`)
 
         if ('error' in result) {
             if (result.error === 'rate_limited') return err(GITHUB_RATE_LIMITED_MESSAGE, 429, ErrorCode.RATE_LIMITED)
