@@ -1,4 +1,5 @@
 import { unstable_cache } from 'next/cache'
+import { after } from 'next/server'
 
 import { listUserBookmarkKeys } from '@/lib/bookmarks'
 import { encodeBatch, decodeBatch, INITIAL_BATCH } from '@/lib/github/batch'
@@ -97,7 +98,7 @@ export async function fetchIssueListPage({
             ['github-issues', userId, String(MIN_CANDIDATE_REPO_STARS), ...profile.topLanguages.slice().sort(), nextBatchParam],
             { revalidate: GITHUB_API_CACHE_TTL_SECONDS }
         )
-        void prefetchNextBatch()
+        after(() => { void prefetchNextBatch() })
     }
 
     return {
