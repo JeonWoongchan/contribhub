@@ -40,7 +40,7 @@ export async function fetchIssueListPage({
     // MIN_CANDIDATE_REPO_STARS를 키에 포함 — 값이 바뀌면 기존 캐시를 무효화
     const getCachedIssues = unstable_cache(
         () => fetchCandidateIssues(profile.topLanguages, accessToken, afterCursors),
-        ['github-issues', String(MIN_CANDIDATE_REPO_STARS), ...profile.topLanguages.slice().sort(), batchParam],
+        ['github-issues', userId, String(MIN_CANDIDATE_REPO_STARS), ...profile.topLanguages.slice().sort(), batchParam],
         { revalidate: GITHUB_API_CACHE_TTL_SECONDS }
     )
 
@@ -94,7 +94,7 @@ export async function fetchIssueListPage({
         const nextBatchParam = encodeBatch(nextBatchCursors)
         const prefetchNextBatch = unstable_cache(
             () => fetchCandidateIssues(profile.topLanguages, accessToken, nextBatchCursors),
-            ['github-issues', String(MIN_CANDIDATE_REPO_STARS), ...profile.topLanguages.slice().sort(), nextBatchParam],
+            ['github-issues', userId, String(MIN_CANDIDATE_REPO_STARS), ...profile.topLanguages.slice().sort(), nextBatchParam],
             { revalidate: GITHUB_API_CACHE_TTL_SECONDS }
         )
         void prefetchNextBatch()
