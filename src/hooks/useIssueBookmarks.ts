@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { isUnauthorizedApiResponse, redirectToLogin } from '@/lib/client-auth'
-import type { ApiResponse } from '@/types/api'
+import type { ApiResponse, IssueListPage } from '@/types/api'
 import type { IssueCardItem } from '@/types/issue'
 import type { ContributionType } from '@/types/user'
 import { useToast } from './use-toast'
@@ -119,6 +119,11 @@ export function useIssueBookmarks({
       })
     }
 
+    // 성공 시 finally에서 캐시 업데이트하기 위한 플래그 — try 안에서 setQueriesData를 호출하면
+    // sourceIssues가 갱신돼 useEffect가 발동하는데, pendingKey 해제 전 타이밍에 걸리면
+    // 낙관적 상태가 덮어써지는 플리커가 발생한다.
+    let succeededBookmarkState: boolean | null = null
+
     try {
       // 서버 북마크 저장 및 삭제 요청 전송부.
       const response = await fetch('/api/bookmarks', {
@@ -152,6 +157,8 @@ export function useIssueBookmarks({
         return
       }
 
+      succeededBookmarkState = !wasBookmarked
+
       await Promise.all([
         // isBookmarked는 optimisticIssues가 이미 관리하므로 즉시 리페치 불필요.
         // stale 마킹만 하고 다음 자연 페치 시 갱신 — 즉시 리페치 시 pendingKeys 해제와
@@ -169,6 +176,27 @@ export function useIssueBookmarks({
       undoOptimisticUpdate()
     } finally {
       pendingBookmarkKeysRef.current = pendingBookmarkKeysRef.current.filter((key) => key !== bookmarkKey)
+
+      // pendingKey 해제 후 캐시 업데이트 — 페이지 재진입 시 isBookmarked 원본값 노출 방지
+      if (succeededBookmarkState !== null) {
+        queryClient.setQueriesData<InfiniteData<IssueListPage>>(
+          { queryKey: QUERY_KEYS.issues },
+          (oldData) => {
+            if (!oldData) return oldData
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page) => ({
+                ...page,
+                issues: page.issues.map((i) =>
+                  getBookmarkKey(i) === bookmarkKey
+                    ? { ...i, isBookmarked: succeededBookmarkState! }
+                    : i
+                ),
+              })),
+            }
+          }
+        )
+      }
     }
   }
 
