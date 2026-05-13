@@ -8,6 +8,7 @@ import type { RawIssue, ScoredIssue } from '@/types/issue'
 import type { IssueSearchResult } from '@/lib/github/issues/search'
 
 vi.mock('next/cache', () => ({ unstable_cache: vi.fn(<T>(fn: () => T) => fn) }))
+vi.mock('next/server', () => ({ after: vi.fn((fn: () => void) => fn()) }))
 vi.mock('@/lib/github/issues/search', () => ({ fetchCandidateIssues: vi.fn() }))
 vi.mock('@/lib/github/issues/ranking', () => ({ rankIssues: vi.fn() }))
 vi.mock('@/lib/github/issues/filters', async (importOriginal) => {
@@ -155,6 +156,48 @@ describe('fetchIssueListPage — 에러 반환', () => {
     const result = await fetchIssueListPage(baseArgs)
 
     expect('error' in result).toBe(false)
+  })
+})
+
+describe('fetchIssueListPage - batch validation', () => {
+  it('invalid batch는 GitHub 조회 없이 invalid_batch를 반환한다', async () => {
+    const result = await fetchIssueListPage({ ...baseArgs, batchParam: '!!!invalid!!!' })
+
+    expect(result).toEqual({ error: 'invalid_batch' })
+    expect(mockSearch).not.toHaveBeenCalled()
+    expect(mockBookmarks).not.toHaveBeenCalled()
+  })
+
+  it('길이 제한을 넘는 batch는 GitHub 조회 없이 invalid_batch를 반환한다', async () => {
+    const result = await fetchIssueListPage({ ...baseArgs, batchParam: 'a'.repeat(2049) })
+
+    expect(result).toEqual({ error: 'invalid_batch' })
+    expect(mockSearch).not.toHaveBeenCalled()
+    expect(mockBookmarks).not.toHaveBeenCalled()
+  })
+
+  it('프로필 언어와 맞는 cursor key가 없으면 invalid_batch를 반환한다', async () => {
+    const result = await fetchIssueListPage({ ...baseArgs, batchParam: encodeBatch({ Rust: 'cursor-rust' }) })
+
+    expect(result).toEqual({ error: 'invalid_batch' })
+    expect(mockSearch).not.toHaveBeenCalled()
+    expect(mockBookmarks).not.toHaveBeenCalled()
+  })
+
+  it('프로필 언어와 무관한 cursor key는 캐시 키와 GitHub 요청에서 제거한다', async () => {
+    setupDeps([makeRawIssue()], [makeScoredIssue()])
+    const canonicalBatch = encodeBatch({ TypeScript: 'cursor-ts' })
+
+    const result = await fetchIssueListPage({
+      ...baseArgs,
+      batchParam: encodeBatch({ Rust: 'cursor-rust', TypeScript: 'cursor-ts' }),
+    })
+
+    expect('error' in result).toBe(false)
+    if ('error' in result) return
+    expect(result.batch).toBe(canonicalBatch)
+    expect(mockSearch).toHaveBeenCalledWith(['TypeScript'], 'token', { TypeScript: 'cursor-ts' })
+    expect(vi.mocked(unstable_cache).mock.calls[0][1]?.at(-1)).toBe(canonicalBatch)
   })
 })
 

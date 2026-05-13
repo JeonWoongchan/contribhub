@@ -55,6 +55,7 @@ export async function GET(req: NextRequest) {
         })
 
         if ('error' in result) {
+            if (result.error === 'invalid_batch') return err('잘못된 배치 커서입니다.', 400, ErrorCode.INVALID_REQUEST)
             if (result.error === 'rate_limited') return err(GITHUB_RATE_LIMITED_MESSAGE, 429, ErrorCode.RATE_LIMITED)
             if (result.error === 'unauthorized') return err(GITHUB_UNAUTHORIZED_MESSAGE, 401, ErrorCode.UNAUTHORIZED)
             return err('이슈 목록을 불러오지 못했습니다.', 502, ErrorCode.GITHUB_ERROR)
