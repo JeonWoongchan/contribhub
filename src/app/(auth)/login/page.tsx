@@ -1,11 +1,15 @@
 import Link from 'next/link'
-import { signIn } from '@/lib/auth'
+import { redirect } from 'next/navigation'
+import { auth, signIn } from '@/lib/auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { LoginButton } from './LoginButton'
 import { LoginPreview } from './LoginPreview'
 
-export default function LoginPage() {
+export default async function LoginPage() {
+    const session = await auth()
+    if (session) redirect('/dashboard')
+
     return (
         <div className="mx-auto flex min-h-svh max-w-6xl flex-col lg:grid lg:h-screen lg:grid-cols-[1fr_460px] lg:overflow-hidden">
             {/* scrollbar-gutter 영역까지 그라디언트를 채우기 위해 fixed로 viewport 전체 커버 */}
