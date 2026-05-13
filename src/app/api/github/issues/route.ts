@@ -1,30 +1,53 @@
 import { NextRequest } from 'next/server'
+import { getToken } from 'next-auth/jwt'
 
 import { err, ErrorCode, ok } from '@/lib/api-response'
-import { requireGithubToken } from '@/lib/auth-utils'
+import { auth } from '@/lib/auth'
+import { env } from '@/lib/env'
 import { GITHUB_RATE_LIMITED_MESSAGE, GITHUB_UNAUTHORIZED_MESSAGE } from '@/lib/github/error-response'
 import { INITIAL_BATCH } from '@/lib/github/batch'
 import { parseIssueFilters } from '@/lib/github/issues/filters'
 import { fetchIssueListPage } from '@/lib/github/issues/service'
-import { loadOnboardingProfile } from '@/lib/user/profile'
+import { loadOnboardingProfile, type OnboardingProfile } from '@/lib/user/profile'
 import { offsetSchema } from '@/lib/validators/pagination'
+import { GUEST_ONBOARDING_PROFILE } from '@/constants/guest-profile'
 
 export async function GET(req: NextRequest) {
-    const auth = await requireGithubToken(req)
-    if (!auth.ok) return err(auth.error, auth.status, auth.code)
+    const session = await auth()
+
+    let userId: string | null
+    let accessToken: string
+    let profile: OnboardingProfile
+
+    if (!session) {
+        // 게스트 모드: 서버 GitHub 토큰과 기본 온보딩 프로필로 이슈 조회
+        const serverToken = process.env.GITHUB_TOKEN
+        if (!serverToken) return err('Unauthorized', 401, ErrorCode.UNAUTHORIZED)
+        userId = null
+        accessToken = serverToken
+        profile = GUEST_ONBOARDING_PROFILE
+    } else {
+        // 로그인 사용자: JWT에서 액세스 토큰 추출 후 개인 온보딩 프로필 적용
+        const secureCookie = process.env.NODE_ENV === 'production'
+        const token = await getToken({ req, secret: env.AUTH_SECRET, secureCookie })
+        if (!token?.accessToken) return err('No access token', 401, ErrorCode.NO_ACCESS_TOKEN)
+
+        userId = session.user.id
+        accessToken = token.accessToken
+        const loaded = await loadOnboardingProfile(userId)
+        if (!loaded) return err('Onboarding not complete', 400, ErrorCode.ONBOARDING_REQUIRED)
+        profile = loaded
+    }
 
     try {
-        const profile = await loadOnboardingProfile(auth.userId)
-        if (!profile) return err('Onboarding not complete', 400, ErrorCode.ONBOARDING_REQUIRED)
-
         const { searchParams } = new URL(req.url)
         const offset = offsetSchema.parse(searchParams.get('offset'))
         const batchParam = searchParams.get('batch') ?? INITIAL_BATCH
         const filters = parseIssueFilters(searchParams)
 
         const result = await fetchIssueListPage({
-            userId: auth.userId,
-            accessToken: auth.accessToken,
+            userId,
+            accessToken,
             profile,
             filters,
             offset,

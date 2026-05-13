@@ -1,5 +1,7 @@
+import Link from 'next/link'
 import { signIn } from '@/lib/auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { LoginButton } from './LoginButton'
 import { LoginPreview } from './LoginPreview'
 
@@ -22,7 +24,7 @@ export default function LoginPage() {
                             GitHub 프로필과 온보딩 기반으로 기여 가능한 오픈소스 이슈를 매칭해드려요.
                         </CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="flex flex-col gap-3">
                         <form
                             action={async () => {
                                 'use server'
@@ -31,6 +33,9 @@ export default function LoginPage() {
                         >
                             <LoginButton />
                         </form>
+                        <Button asChild variant="outline" className="w-full">
+                            <Link href="/dashboard">서비스 미리보기</Link>
+                        </Button>
                     </CardContent>
                 </Card>
             </div>

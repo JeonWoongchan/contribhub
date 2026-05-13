@@ -16,7 +16,7 @@ export type IssuePageData = IssueListPage
 export type IssuePageError = { error: 'rate_limited' } | { error: 'unauthorized' } | { error: 'all_failed' }
 
 type FetchIssueListPageParams = {
-    userId: string
+    userId: string | null  // null = 게스트 (북마크 조회 생략, 공유 캐시 사용)
     accessToken: string
     profile: OnboardingProfile
     filters: IssueFilters
@@ -37,18 +37,22 @@ export async function fetchIssueListPage({
         ? {}
         : (decodeBatch<Record<string, string | null>>(batchParam) ?? {})
 
+    // 게스트는 'guest' 키로 전체 게스트가 캐시를 공유, 로그인 사용자는 userId로 분리
+    const cacheUserId = userId ?? 'guest'
+
     // 배치별로 캐시 분리 — 같은 언어 조합이라도 batch가 다르면 별도 GitHub 호출
     // MIN_CANDIDATE_REPO_STARS를 키에 포함 — 값이 바뀌면 기존 캐시를 무효화
     const getCachedIssues = unstable_cache(
         () => fetchCandidateIssues(profile.topLanguages, accessToken, afterCursors),
-        ['github-issues', userId, String(MIN_CANDIDATE_REPO_STARS), ...profile.topLanguages.slice().sort(), batchParam],
+        ['github-issues', cacheUserId, String(MIN_CANDIDATE_REPO_STARS), ...profile.topLanguages.slice().sort(), batchParam],
         { revalidate: GITHUB_API_CACHE_TTL_SECONDS }
     )
 
     // GitHub 이슈 검색(캐시)과 북마크 키 목록 조회를 병렬 실행 — 서로 의존성 없음
+    // 게스트는 북마크 DB 조회 생략
     const [searchResult, bookmarkKeyList] = await Promise.all([
         getCachedIssues(),
-        listUserBookmarkKeys(userId),
+        userId ? listUserBookmarkKeys(userId) : Promise.resolve([]),
     ])
 
     if (searchResult.rateLimited && searchResult.issues.length === 0) {
@@ -95,7 +99,7 @@ export async function fetchIssueListPage({
         const nextBatchParam = encodeBatch(nextBatchCursors)
         const prefetchNextBatch = unstable_cache(
             () => fetchCandidateIssues(profile.topLanguages, accessToken, nextBatchCursors),
-            ['github-issues', userId, String(MIN_CANDIDATE_REPO_STARS), ...profile.topLanguages.slice().sort(), nextBatchParam],
+            ['github-issues', cacheUserId, String(MIN_CANDIDATE_REPO_STARS), ...profile.topLanguages.slice().sort(), nextBatchParam],
             { revalidate: GITHUB_API_CACHE_TTL_SECONDS }
         )
         after(() => { void prefetchNextBatch() })

@@ -1,11 +1,13 @@
 import Link from 'next/link'
 import { signOut } from '@/lib/auth'
+import { Button } from '@/components/ui/button'
 import { UserAvatar } from './UserAvatar'
 import { UserMenu } from './UserMenu'
 
 type MainHeaderProps = {
     image: string | null | undefined
     name: string | null | undefined
+    isGuest?: boolean
 }
 
 async function logoutAction() {
@@ -13,7 +15,7 @@ async function logoutAction() {
     await signOut({ redirectTo: '/login' })
 }
 
-export function MainHeader({ image, name }: MainHeaderProps) {
+export function MainHeader({ image, name, isGuest = false }: MainHeaderProps) {
     return (
         <header
             data-scroll-lock-offset
@@ -27,8 +29,16 @@ export function MainHeader({ image, name }: MainHeaderProps) {
                     Open Issue Map
                 </Link>
                 <div className="flex items-center gap-3">
-                    <UserAvatar image={image} name={name} />
-                    <UserMenu logoutAction={logoutAction} />
+                    {isGuest ? (
+                        <Button asChild size="sm">
+                            <Link href="/login">로그인</Link>
+                        </Button>
+                    ) : (
+                        <>
+                            <UserAvatar image={image} name={name} />
+                            <UserMenu logoutAction={logoutAction} />
+                        </>
+                    )}
                 </div>
             </div>
         </header>
