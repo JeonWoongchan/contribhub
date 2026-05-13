@@ -87,6 +87,19 @@ export async function fetchIssueListPage({
         ? encodeBatch(searchResult.endCursors)
         : null
 
+    // 배치 첫 페이지 서빙 시 다음 배치를 백그라운드 캐싱 — 배치 경계 지연 방지
+    const isFirstPage = offset === 0
+    if (isFirstPage && searchResult.hasMoreOnGithub) {
+        const nextBatchCursors = searchResult.endCursors
+        const nextBatchParam = encodeBatch(nextBatchCursors)
+        const prefetchNextBatch = unstable_cache(
+            () => fetchCandidateIssues(profile.topLanguages, accessToken, nextBatchCursors),
+            ['github-issues', String(MIN_CANDIDATE_REPO_STARS), ...profile.topLanguages.slice().sort(), nextBatchParam],
+            { revalidate: GITHUB_API_CACHE_TTL_SECONDS }
+        )
+        void prefetchNextBatch()
+    }
+
     return {
         issues: pageIssues,
         total: allIssues.length,
