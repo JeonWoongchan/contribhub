@@ -22,12 +22,12 @@ function redirectPath(res: Response): string {
 
 describe('middleware — / 라우팅 분기', () => {
     describe('미인증 사용자', () => {
-        it('JWT가 없으면 /login으로 리다이렉트한다', async () => {
+        it('JWT가 없으면 공개 루트 페이지를 그대로 보여준다', async () => {
             mockGetToken.mockResolvedValueOnce(null)
 
             const res = await middleware(makeReq())
 
-            expect(redirectPath(res)).toBe('/login')
+            expect(res.headers.get('location')).toBeNull()
         })
     })
 
@@ -62,7 +62,7 @@ describe('middleware — / 라우팅 분기', () => {
 
     describe('리다이렉트 동작', () => {
         it('리다이렉트 응답의 Location 헤더가 요청과 같은 origin을 가진다', async () => {
-            mockGetToken.mockResolvedValueOnce(null)
+            mockGetToken.mockResolvedValueOnce({ isOnboarded: false } as JWT)
 
             const res = await middleware(makeReq())
 

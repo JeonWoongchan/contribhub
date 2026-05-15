@@ -1,10 +1,17 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth, signIn } from '@/lib/auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { createNoIndexMetadata } from '@/lib/metadata'
 import { LoginButton } from './LoginButton'
 import { LoginPreview } from './LoginPreview'
+
+export const metadata: Metadata = createNoIndexMetadata({
+    title: '로그인',
+    description: 'GitHub 계정으로 Open Issue Map에 로그인합니다.',
+})
 
 export default async function LoginPage() {
     const session = await auth()
