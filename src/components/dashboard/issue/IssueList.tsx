@@ -63,7 +63,7 @@ export function IssueList({ isGuest }: IssueListProps) {
                         href="/login"
                         className="font-medium text-interactive-action underline-offset-4 hover:underline"
                     >
-                        로그인하면 내 기술 스택에 맞는 이슈를 추천받을 수 있어요 →
+                        로그인하고 나에게 맞는 이슈를 추천받아보세요.
                     </Link>
                 </div>
             )}

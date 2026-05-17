@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { Bookmark, GitPullRequestArrow, Map, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { MainHeader } from '@/components/layout/MainHeader'
 import { AppFooter } from '@/components/layout/AppFooter'
 
 const featureItems = [
@@ -29,21 +28,21 @@ const featureItems = [
 
 export function HomeLanding() {
     return (
-        <div className="min-h-screen bg-background">
-            <MainHeader image={null} name={null} isGuest />
-            <main className="mx-auto flex max-w-5xl flex-col gap-14 px-4 py-12 sm:py-16">
-                <section className="grid gap-10 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
+        <main className="min-h-screen mx-auto flex max-w-5xl flex-col px-4 py-8">
+            <div className="flex flex-1 items-center">
+                <section className="grid w-full gap-10 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
                     <div className="flex flex-col gap-7">
                         <div className="space-y-4">
-                            <p className="text-xs font-semibold uppercase text-primary">
-                                Open Source Issue Discovery
+                            <p className="text-lg font-semibold text-primary">
+                                Open Issue Map
                             </p>
                             <h1 className="max-w-3xl text-3xl font-bold leading-tight text-foreground sm:text-5xl">
-                                나에게 맞는 오픈소스 이슈를 추천받아보세요
+                                나에게 맞는 오픈소스<br/> 이슈를 추천받아보세요
                             </h1>
                             <p className="max-w-2xl text-base leading-7 text-muted-foreground">
                                 Open Issue Map은 GitHub 프로필과 온보딩 정보를 바탕으로
-                                초보자도 검토해볼 만한 오픈소스 이슈를 추천하는 개발자용 웹 서비스입니다.
+                            <br/>
+                                검토해볼 만한 오픈소스 이슈를 추천하는 개발자용 웹 서비스입니다.
                             </p>
                         </div>
                         <div className="flex flex-col gap-3 sm:flex-row">
@@ -74,24 +73,8 @@ export function HomeLanding() {
                         ))}
                     </div>
                 </section>
-                <section
-                    aria-labelledby="seo-public-summary"
-                    className="rounded-md border border-border/70 bg-muted/30 p-6"
-                >
-                    <div className="max-w-3xl space-y-3">
-                        <h2 id="seo-public-summary" className="text-lg font-semibold text-foreground">
-                            오픈소스 첫 기여를 위한 탐색 흐름
-                        </h2>
-                        <p className="text-sm leading-7 text-muted-foreground">
-                            관심 언어를 고르고, 추천 이슈를 비교하고, 북마크로 후보를 저장한 뒤
-                            실제 GitHub 이슈에서 claim과 PR 흐름을 이어갈 수 있도록 돕는 것이 목표입니다.
-                        </p>
-                    </div>
-                </section>
-            </main>
-            <div className="mx-auto max-w-5xl px-4">
-                <AppFooter />
             </div>
-        </div>
+            <AppFooter />
+        </main>
     )
 }
