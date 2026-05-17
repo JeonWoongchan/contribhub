@@ -16,7 +16,7 @@ export function useOnboardingWizard(initialLanguages: string[] = []) {
   const [form, setForm] = useState<FormState>({
     experienceLevel: null,
     contributionTypes: [],
-    topLanguages: initialLanguages,
+    topLanguages: initialLanguages.filter((lang) => (POPULAR_LANGUAGES as readonly string[]).includes(lang)),
     weeklyHours: null,
     purpose: null,
   })
