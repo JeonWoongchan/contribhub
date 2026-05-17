@@ -40,7 +40,7 @@ export function HomeLanding() {
                             </p>
                             <h1 className="max-w-3xl text-3xl font-bold leading-tight text-foreground sm:text-5xl">
                                 나에게 맞는 오픈소스<br/> 이슈를 추천받아보세요
-                            </h1>크
+                            </h1>
                             <p className="max-w-2xl text-base leading-7 text-muted-foreground">
                                 Open Issue Map은 GitHub 프로필과 온보딩 정보를 바탕으로
                             <br/>
