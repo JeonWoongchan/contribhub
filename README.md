@@ -160,11 +160,9 @@ GitHub access token은 클라이언트에 노출하지 않습니다.
 
 ## 화면별 기능
 
-### 1. 로그인
+### 1. 랜딩 페이지
 
-> ![로그인화면](docs/screenshots/login.png)
-
-- GitHub OAuth로 시작하는 진입 화면입니다.
+> ![랜딩화면](docs/screenshots/landing.png)
 
 ### 2. 온보딩
 
@@ -204,4 +202,3 @@ GitHub access token은 클라이언트에 노출하지 않습니다.
 ## 문서
 
 - [추천 점수 규칙](./docs/SCORING_RULES.md)
-- [GitHub API 캐싱 전략](./docs/CACHING_STRATEGY.md)
