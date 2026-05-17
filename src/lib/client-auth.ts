@@ -2,7 +2,7 @@ import type { ApiResponse } from '@/types/api'
 
 export function redirectToLogin(): void {
   if (typeof window === 'undefined') return
-  window.location.assign('/login')
+  window.location.assign('/')
 }
 
 export function isUnauthorizedApiResponse<T>(

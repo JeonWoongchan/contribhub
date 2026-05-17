@@ -14,7 +14,7 @@ export default async function MainLayout({
   children: ReactNode
 }) {
   const session = await auth()
-  if (!session) redirect('/login')
+  if (!session) redirect('/')
 
   // isOnboarded는 JWT에 저장된 값 — DB 조회 없이 확인
   if (!session.user.isOnboarded) redirect('/onboarding')

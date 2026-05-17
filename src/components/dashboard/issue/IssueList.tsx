@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { signIn } from 'next-auth/react'
 import { SearchBarRow } from '@/components/shared/SearchBarRow'
 import { SearchDataListState } from '@/components/shared/SearchDataListState'
 import { InfiniteScrollTrigger } from '@/components/shared/InfiniteScrollTrigger'
@@ -59,12 +60,13 @@ export function IssueList({ isGuest }: IssueListProps) {
             {isGuest && (
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
                     <span>지금은 기본 추천 이슈를 보여드리고 있어요.</span>
-                    <Link
-                        href="/login"
+                    <button
+                        type="button"
+                        onClick={() => void signIn('github', { callbackUrl: '/dashboard' })}
                         className="font-medium text-interactive-action underline-offset-4 hover:underline"
                     >
                         로그인하고 나에게 맞는 이슈를 추천받아보세요.
-                    </Link>
+                    </button>
                 </div>
             )}
 
@@ -90,7 +92,7 @@ export function IssueList({ isGuest }: IssueListProps) {
                     description: '프로필 설정이나 GitHub 조회 결과에 따라 지금은 보여드릴 추천 이슈가 없습니다.',
                     detail: '온보딩 설정을 다시 확인하거나 잠시 후 다시 시도해 주세요.',
                     action: isGuest
-                        ? <Link href="/login">로그인하여 맞춤 추천 받기</Link>
+                        ? <button type="button" onClick={() => void signIn('github', { callbackUrl: '/dashboard' })}>로그인하여 맞춤 추천 받기</button>
                         : <Link href="/onboarding">온보딩 다시하기</Link>,
                 }}
                 isPending={isPending}

@@ -6,7 +6,7 @@ import { env } from '@/lib/env'
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
   pages: {
-    signIn: '/login',
+    signIn: '/',
   },
   providers: [
     GitHub({

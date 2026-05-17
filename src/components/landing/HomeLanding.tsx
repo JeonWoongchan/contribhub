@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { Bookmark, GitPullRequestArrow, Map, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AppFooter } from '@/components/layout/AppFooter'
+import { signInWithGitHub } from '@/lib/auth-actions'
+import { SignInButton } from './SignInButton'
 
 const featureItems = [
     {
@@ -38,7 +40,7 @@ export function HomeLanding() {
                             </p>
                             <h1 className="max-w-3xl text-3xl font-bold leading-tight text-foreground sm:text-5xl">
                                 나에게 맞는 오픈소스<br/> 이슈를 추천받아보세요
-                            </h1>
+                            </h1>크
                             <p className="max-w-2xl text-base leading-7 text-muted-foreground">
                                 Open Issue Map은 GitHub 프로필과 온보딩 정보를 바탕으로
                             <br/>
@@ -49,9 +51,9 @@ export function HomeLanding() {
                             <Button asChild variant="interactive" size="lg">
                                 <Link href="/dashboard">추천 이슈 미리보기</Link>
                             </Button>
-                            <Button asChild variant="outline" size="lg">
-                                <Link href="/login">GitHub로 시작하기</Link>
-                            </Button>
+                            <form action={signInWithGitHub}>
+                                <SignInButton />
+                            </form>
                         </div>
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">

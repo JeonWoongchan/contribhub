@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import { signOut } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
+import { signInWithGitHub, signOutToHome } from '@/lib/auth-actions'
 import { UserAvatar } from './UserAvatar'
 import { UserMenu } from './UserMenu'
 
@@ -8,11 +8,6 @@ type MainHeaderProps = {
     image: string | null | undefined
     name: string | null | undefined
     isGuest?: boolean
-}
-
-async function logoutAction() {
-    'use server'
-    await signOut({ redirectTo: '/login' })
 }
 
 export function MainHeader({ image, name, isGuest = false }: MainHeaderProps) {
@@ -30,13 +25,13 @@ export function MainHeader({ image, name, isGuest = false }: MainHeaderProps) {
                 </Link>
                 <div className="flex items-center gap-3">
                     {isGuest ? (
-                        <Button asChild size="sm">
-                            <Link href="/login">로그인</Link>
-                        </Button>
+                        <form action={signInWithGitHub}>
+                            <Button type="submit" size="sm">로그인</Button>
+                        </form>
                     ) : (
                         <>
                             <UserAvatar image={image} name={name} />
-                            <UserMenu logoutAction={logoutAction} />
+                            <UserMenu logoutAction={signOutToHome} />
                         </>
                     )}
                 </div>
